@@ -37,3 +37,11 @@ Suba os arquivos no mesmo repositório do Portal e faça commit. O Streamlit Com
 - Registra cada sessão em `training_sessions` com atleta, data, título e caminho do CSV.
 - Nova página `Histórico de Treinos` para consultar, baixar e excluir sessões (admin).
 - Execute `supabase_v1_7_migration.sql` uma vez antes de usar o salvamento.
+
+
+## V1.8 — Perfis e Permissões
+- Admin: gestão completa de cadastros, times, atletas e históricos.
+- Técnico: visualiza somente times e skatistas aos quais está vinculado; pode consultar análises/histórico desses atletas.
+- Skatista: visualiza o próprio perfil/análise/histórico.
+- Segurança aplicada no Supabase via RLS, não apenas na interface.
+- Execute `supabase_v1_8_migration.sql` uma vez após instalar esta versão.

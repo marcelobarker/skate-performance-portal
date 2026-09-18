@@ -117,3 +117,7 @@ with c: st.markdown('<div class="card"><h3>🛹 Times</h3><div class="muted">Org
 
 if role == "admin":
     st.success("🛡️ Você está conectado como ADMINISTRADOR. Use Cadastros para aprovar usuários.")
+elif role == "tecnico":
+    st.info("🎯 Perfil TÉCNICO: você acessa somente os times e skatistas vinculados a você.")
+else:
+    st.info("🛹 Perfil SKATISTA: seu acesso é limitado ao seu próprio perfil, análises e histórico.")

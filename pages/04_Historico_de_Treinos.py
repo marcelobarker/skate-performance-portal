@@ -12,18 +12,22 @@ st.markdown("""<style>
 
 user, profile = require_login()
 sb = get_supabase()
-is_admin = profile.get("role") == "admin"
+role = profile.get("role")
+is_admin = role == "admin"
+is_technician = role == "tecnico"
 
 st.title("📚 Histórico de Treinos")
 st.caption("Sessões salvas permanentemente e vinculadas a cada skatista.")
 
 try:
-    if is_admin:
+    if is_admin or is_technician:
         athletes = (sb.table("profiles")
-                    .select("id,full_name,modality,status")
-                    .eq("role", "skatista").order("full_name").execute().data or [])
+                    .select("id,full_name,modality,status,role")
+                    .eq("role", "skatista").eq("status", "ativo")
+                    .order("full_name").execute().data or [])
         if not athletes:
-            st.info("Ainda não há skatistas cadastrados para consultar.")
+            msg = "Ainda não há skatistas cadastrados para consultar." if is_admin else "Nenhum skatista do seu time está disponível para consulta."
+            st.info(msg)
             st.stop()
         amap = {f"{a.get('full_name') or 'Sem nome'}" + (f" • {a.get('modality')}" if a.get('modality') else ""): a for a in athletes}
         label = st.selectbox("Skatista", list(amap.keys()))
@@ -57,7 +61,7 @@ for row in rows:
         c1.caption(f"Data do treino: {row.get('training_date') or '—'}")
         c2.caption("CSV armazenado")
 
-        if is_admin and row.get("csv_path"):
+        if row.get("csv_path"):
             try:
                 data = sb.storage.from_("training-csvs").download(row["csv_path"])
                 st.download_button(

@@ -733,7 +733,7 @@ st.markdown("""
 
 st.sidebar.markdown("## 🛹 SKATE **PERFORMANCE**")
 
-# V1.6 — atleta vem do cadastro do Portal
+# V1.8 — atleta vem do cadastro; RLS limita por perfil (admin/técnico/skatista)
 sb = get_supabase()
 try:
     athlete_rows = (
@@ -750,7 +750,12 @@ except Exception as e:
     st.stop()
 
 if not athlete_rows:
-    st.info("Ainda não há skatistas ativos cadastrados. Cadastre/aprove um skatista em Cadastros para iniciar uma análise.")
+    if profile.get("role") == "tecnico":
+        st.info("Nenhum skatista ativo do seu time está disponível para análise.")
+    elif profile.get("role") == "skatista":
+        st.info("Seu perfil de skatista ainda não está disponível para análise.")
+    else:
+        st.info("Ainda não há skatistas ativos cadastrados. Cadastre/aprove um skatista em Cadastros para iniciar uma análise.")
     st.stop()
 
 athlete_by_label = {
