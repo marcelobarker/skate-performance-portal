@@ -7,8 +7,23 @@ st.set_page_config(page_title="Skate Performance • Portal", page_icon="🛹", 
 st.markdown("""
 <style>
 .stApp {background:#06111f;color:#eef8ff}
+html, body, [class*="css"], [data-testid="stAppViewContainer"] {color:#eef8ff !important}
+[data-testid="stAppViewContainer"] > .main {background:#06111f !important}
+[data-testid="stHeader"] {background:transparent !important; height:0 !important}
+[data-testid="stToolbar"] {display:none !important}
+[data-testid="stDecoration"] {display:none !important}
+header[data-testid="stHeader"] {display:none !important}
+#MainMenu {visibility:hidden !important}
+.block-container {padding-top:1.2rem !important}
+h1,h2,h3,h4,h5,h6,p,span,label,div { }
+[data-testid="stMetricLabel"] p,
+[data-testid="stMetricValue"],
+[data-testid="stMetricValue"] div {color:#eef8ff !important}
+[data-testid="stCaptionContainer"] p {color:#9bb2c8 !important}
+[data-testid="stSidebar"] * {color:#d9eafa !important}
+
 [data-testid="stSidebar"] {background:#081827}
-.block-container {max-width:1400px;padding-top:1.6rem}
+.block-container {max-width:1400px;padding-top:1.2rem !important}
 .hero{background:#0b1d31;border:1px solid #173b5a;border-radius:18px;padding:24px 28px;margin-bottom:18px}
 .brand{font-size:31px;font-weight:900;font-style:italic;letter-spacing:-1px}
 .brand .blue{color:#1398ff}.brand .time{font-size:15px;font-style:normal;margin-left:8px}
