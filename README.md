@@ -53,3 +53,12 @@ Suba os arquivos no mesmo repositório do Portal e faça commit. O Streamlit Com
 - PDFs ficam em bucket privado e seguem as permissões Admin / Técnico / Skatista.
 - Sessões salvas antes da V1.9 continuam válidas; elas apenas não possuem PDFs arquivados retroativamente.
 - Execute `supabase_v1_9_migration.sql` uma única vez após a V1.8.
+
+## V2.0 — revisão final
+- Dashboard visual PDF volta a exibir percentuais diretamente nas pizzas.
+- Foto opcional restaurada na Análise de Treino, sem substituir a foto do cadastro.
+- Skatistas ficam restritos ao Histórico; Análise/CSV é área de Admin/Técnico.
+- Técnicos podem salvar treino somente para skatistas dos próprios times (RLS).
+- Controles e botões recebem tema escuro global.
+- Home/Central da equipe mostra contagens reais de atletas, técnicos, times, treinos e pendentes (admin).
+- Execute `supabase_v2_0_migration.sql` uma vez após atualizar o GitHub.

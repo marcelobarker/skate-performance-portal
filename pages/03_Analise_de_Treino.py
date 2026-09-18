@@ -11,8 +11,32 @@ from PIL import Image
 
 st.set_page_config(page_title="Skate Performance", page_icon="🛹", layout="wide")
 
+st.markdown("""<style>
+/* V2.0 — controles globais escuros */
+[data-testid="stButton"] button,
+[data-testid="stFormSubmitButton"] button,
+[data-testid="stDownloadButton"] button {
+  background:#0b1d31!important;color:#eef8ff!important;border:1px solid #245274!important;border-radius:10px!important;
+}
+[data-testid="stButton"] button:hover,[data-testid="stFormSubmitButton"] button:hover,[data-testid="stDownloadButton"] button:hover{
+  background:#102b46!important;color:#fff!important;border-color:#1398ff!important;
+}
+[data-testid="stButton"] button:disabled,[data-testid="stFormSubmitButton"] button:disabled{
+  background:#0a1725!important;color:#668097!important;border-color:#18354d!important;opacity:.8!important;
+}
+[data-testid="stTextInput"] input,[data-testid="stNumberInput"] input,[data-testid="stDateInput"] input,[data-testid="stTimeInput"] input,
+[data-testid="stSelectbox"] [role="combobox"],[data-testid="stMultiSelect"] [role="combobox"],textarea{
+  background:#0b1d2d!important;color:#eef8ff!important;border-color:#245274!important;
+}
+[data-testid="stDateInput"] button,[data-testid="stTimeInput"] button{background:#0b1d2d!important;color:#eef8ff!important;}
+[data-baseweb="input"],[data-baseweb="select"]>div,[data-baseweb="textarea"]{background:#0b1d2d!important;color:#eef8ff!important;}
+</style>""", unsafe_allow_html=True)
+
 
 user, profile = require_login()
+if profile.get("role") == "skatista":
+    st.info("🛹 Seu perfil de skatista tem acesso ao Histórico de Treinos. As análises e uploads de CSV são realizados pela equipe técnica.")
+    st.stop()
 st.markdown("""
 <style>
 :root{--bg:#06111f;--panel:#09192b;--panel2:#0c2035;--line:#173a58;--blue:#1398ff;--cyan:#5bc0ff;--green:#12dc8c;--red:#ff4050;--text:#f5f8ff;--muted:#89a5bf}
@@ -581,6 +605,16 @@ def make_visual_pdf(athlete, cur, sessions, choice, photo_file=None):
             extent=360*v/total
             c.setFillColor(assigned[i])
             c.wedge(x-r,y-r,x+r,y+r,angle,extent,fill=1,stroke=0)
+            # V2.0 — percentual diretamente na fatia do dashboard visual.
+            # Posiciona o texto entre o furo e a borda para permanecer legível.
+            import math
+            mid = math.radians(angle + extent / 2.0)
+            tx = x + math.cos(mid) * r * .79
+            ty = y + math.sin(mid) * r * .79
+            pct = v / total * 100
+            c.setFillColor(white)
+            c.setFont("Helvetica-Bold", 5.8 if extent >= 24 else 4.8)
+            c.drawCentredString(tx, ty-1.5, f"{pct:.0f}%")
             angle+=extent
         c.setFillColor(bg); c.circle(x,y,r*.58,fill=1,stroke=0)
 
@@ -777,6 +811,11 @@ if photo_url:
 
 st.sidebar.caption(" • ".join([x for x in [selected_athlete.get("modality"), selected_athlete.get("category"), selected_athlete.get("stance")] if x]))
 
+# V2.0 — foto opcional específica para a análise/PDF, sem alterar a foto do cadastro.
+analysis_photo = st.sidebar.file_uploader("FOTO PARA A ANÁLISE (OPCIONAL)", type=["jpg", "jpeg", "png", "webp"], accept_multiple_files=False)
+if analysis_photo is not None:
+    photo = io.BytesIO(analysis_photo.getvalue())
+
 # V1.7 — metadados usados ao salvar os CSVs no histórico permanente.
 training_date = st.sidebar.date_input("DATA DO TREINO", value=date.today())
 training_title = st.sidebar.text_input("TÍTULO DO TREINO", placeholder="Ex.: Treino Street - manhã")
@@ -795,7 +834,7 @@ for f in files:
 for p in problems:st.sidebar.warning(p)
 
 # V1.7 — salva cada CSV como uma sessão permanente vinculada ao atleta.
-if sessions and profile.get("role") == "admin":
+if sessions and profile.get("role") in ("admin", "tecnico"):
     if st.sidebar.button("💾 SALVAR NO HISTÓRICO", use_container_width=True):
         saved = 0
         try:
@@ -856,7 +895,9 @@ for n in names:st.sidebar.markdown(f'<span class="session-pill">✓ {n}</span>',
 head1,head2=st.columns([1.05,4.5])
 with head1:
     st.markdown('<div class="hero">',unsafe_allow_html=True)
-    if photo_url:
+    if analysis_photo is not None:
+        st.image(analysis_photo, use_container_width=True)
+    elif photo_url:
         st.image(photo_url,use_container_width=True)
     else:
         st.markdown("### 📷 FOTO")

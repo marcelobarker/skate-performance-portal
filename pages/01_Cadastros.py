@@ -4,6 +4,27 @@ import streamlit as st
 from auth_utils import require_login, get_supabase
 
 st.set_page_config(page_title="Cadastros • Skate Performance", page_icon="👥", layout="wide")
+
+st.markdown("""<style>
+/* V2.0 — controles globais escuros */
+[data-testid="stButton"] button,
+[data-testid="stFormSubmitButton"] button,
+[data-testid="stDownloadButton"] button {
+  background:#0b1d31!important;color:#eef8ff!important;border:1px solid #245274!important;border-radius:10px!important;
+}
+[data-testid="stButton"] button:hover,[data-testid="stFormSubmitButton"] button:hover,[data-testid="stDownloadButton"] button:hover{
+  background:#102b46!important;color:#fff!important;border-color:#1398ff!important;
+}
+[data-testid="stButton"] button:disabled,[data-testid="stFormSubmitButton"] button:disabled{
+  background:#0a1725!important;color:#668097!important;border-color:#18354d!important;opacity:.8!important;
+}
+[data-testid="stTextInput"] input,[data-testid="stNumberInput"] input,[data-testid="stDateInput"] input,[data-testid="stTimeInput"] input,
+[data-testid="stSelectbox"] [role="combobox"],[data-testid="stMultiSelect"] [role="combobox"],textarea{
+  background:#0b1d2d!important;color:#eef8ff!important;border-color:#245274!important;
+}
+[data-testid="stDateInput"] button,[data-testid="stTimeInput"] button{background:#0b1d2d!important;color:#eef8ff!important;}
+[data-baseweb="input"],[data-baseweb="select"]>div,[data-baseweb="textarea"]{background:#0b1d2d!important;color:#eef8ff!important;}
+</style>""", unsafe_allow_html=True)
 st.markdown("""<style>
 [data-testid="stHeader"],header[data-testid="stHeader"],[data-testid="stToolbar"]{display:none!important}
 .stApp,[data-testid="stAppViewContainer"]{background:#06111f!important;color:#eef8ff!important}

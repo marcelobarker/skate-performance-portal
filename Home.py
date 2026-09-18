@@ -4,6 +4,27 @@ from auth_utils import sign_in, sign_up, sign_out, current_user, current_profile
 
 st.set_page_config(page_title="Skate Performance • Portal", page_icon="🛹", layout="wide")
 
+st.markdown("""<style>
+/* V2.0 — controles globais escuros */
+[data-testid="stButton"] button,
+[data-testid="stFormSubmitButton"] button,
+[data-testid="stDownloadButton"] button {
+  background:#0b1d31!important;color:#eef8ff!important;border:1px solid #245274!important;border-radius:10px!important;
+}
+[data-testid="stButton"] button:hover,[data-testid="stFormSubmitButton"] button:hover,[data-testid="stDownloadButton"] button:hover{
+  background:#102b46!important;color:#fff!important;border-color:#1398ff!important;
+}
+[data-testid="stButton"] button:disabled,[data-testid="stFormSubmitButton"] button:disabled{
+  background:#0a1725!important;color:#668097!important;border-color:#18354d!important;opacity:.8!important;
+}
+[data-testid="stTextInput"] input,[data-testid="stNumberInput"] input,[data-testid="stDateInput"] input,[data-testid="stTimeInput"] input,
+[data-testid="stSelectbox"] [role="combobox"],[data-testid="stMultiSelect"] [role="combobox"],textarea{
+  background:#0b1d2d!important;color:#eef8ff!important;border-color:#245274!important;
+}
+[data-testid="stDateInput"] button,[data-testid="stTimeInput"] button{background:#0b1d2d!important;color:#eef8ff!important;}
+[data-baseweb="input"],[data-baseweb="select"]>div,[data-baseweb="textarea"]{background:#0b1d2d!important;color:#eef8ff!important;}
+</style>""", unsafe_allow_html=True)
+
 st.markdown("""
 <style>
 .stApp,[data-testid="stAppViewContainer"]{background:#06111f!important;color:#eef8ff!important}
@@ -90,6 +111,12 @@ status = (profile or {}).get("status","pendente")
 role = (profile or {}).get("role","skatista")
 name = (profile or {}).get("full_name", getattr(user,"email","Usuário"))
 
+if role == "skatista":
+    st.markdown("""<style>
+    [data-testid="stSidebarNav"] a[href*="Analise_de_Treino"],
+    [data-testid="stSidebarNav"] a[href*="03_Analise"]{display:none!important}
+    </style>""", unsafe_allow_html=True)
+
 top1, top2 = st.columns([5,1])
 with top1:
     st.title(f"Olá, {name}")
@@ -107,8 +134,24 @@ if status != "ativo":
     st.stop()
 
 st.header("Central da equipe")
-c1,c2,c3,c4=st.columns(4)
-c1.metric("Atletas","—"); c2.metric("Técnicos","—"); c3.metric("Times","—"); c4.metric("Pendentes","—")
+# V2.0 — números reais do Supabase. O RLS mantém cada perfil limitado ao que pode consultar.
+try:
+    from auth_utils import get_supabase
+    sb = get_supabase()
+    visible_profiles = sb.table("profiles").select("id,role,status").execute().data or []
+    visible_teams = sb.table("teams").select("id").execute().data or []
+    visible_trainings = sb.table("training_sessions").select("id").execute().data or []
+    athletes_count = sum(1 for x in visible_profiles if x.get("role") == "skatista" and x.get("status") == "ativo")
+    tech_count = sum(1 for x in visible_profiles if x.get("role") == "tecnico" and x.get("status") == "ativo")
+    pending_count = sum(1 for x in visible_profiles if x.get("status") == "pendente") if role == "admin" else None
+    cols = st.columns(5 if role == "admin" else 4)
+    cols[0].metric("Atletas", athletes_count)
+    cols[1].metric("Técnicos", tech_count)
+    cols[2].metric("Times", len(visible_teams))
+    cols[3].metric("Treinos", len(visible_trainings))
+    if role == "admin": cols[4].metric("Pendentes", pending_count)
+except Exception as exc:
+    st.warning(f"Não foi possível atualizar a Central da equipe: {exc}")
 
 a,b,c=st.columns(3)
 with a: st.markdown('<div class="card"><h3>👤 Atletas</h3><div class="muted">Perfis, modalidade, stance, categoria e histórico.</div></div>',unsafe_allow_html=True)
@@ -120,4 +163,4 @@ if role == "admin":
 elif role == "tecnico":
     st.info("🎯 Perfil TÉCNICO: você acessa somente os times e skatistas vinculados a você.")
 else:
-    st.info("🛹 Perfil SKATISTA: seu acesso é limitado ao seu próprio perfil, análises e histórico.")
+    st.info("🛹 Perfil SKATISTA: seu acesso é limitado ao próprio perfil e ao Histórico de Treinos.")

@@ -69,4 +69,9 @@ def require_login(require_active=True, admin=False):
     if admin and profile.get("role") != "admin":
         st.error("🔐 Área exclusiva do administrador.")
         st.stop()
+    if profile.get("role") == "skatista":
+        st.markdown("""<style>
+        [data-testid="stSidebarNav"] a[href*="Analise_de_Treino"],
+        [data-testid="stSidebarNav"] a[href*="03_Analise"]{display:none!important}
+        </style>""", unsafe_allow_html=True)
     return user, profile
