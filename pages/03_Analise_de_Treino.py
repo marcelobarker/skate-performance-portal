@@ -1,5 +1,6 @@
 from auth_utils import require_login, get_supabase
-import io, re, unicodedata
+import io, re, unicodedata, uuid
+from datetime import date
 from urllib.request import urlopen
 from pathlib import Path
 import pandas as pd
@@ -770,6 +771,10 @@ if photo_url:
         photo = None
 
 st.sidebar.caption(" • ".join([x for x in [selected_athlete.get("modality"), selected_athlete.get("category"), selected_athlete.get("stance")] if x]))
+
+# V1.7 — metadados usados ao salvar os CSVs no histórico permanente.
+training_date = st.sidebar.date_input("DATA DO TREINO", value=date.today())
+training_title = st.sidebar.text_input("TÍTULO DO TREINO", placeholder="Ex.: Treino Street - manhã")
 files=st.sidebar.file_uploader("ARQUIVOS CSV (TREINOS)",type=["csv","txt"],accept_multiple_files=True)
 if not files:
     st.title("SKATE PERFORMANCE")
@@ -783,6 +788,39 @@ for f in files:
         sessions.append(parse_aggregate(d,Path(f.name).stem) if is_aggregate(d) else parse_raw(d,Path(f.name).stem))
     except Exception as e:problems.append(f"{f.name}: {e}")
 for p in problems:st.sidebar.warning(p)
+
+# V1.7 — salva cada CSV como uma sessão permanente vinculada ao atleta.
+if sessions and profile.get("role") == "admin":
+    if st.sidebar.button("💾 SALVAR NO HISTÓRICO", use_container_width=True):
+        saved = 0
+        try:
+            for f in files:
+                raw = f.getvalue()
+                ext = Path(f.name).suffix.lower() or ".csv"
+                object_path = f"{selected_athlete['id']}/{training_date.isoformat()}/{uuid.uuid4().hex}{ext}"
+                sb.storage.from_("training-csvs").upload(
+                    object_path, raw, {"content-type": "text/csv", "upsert": "false"}
+                )
+                title = training_title.strip() or Path(f.name).stem
+                if len(files) > 1 and training_title.strip():
+                    title = f"{training_title.strip()} • {Path(f.name).stem}"
+                try:
+                    sb.table("training_sessions").insert({
+                        "athlete_id": selected_athlete["id"],
+                        "training_date": training_date.isoformat(),
+                        "title": title,
+                        "csv_path": object_path,
+                    }).execute()
+                except Exception:
+                    try:
+                        sb.storage.from_("training-csvs").remove([object_path])
+                    except Exception:
+                        pass
+                    raise
+                saved += 1
+            st.sidebar.success(f"{saved} treino(s) salvo(s) no histórico.")
+        except Exception as exc:
+            st.sidebar.error(f"Não foi possível salvar o histórico: {exc}")
 
 names=[s["name"] for s in sessions]
 choice=st.sidebar.selectbox("SESSÃO",["TODOS OS TREINOS"]+names)

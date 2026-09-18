@@ -31,3 +31,9 @@ Suba os arquivos no mesmo repositório do Portal e faça commit. O Streamlit Com
 - Os CSVs e todos os cálculos/relatórios do dashboard foram preservados.
 - Esta versão não grava histórico de CSVs ainda; isso fica para a V1.7.
 - Não exige nova migration SQL.
+
+## V1.7 — Histórico de Treinos
+- Salva CSVs em bucket privado `training-csvs`.
+- Registra cada sessão em `training_sessions` com atleta, data, título e caminho do CSV.
+- Nova página `Histórico de Treinos` para consultar, baixar e excluir sessões (admin).
+- Execute `supabase_v1_7_migration.sql` uma vez antes de usar o salvamento.
