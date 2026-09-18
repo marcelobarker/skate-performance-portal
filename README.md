@@ -16,3 +16,9 @@ Execute **uma vez** `supabase_v1_4_migration.sql` no SQL Editor do Supabase.
 
 ## Deploy
 Suba os arquivos no mesmo repositório do Portal e faça commit. O Streamlit Community Cloud fará o redeploy automaticamente.
+
+## V1.5 — Times completos
+- Criar, editar e excluir times.
+- Adicionar/remover skatistas e técnicos ativos.
+- Visualizar composição do time.
+- Execute `supabase_v1_5_migration.sql` uma vez no Supabase após o deploy.
