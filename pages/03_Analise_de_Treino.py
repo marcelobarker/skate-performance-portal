@@ -1,3 +1,4 @@
+from auth_utils import require_login
 import io, re, unicodedata
 from pathlib import Path
 import pandas as pd
@@ -8,6 +9,8 @@ from PIL import Image
 
 st.set_page_config(page_title="Skate Performance", page_icon="🛹", layout="wide")
 
+
+require_login()
 st.markdown("""
 <style>
 :root{--bg:#06111f;--panel:#09192b;--panel2:#0c2035;--line:#173a58;--blue:#1398ff;--cyan:#5bc0ff;--green:#12dc8c;--red:#ff4050;--text:#f5f8ff;--muted:#89a5bf}
