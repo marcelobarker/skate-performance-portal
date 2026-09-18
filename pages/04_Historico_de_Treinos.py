@@ -1,4 +1,5 @@
 import re
+import io, zipfile
 from datetime import date, timedelta
 import streamlit as st
 from auth_utils import require_login, get_supabase
@@ -59,7 +60,7 @@ try:
 
     period = st.selectbox("Período", ["Todos", "Últimos 30 dias", "Últimos 90 dias", "Este ano", "Personalizado"])
     query = (sb.table("training_sessions")
-             .select("id,athlete_id,training_date,title,csv_path,report_pdf_path,visual_pdf_path,created_at")
+             .select("id,athlete_id,training_date,title,csv_path,csv_paths,report_pdf_path,visual_pdf_path,created_at")
              .eq("athlete_id", athlete_id))
     today = date.today()
     if period == "Últimos 30 dias": query = query.gte("training_date", (today-timedelta(days=30)).isoformat())
@@ -86,10 +87,20 @@ for row in rows:
         c1.caption(f"Data do treino: {row.get('training_date') or '—'}"); c2.caption("ARQUIVOS DA SESSÃO")
         safe=re.sub(r"[^A-Za-z0-9_-]+","_",row.get('title') or 'treino')
         b1,b2,b3=st.columns(3)
-        if row.get("csv_path"):
+        csv_paths = row.get("csv_paths") or ([row.get("csv_path")] if row.get("csv_path") else [])
+        if csv_paths:
             try:
-                data=sb.storage.from_("training-csvs").download(row["csv_path"])
-                b1.download_button("⬇ CSV",data=data,file_name=f"{safe}.csv",mime="text/csv",key=f"csv_{row['id']}",use_container_width=True)
+                if len(csv_paths) == 1:
+                    data=sb.storage.from_("training-csvs").download(csv_paths[0])
+                    b1.download_button("⬇ CSV",data=data,file_name=f"{safe}.csv",mime="text/csv",key=f"csv_{row['id']}",use_container_width=True)
+                else:
+                    buf=io.BytesIO()
+                    with zipfile.ZipFile(buf,"w",zipfile.ZIP_DEFLATED) as zf:
+                        for i,path in enumerate(csv_paths,1):
+                            data=sb.storage.from_("training-csvs").download(path)
+                            name=path.rsplit("/",1)[-1] or f"treino_{i}.csv"
+                            zf.writestr(name,data)
+                    b1.download_button(f"⬇ {len(csv_paths)} CSVs",data=buf.getvalue(),file_name=f"{safe}_CSVs.zip",mime="application/zip",key=f"csv_{row['id']}",use_container_width=True)
             except Exception as exc: b1.caption(f"CSV indisponível: {exc}")
         if row.get("report_pdf_path"):
             try:
@@ -108,7 +119,8 @@ for row in rows:
             confirm=st.checkbox("Confirmar exclusão",key=f"confirm_{row['id']}")
             if st.button("🗑️ Excluir do histórico",key=f"delete_{row['id']}",disabled=not confirm):
                 try:
-                    if row.get("csv_path"): sb.storage.from_("training-csvs").remove([row["csv_path"]])
+                    csv_paths = row.get("csv_paths") or ([row.get("csv_path")] if row.get("csv_path") else [])
+                    if csv_paths: sb.storage.from_("training-csvs").remove(csv_paths)
                     report_paths=[p for p in [row.get("report_pdf_path"),row.get("visual_pdf_path")] if p]
                     if report_paths: sb.storage.from_("training-reports").remove(report_paths)
                     sb.table("training_sessions").delete().eq("id",row["id"]).execute()

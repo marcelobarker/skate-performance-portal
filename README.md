@@ -62,3 +62,10 @@ Suba os arquivos no mesmo repositório do Portal e faça commit. O Streamlit Com
 - Controles e botões recebem tema escuro global.
 - Home/Central da equipe mostra contagens reais de atletas, técnicos, times, treinos e pendentes (admin).
 - Execute `supabase_v2_0_migration.sql` uma vez após atualizar o GitHub.
+
+## V2.0.1
+- Vários CSVs enviados juntos agora geram um único treino no Histórico.
+- Os CSVs originais ficam vinculados à mesma sessão e podem ser baixados juntos em ZIP.
+- Relatório PDF e Dashboard Visual são gerados com os dados consolidados de todos os CSVs do envio.
+- Percentuais nas pizzas do Dashboard Visual PDF receberam fonte maior.
+- Execute somente `supabase_v2_0_1_migration.sql` ao atualizar da V2.0.

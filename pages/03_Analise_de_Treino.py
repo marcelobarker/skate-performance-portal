@@ -613,7 +613,7 @@ def make_visual_pdf(athlete, cur, sessions, choice, photo_file=None):
             ty = y + math.sin(mid) * r * .79
             pct = v / total * 100
             c.setFillColor(white)
-            c.setFont("Helvetica-Bold", 5.8 if extent >= 24 else 4.8)
+            c.setFont("Helvetica-Bold", 9.0 if extent >= 24 else 7.2)
             c.drawCentredString(tx, ty-1.5, f"{pct:.0f}%")
             angle+=extent
         c.setFillColor(bg); c.circle(x,y,r*.58,fill=1,stroke=0)
@@ -833,57 +833,59 @@ for f in files:
     except Exception as e:problems.append(f"{f.name}: {e}")
 for p in problems:st.sidebar.warning(p)
 
-# V1.7 — salva cada CSV como uma sessão permanente vinculada ao atleta.
+# V2.0.1 — um envio com vários CSVs representa UM treino no histórico.
+# Os arquivos originais continuam separados no Storage, mas compartilham um único
+# registro de sessão e um único par de relatórios consolidados.
 if sessions and profile.get("role") in ("admin", "tecnico"):
     if st.sidebar.button("💾 SALVAR NO HISTÓRICO", use_container_width=True):
-        saved = 0
+        uploaded_paths = []
+        report_path = visual_path = None
         try:
+            token = uuid.uuid4().hex
+            base_path = f"{selected_athlete['id']}/{training_date.isoformat()}/{token}"
             for idx, f in enumerate(files):
                 raw = f.getvalue()
                 ext = Path(f.name).suffix.lower() or ".csv"
-                token = uuid.uuid4().hex
-                base_path = f"{selected_athlete['id']}/{training_date.isoformat()}/{token}"
-                object_path = f"{base_path}{ext}"
-                report_path = f"{base_path}_relatorio.pdf"
-                visual_path = f"{base_path}_dashboard_visual.pdf"
+                safe_stem = re.sub(r"[^A-Za-z0-9_-]+", "_", Path(f.name).stem)[:70] or f"treino_{idx+1}"
+                object_path = f"{base_path}/{idx+1:02d}_{safe_stem}{ext}"
                 sb.storage.from_("training-csvs").upload(
                     object_path, raw, {"content-type": "text/csv", "upsert": "false"}
                 )
-                title = training_title.strip() or Path(f.name).stem
-                if len(files) > 1 and training_title.strip():
-                    title = f"{training_title.strip()} • {Path(f.name).stem}"
+                uploaded_paths.append(object_path)
 
-                # V1.9 — gera e arquiva os dois PDFs aprovados junto da sessão.
-                session = sessions[idx]
-                report_bytes = make_pdf(athlete, session, [session], session["name"])
-                if photo is not None:
-                    photo.seek(0)
-                visual_bytes = make_visual_pdf(athlete, session, [session], session["name"], photo)
-                sb.storage.from_("training-reports").upload(
-                    report_path, report_bytes, {"content-type": "application/pdf", "upsert": "false"}
-                )
-                sb.storage.from_("training-reports").upload(
-                    visual_path, visual_bytes, {"content-type": "application/pdf", "upsert": "false"}
-                )
-                try:
-                    sb.table("training_sessions").insert({
-                        "athlete_id": selected_athlete["id"],
-                        "training_date": training_date.isoformat(),
-                        "title": title,
-                        "csv_path": object_path,
-                        "report_pdf_path": report_path,
-                        "visual_pdf_path": visual_path,
-                    }).execute()
-                except Exception:
-                    try:
-                        sb.storage.from_("training-csvs").remove([object_path])
-                        sb.storage.from_("training-reports").remove([report_path, visual_path])
-                    except Exception:
-                        pass
-                    raise
-                saved += 1
-            st.sidebar.success(f"{saved} treino(s) salvo(s) no histórico.")
+            title = training_title.strip() or (Path(files[0].name).stem if len(files) == 1 else f"Treino consolidado • {len(files)} CSVs")
+            report_path = f"{base_path}_relatorio.pdf"
+            visual_path = f"{base_path}_dashboard_visual.pdf"
+            merged = merge_sessions(sessions)
+            report_bytes = make_pdf(athlete, merged, sessions, "TODOS OS TREINOS")
+            if photo is not None:
+                photo.seek(0)
+            visual_bytes = make_visual_pdf(athlete, merged, sessions, "TODOS OS TREINOS", photo)
+            sb.storage.from_("training-reports").upload(
+                report_path, report_bytes, {"content-type": "application/pdf", "upsert": "false"}
+            )
+            sb.storage.from_("training-reports").upload(
+                visual_path, visual_bytes, {"content-type": "application/pdf", "upsert": "false"}
+            )
+            sb.table("training_sessions").insert({
+                "athlete_id": selected_athlete["id"],
+                "training_date": training_date.isoformat(),
+                "title": title,
+                "csv_path": uploaded_paths[0] if uploaded_paths else None,
+                "csv_paths": uploaded_paths,
+                "report_pdf_path": report_path,
+                "visual_pdf_path": visual_path,
+            }).execute()
+            st.sidebar.success(f"Treino salvo no histórico com {len(uploaded_paths)} CSV(s) consolidados.")
         except Exception as exc:
+            try:
+                if uploaded_paths:
+                    sb.storage.from_("training-csvs").remove(uploaded_paths)
+                cleanup = [x for x in [report_path, visual_path] if x]
+                if cleanup:
+                    sb.storage.from_("training-reports").remove(cleanup)
+            except Exception:
+                pass
             st.sidebar.error(f"Não foi possível salvar o histórico: {exc}")
 
 names=[s["name"] for s in sessions]
