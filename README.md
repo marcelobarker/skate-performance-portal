@@ -1,27 +1,18 @@
-# Skate Performance Portal V1.2
+# Skate Performance Portal V1.4
 
-V1.2 conecta o portal ao Supabase:
-- Login e criação de conta.
-- Cadastro como Skatista ou Técnico.
-- Novas contas entram como PENDENTE.
-- Usuário pendente não acessa áreas internas.
-- Painel ADMIN aprova, bloqueia e reativa usuários.
-- Times gravados no Supabase.
-- Análise de Treino preservada e protegida por login.
-- Projeto antigo continua separado.
+V1.4 adiciona gestão completa de perfis sem alterar a página de Análise de Treino.
 
-## Antes de testar
-1. No Supabase SQL Editor, execute `supabase_v1_2_migration.sql` UMA VEZ.
-2. Atualize o GitHub com os arquivos V1.2.
-3. Aguarde o Streamlit redeploy.
-4. Crie a SUA conta pelo Portal.
-5. Abra `make_me_admin.sql`, substitua `SEU_EMAIL_AQUI` pelo e-mail da sua conta e execute no SQL Editor.
-6. Saia e entre novamente no Portal.
+## Novidades
+- edição de nome, modalidade, base e categoria;
+- upload de foto de perfil pelo administrador;
+- visualização da foto no painel de Cadastros;
+- separação por pendentes, ativos e bloqueados;
+- aprovação, bloqueio e reativação;
+- administrador não pode bloquear a própria conta;
+- e-mail de login fica protegido contra edição pelo painel.
 
-Os Secrets esperados no Streamlit são `SUPABASE_URL` e `SUPABASE_KEY`.
-Nunca coloque Secret/Service Role Key no GitHub.
+## Antes de testar fotos
+Execute **uma vez** `supabase_v1_4_migration.sql` no SQL Editor do Supabase.
 
-## V1.3
-- Corrige o visual dos campos e botões de login/cadastro para o tema escuro.
-- Isola o cliente autenticado do Supabase por sessão do navegador (remove cache global de autenticação).
-- Mantém a página de Análise de Treino e seus cálculos sem alterações.
+## Deploy
+Suba os arquivos no mesmo repositório do Portal e faça commit. O Streamlit Community Cloud fará o redeploy automaticamente.

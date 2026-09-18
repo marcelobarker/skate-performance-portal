@@ -1,29 +1,106 @@
-
+import mimetypes
+import uuid
 import streamlit as st
-from auth_utils import require_login, get_supabase, load_profile
+from auth_utils import require_login, get_supabase
+
 st.set_page_config(page_title="Cadastros • Skate Performance", page_icon="👥", layout="wide")
 st.markdown("""<style>
 [data-testid="stHeader"],header[data-testid="stHeader"],[data-testid="stToolbar"]{display:none!important}
 .stApp,[data-testid="stAppViewContainer"]{background:#06111f!important;color:#eef8ff!important}
 [data-testid="stSidebar"]{background:#081827!important}[data-testid="stSidebar"] *{color:#d9eafa!important}
-.block-container{padding-top:1.2rem!important} h1,h2,h3,p,label{color:#eef8ff}
-</style>""",unsafe_allow_html=True)
+.block-container{padding-top:1.2rem!important} h1,h2,h3,p,label{color:#eef8ff!important}
+[data-testid="stTextInput"] input,[data-testid="stSelectbox"]>div>div,[data-testid="stFileUploader"] section{
+  background:#0b1d2d!important;color:#eef8ff!important;border-color:#24445d!important
+}
+[data-testid="stFileUploader"] small,[data-testid="stFileUploader"] span{color:#b8cede!important}
+div[data-testid="stButton"] button{border-radius:10px!important}
+.profile-card{padding:.75rem 0 .15rem 0}
+</style>""", unsafe_allow_html=True)
+
 user, me = require_login(admin=True)
 sb = get_supabase()
 
 st.title("👥 Cadastros e permissões")
-st.caption("Aprove, bloqueie e gerencie skatistas e técnicos.")
+st.caption("Gerencie skatistas e técnicos. Novas contas entram como pendentes até sua aprovação.")
 
-try:
-    rows = sb.table("profiles").select("*").order("created_at", desc=True).execute().data or []
-except Exception:
-    rows = []
 
-pending = [r for r in rows if r.get("status")=="pendente"]
-active = [r for r in rows if r.get("status")=="ativo"]
-blocked = [r for r in rows if r.get("status")=="bloqueado"]
+def fetch_profiles():
+    try:
+        return sb.table("profiles").select("*").order("created_at", desc=True).execute().data or []
+    except Exception as exc:
+        st.error(f"Não foi possível carregar os cadastros: {exc}")
+        return []
 
-t1,t2,t3=st.tabs([f"PENDENTES ({len(pending)})",f"ATIVOS ({len(active)})",f"BLOQUEADOS ({len(blocked)})"])
+
+def upload_photo(profile_id, uploaded):
+    if uploaded is None:
+        return None
+    ext = (uploaded.name.rsplit(".", 1)[-1] if "." in uploaded.name else "jpg").lower()
+    if ext not in ("jpg", "jpeg", "png", "webp"):
+        ext = "jpg"
+    path = f"{profile_id}/{uuid.uuid4().hex}.{ext}"
+    content_type = uploaded.type or mimetypes.guess_type(uploaded.name)[0] or "image/jpeg"
+    sb.storage.from_("profile-photos").upload(
+        path,
+        uploaded.getvalue(),
+        {"content-type": content_type, "upsert": "false"},
+    )
+    return sb.storage.from_("profile-photos").get_public_url(path)
+
+
+def editor(r):
+    is_self = r.get("id") == user.id
+    role_value = r.get("role") or "skatista"
+    modality_value = r.get("modality") or "Street"
+    stance_value = r.get("stance") or "Regular"
+    category_value = r.get("category") or ""
+
+    role_opts = ["skatista", "tecnico"]
+    if role_value == "admin":
+        role_opts = ["admin", "skatista", "tecnico"]
+
+    with st.expander("✏️ Editar cadastro"):
+        with st.form(f"edit_{r['id']}"):
+            c1, c2 = st.columns(2)
+            full_name = c1.text_input("Nome completo", value=r.get("full_name") or "")
+            email = c2.text_input("E-mail", value=r.get("email") or "", disabled=True,
+                                  help="O e-mail de acesso é gerenciado pelo Supabase Auth.")
+
+            c3, c4, c5 = st.columns(3)
+            role = c3.selectbox("Perfil", role_opts,
+                                index=role_opts.index(role_value) if role_value in role_opts else 0,
+                                disabled=is_self)
+            modality_opts = ["Street", "Park", "Vert", "Outro"]
+            modality = c4.selectbox("Modalidade", modality_opts,
+                                    index=modality_opts.index(modality_value) if modality_value in modality_opts else 0)
+            stance_opts = ["Regular", "Goofy", "Não informado"]
+            stance = c5.selectbox("Base", stance_opts,
+                                  index=stance_opts.index(stance_value) if stance_value in stance_opts else 2)
+
+            category = st.text_input("Categoria", value=category_value,
+                                     placeholder="Ex.: Masculino, Feminino, Sub-16, Open...")
+            photo = st.file_uploader("Foto do perfil", type=["jpg", "jpeg", "png", "webp"],
+                                     key=f"photo_{r['id']}")
+            submitted = st.form_submit_button("💾 Salvar alterações", use_container_width=True)
+
+        if submitted:
+            try:
+                payload = {
+                    "full_name": full_name.strip() or r.get("full_name") or "Sem nome",
+                    "modality": modality,
+                    "stance": None if stance == "Não informado" else stance,
+                    "category": category.strip() or None,
+                }
+                if not is_self:
+                    payload["role"] = role
+                if photo is not None:
+                    payload["photo_url"] = upload_photo(r["id"], photo)
+                sb.table("profiles").update(payload).eq("id", r["id"]).execute()
+                st.success("Cadastro atualizado.")
+                st.rerun()
+            except Exception as exc:
+                st.error(f"Não foi possível salvar: {exc}")
+
 
 def render_people(items, mode):
     if not items:
@@ -31,23 +108,57 @@ def render_people(items, mode):
         return
     for r in items:
         with st.container(border=True):
-            a,b,c,d=st.columns([3,2,2,2])
-            a.markdown(f"**{r.get('full_name','—')}**")
-            a.caption(r.get("email") or "Sem e-mail")
-            b.write((r.get("role") or "—").upper())
-            b.caption(r.get("modality") or "—")
-            if mode=="pending":
-                if c.button("✅ Aprovar",key=f"ap_{r['id']}",use_container_width=True):
-                    sb.table("profiles").update({"status":"ativo"}).eq("id",r["id"]).execute(); st.rerun()
-                if d.button("⛔ Bloquear",key=f"bl_{r['id']}",use_container_width=True):
-                    sb.table("profiles").update({"status":"bloqueado"}).eq("id",r["id"]).execute(); st.rerun()
-            elif mode=="active":
-                if d.button("⛔ Bloquear",key=f"bla_{r['id']}",use_container_width=True):
-                    sb.table("profiles").update({"status":"bloqueado"}).eq("id",r["id"]).execute(); st.rerun()
+            photo_col, info_col, sport_col, action_col = st.columns([1, 3.2, 2.2, 1.8])
+            if r.get("photo_url"):
+                photo_col.image(r["photo_url"], width=88)
             else:
-                if d.button("♻️ Reativar",key=f"re_{r['id']}",use_container_width=True):
-                    sb.table("profiles").update({"status":"ativo"}).eq("id",r["id"]).execute(); st.rerun()
+                photo_col.markdown("### 👤")
 
-with t1: render_people(pending,"pending")
-with t2: render_people(active,"active")
-with t3: render_people(blocked,"blocked")
+            info_col.markdown(f"**{r.get('full_name','—')}**")
+            info_col.caption(r.get("email") or "Sem e-mail")
+            role_label = (r.get("role") or "—").upper()
+            if r.get("id") == user.id:
+                role_label += " • VOCÊ"
+            info_col.write(role_label)
+
+            sport_col.write(f"**Modalidade:** {r.get('modality') or '—'}")
+            sport_col.caption(f"Base: {r.get('stance') or '—'}  •  Categoria: {r.get('category') or '—'}")
+
+            if mode == "pending":
+                if action_col.button("✅ Aprovar", key=f"ap_{r['id']}", use_container_width=True):
+                    sb.table("profiles").update({"status": "ativo"}).eq("id", r["id"]).execute()
+                    st.rerun()
+                if action_col.button("⛔ Bloquear", key=f"bl_{r['id']}", use_container_width=True):
+                    sb.table("profiles").update({"status": "bloqueado"}).eq("id", r["id"]).execute()
+                    st.rerun()
+            elif mode == "active":
+                if r.get("id") == user.id:
+                    action_col.info("🔐 Sua conta admin")
+                    action_col.caption("Autobloqueio desativado.")
+                elif action_col.button("⛔ Bloquear", key=f"bla_{r['id']}", use_container_width=True):
+                    sb.table("profiles").update({"status": "bloqueado"}).eq("id", r["id"]).execute()
+                    st.rerun()
+            else:
+                if action_col.button("♻️ Reativar", key=f"re_{r['id']}", use_container_width=True):
+                    sb.table("profiles").update({"status": "ativo"}).eq("id", r["id"]).execute()
+                    st.rerun()
+
+            editor(r)
+
+
+rows = fetch_profiles()
+pending = [r for r in rows if r.get("status") == "pendente"]
+active = [r for r in rows if r.get("status") == "ativo"]
+blocked = [r for r in rows if r.get("status") == "bloqueado"]
+
+t1, t2, t3 = st.tabs([
+    f"PENDENTES ({len(pending)})",
+    f"ATIVOS ({len(active)})",
+    f"BLOQUEADOS ({len(blocked)})",
+])
+with t1:
+    render_people(pending, "pending")
+with t2:
+    render_people(active, "active")
+with t3:
+    render_people(blocked, "blocked")
