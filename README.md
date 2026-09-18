@@ -45,3 +45,11 @@ Suba os arquivos no mesmo repositório do Portal e faça commit. O Streamlit Com
 - Skatista: visualiza o próprio perfil/análise/histórico.
 - Segurança aplicada no Supabase via RLS, não apenas na interface.
 - Execute `supabase_v1_8_migration.sql` uma vez após instalar esta versão.
+
+## V1.9 — Relatórios integrados ao histórico
+- Ao salvar um treino novo, o portal arquiva o CSV e também os dois PDFs da análise.
+- Histórico permite baixar CSV, relatório PDF e dashboard visual por sessão.
+- Filtro por período: todos, 30 dias, 90 dias, ano atual ou personalizado.
+- PDFs ficam em bucket privado e seguem as permissões Admin / Técnico / Skatista.
+- Sessões salvas antes da V1.9 continuam válidas; elas apenas não possuem PDFs arquivados retroativamente.
+- Execute `supabase_v1_9_migration.sql` uma única vez após a V1.8.

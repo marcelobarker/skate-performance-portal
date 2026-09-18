@@ -799,26 +799,46 @@ if sessions and profile.get("role") == "admin":
     if st.sidebar.button("💾 SALVAR NO HISTÓRICO", use_container_width=True):
         saved = 0
         try:
-            for f in files:
+            for idx, f in enumerate(files):
                 raw = f.getvalue()
                 ext = Path(f.name).suffix.lower() or ".csv"
-                object_path = f"{selected_athlete['id']}/{training_date.isoformat()}/{uuid.uuid4().hex}{ext}"
+                token = uuid.uuid4().hex
+                base_path = f"{selected_athlete['id']}/{training_date.isoformat()}/{token}"
+                object_path = f"{base_path}{ext}"
+                report_path = f"{base_path}_relatorio.pdf"
+                visual_path = f"{base_path}_dashboard_visual.pdf"
                 sb.storage.from_("training-csvs").upload(
                     object_path, raw, {"content-type": "text/csv", "upsert": "false"}
                 )
                 title = training_title.strip() or Path(f.name).stem
                 if len(files) > 1 and training_title.strip():
                     title = f"{training_title.strip()} • {Path(f.name).stem}"
+
+                # V1.9 — gera e arquiva os dois PDFs aprovados junto da sessão.
+                session = sessions[idx]
+                report_bytes = make_pdf(athlete, session, [session], session["name"])
+                if photo is not None:
+                    photo.seek(0)
+                visual_bytes = make_visual_pdf(athlete, session, [session], session["name"], photo)
+                sb.storage.from_("training-reports").upload(
+                    report_path, report_bytes, {"content-type": "application/pdf", "upsert": "false"}
+                )
+                sb.storage.from_("training-reports").upload(
+                    visual_path, visual_bytes, {"content-type": "application/pdf", "upsert": "false"}
+                )
                 try:
                     sb.table("training_sessions").insert({
                         "athlete_id": selected_athlete["id"],
                         "training_date": training_date.isoformat(),
                         "title": title,
                         "csv_path": object_path,
+                        "report_pdf_path": report_path,
+                        "visual_pdf_path": visual_path,
                     }).execute()
                 except Exception:
                     try:
                         sb.storage.from_("training-csvs").remove([object_path])
+                        sb.storage.from_("training-reports").remove([report_path, visual_path])
                     except Exception:
                         pass
                     raise
