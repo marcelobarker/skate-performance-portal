@@ -21,6 +21,14 @@ st.markdown("""
 [data-testid="stMetricLabel"] p,[data-testid="stMetricValue"],[data-testid="stMetricValue"] div{color:#eef8ff!important}
 [data-testid="stCaptionContainer"] p{color:#9bb2c8!important}
 h1,h2,h3,p,label{color:#eef8ff}
+/* Login/cadastro: remove os blocos brancos do tema padrão */
+[data-testid="stTextInput"] input{background:#0b1d31!important;color:#eef8ff!important;border:1px solid #245274!important;border-radius:10px!important}
+[data-testid="stTextInput"] input:focus{border-color:#1398ff!important;box-shadow:0 0 0 1px #1398ff!important}
+[data-testid="stTextInput"] input::placeholder{color:#7893aa!important}
+[data-testid="stTextInput"] button{background:transparent!important;color:#9fc7e5!important}
+[data-testid="stFormSubmitButton"] button{background:#1398ff!important;color:#fff!important;border:1px solid #1398ff!important;border-radius:10px!important;font-weight:800!important}
+[data-testid="stFormSubmitButton"] button:hover{background:#087fd8!important;border-color:#34aaff!important;color:#fff!important}
+[data-testid="stForm"]{border-color:#173b5a!important;background:#081827!important}
 </style>
 """, unsafe_allow_html=True)
 

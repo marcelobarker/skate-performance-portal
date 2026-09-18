@@ -1,10 +1,14 @@
-
 import streamlit as st
 from supabase import create_client
 
-@st.cache_resource
+# IMPORTANT: never cache the authenticated Supabase client globally.
+# Each Streamlit browser session gets its own client via session_state.
 def get_supabase():
-    return create_client(st.secrets["SUPABASE_URL"], st.secrets["SUPABASE_KEY"])
+    if "sp_supabase" not in st.session_state:
+        st.session_state["sp_supabase"] = create_client(
+            st.secrets["SUPABASE_URL"], st.secrets["SUPABASE_KEY"]
+        )
+    return st.session_state["sp_supabase"]
 
 def current_user():
     return st.session_state.get("sp_user")
@@ -29,25 +33,20 @@ def sign_in(email, password):
 
 def sign_up(full_name, email, password, role, modality):
     sb = get_supabase()
-    # O trigger do banco cria public.profiles a partir destes metadados.
     return sb.auth.sign_up({
         "email": email.strip(),
         "password": password,
-        "options": {
-            "data": {
-                "full_name": full_name.strip(),
-                "role": role,
-                "modality": modality
-            }
-        }
+        "options": {"data": {"full_name": full_name.strip(), "role": role, "modality": modality}}
     })
 
 def sign_out():
-    try:
-        get_supabase().auth.sign_out()
-    except Exception:
-        pass
-    for k in ("sp_user","sp_session","sp_profile"):
+    sb = st.session_state.get("sp_supabase")
+    if sb is not None:
+        try:
+            sb.auth.sign_out()
+        except Exception:
+            pass
+    for k in ("sp_user", "sp_session", "sp_profile", "sp_supabase"):
         st.session_state.pop(k, None)
 
 def require_login(require_active=True, admin=False):

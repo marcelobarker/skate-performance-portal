@@ -20,3 +20,8 @@ V1.2 conecta o portal ao Supabase:
 
 Os Secrets esperados no Streamlit são `SUPABASE_URL` e `SUPABASE_KEY`.
 Nunca coloque Secret/Service Role Key no GitHub.
+
+## V1.3
+- Corrige o visual dos campos e botões de login/cadastro para o tema escuro.
+- Isola o cliente autenticado do Supabase por sessão do navegador (remove cache global de autenticação).
+- Mantém a página de Análise de Treino e seus cálculos sem alterações.
