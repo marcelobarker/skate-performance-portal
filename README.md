@@ -22,3 +22,12 @@ Suba os arquivos no mesmo repositório do Portal e faça commit. O Streamlit Com
 - Adicionar/remover skatistas e técnicos ativos.
 - Visualizar composição do time.
 - Execute `supabase_v1_5_migration.sql` uma vez no Supabase após o deploy.
+
+
+## V1.6 — Atleta + Análise de Treino
+- A Análise de Treino agora seleciona skatistas ativos cadastrados no Portal.
+- Nome, foto, modalidade, categoria e base são carregados automaticamente do perfil.
+- O upload manual de foto/nome na análise foi removido para evitar divergência de cadastro.
+- Os CSVs e todos os cálculos/relatórios do dashboard foram preservados.
+- Esta versão não grava histórico de CSVs ainda; isso fica para a V1.7.
+- Não exige nova migration SQL.

@@ -1,5 +1,6 @@
-from auth_utils import require_login
+from auth_utils import require_login, get_supabase
 import io, re, unicodedata
+from urllib.request import urlopen
 from pathlib import Path
 import pandas as pd
 import plotly.graph_objects as go
@@ -10,7 +11,7 @@ from PIL import Image
 st.set_page_config(page_title="Skate Performance", page_icon="🛹", layout="wide")
 
 
-require_login()
+user, profile = require_login()
 st.markdown("""
 <style>
 :root{--bg:#06111f;--panel:#09192b;--panel2:#0c2035;--line:#173a58;--blue:#1398ff;--cyan:#5bc0ff;--green:#12dc8c;--red:#ff4050;--text:#f5f8ff;--muted:#89a5bf}
@@ -730,8 +731,45 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 st.sidebar.markdown("## 🛹 SKATE **PERFORMANCE**")
-athlete=st.sidebar.text_input("ATLETA",placeholder="Ex.: Wallace Gabriel")
-photo=st.sidebar.file_uploader("FOTO DO ATLETA",type=["jpg","jpeg","png","webp"])
+
+# V1.6 — atleta vem do cadastro do Portal
+sb = get_supabase()
+try:
+    athlete_rows = (
+        sb.table("profiles")
+        .select("id,full_name,email,role,status,modality,stance,category,photo_url")
+        .eq("role", "skatista")
+        .eq("status", "ativo")
+        .order("full_name")
+        .execute()
+        .data or []
+    )
+except Exception as e:
+    st.error(f"Não foi possível carregar os skatistas cadastrados: {e}")
+    st.stop()
+
+if not athlete_rows:
+    st.info("Ainda não há skatistas ativos cadastrados. Cadastre/aprove um skatista em Cadastros para iniciar uma análise.")
+    st.stop()
+
+athlete_by_label = {
+    f"{r.get('full_name') or 'Sem nome'}" + (f" • {r.get('modality')}" if r.get('modality') else ""): r
+    for r in athlete_rows
+}
+athlete_label = st.sidebar.selectbox("ATLETA CADASTRADO", list(athlete_by_label.keys()))
+selected_athlete = athlete_by_label[athlete_label]
+athlete = selected_athlete.get("full_name") or "ATLETA"
+photo_url = selected_athlete.get("photo_url")
+
+# O PDF visual recebe um objeto de arquivo; para foto pública, carregamos uma cópia em memória.
+photo = None
+if photo_url:
+    try:
+        photo = io.BytesIO(urlopen(photo_url, timeout=8).read())
+    except Exception:
+        photo = None
+
+st.sidebar.caption(" • ".join([x for x in [selected_athlete.get("modality"), selected_athlete.get("category"), selected_athlete.get("stance")] if x]))
 files=st.sidebar.file_uploader("ARQUIVOS CSV (TREINOS)",type=["csv","txt"],accept_multiple_files=True)
 if not files:
     st.title("SKATE PERFORMANCE")
@@ -755,9 +793,14 @@ for n in names:st.sidebar.markdown(f'<span class="session-pill">✓ {n}</span>',
 head1,head2=st.columns([1.05,4.5])
 with head1:
     st.markdown('<div class="hero">',unsafe_allow_html=True)
-    if photo:st.image(Image.open(photo),use_container_width=True)
-    else:st.markdown("### 📷 FOTO")
+    if photo_url:
+        st.image(photo_url,use_container_width=True)
+    else:
+        st.markdown("### 📷 FOTO")
     st.markdown(f"### {athlete or 'ATLETA'}")
+    sport_info = " • ".join([x for x in [selected_athlete.get("modality"), selected_athlete.get("category"), selected_athlete.get("stance")] if x])
+    if sport_info:
+        st.caption(sport_info)
     st.caption(f"{len(sessions)} treino(s) carregado(s)")
     st.markdown("</div>",unsafe_allow_html=True)
 with head2:
@@ -834,6 +877,8 @@ with ex1:
     st.download_button("⬇ BAIXAR RELATÓRIO EM PDF", data=pdf_bytes,
         file_name=f"skate_performance_relatorio_{safe_name}.pdf", mime="application/pdf", use_container_width=True)
 with ex2:
+    if photo is not None:
+        photo.seek(0)
     visual_pdf=make_visual_pdf(athlete,cur,sessions,choice,photo)
     st.download_button("⬇ BAIXAR DASHBOARD VISUAL EM PDF", data=visual_pdf,
         file_name=f"skate_performance_dashboard_visual_{safe_name}.pdf", mime="application/pdf", use_container_width=True)
