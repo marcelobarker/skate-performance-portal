@@ -44,9 +44,20 @@ st.caption("Monte as equipes e vincule skatistas e técnicos cadastrados.")
 
 def fetch_data():
     try:
-        teams = sb.table("teams").select("*").order("name").execute().data or []
+        # Para não-admin, parte primeiro dos vínculos do próprio usuário. Isso evita
+        # que uma listagem ampla seja esvaziada pelo RLS e pareça que ele não tem time.
+        if is_admin:
+            members = sb.table("team_members").select("team_id,profile_id").execute().data or []
+            teams = sb.table("teams").select("*").order("name").execute().data or []
+        else:
+            mine = sb.table("team_members").select("team_id,profile_id").eq("profile_id", user.id).execute().data or []
+            tids = [m["team_id"] for m in mine]
+            teams=[]; members=[]
+            for tid in tids:
+                t=sb.table("teams").select("*").eq("id",tid).maybe_single().execute()
+                if t and t.data: teams.append(t.data)
+                members += sb.table("team_members").select("team_id,profile_id").eq("team_id",tid).execute().data or []
         profiles = sb.table("profiles").select("id,full_name,email,role,status,modality,photo_url").eq("status", "ativo").order("full_name").execute().data or []
-        members = sb.table("team_members").select("team_id,profile_id").execute().data or []
         return teams, profiles, members
     except Exception as exc:
         st.error(f"Não foi possível carregar os times: {exc}")

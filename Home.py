@@ -153,10 +153,18 @@ try:
 except Exception as exc:
     st.warning(f"Não foi possível atualizar a Central da equipe: {exc}")
 
+st.caption("ATALHOS — clique para abrir")
 a,b,c=st.columns(3)
-with a: st.markdown('<div class="card"><h3>👤 Atletas</h3><div class="muted">Perfis, modalidade, stance, categoria e histórico.</div></div>',unsafe_allow_html=True)
-with b: st.markdown('<div class="card"><h3>🧑‍🏫 Técnicos</h3><div class="muted">Acesso aos atletas e times autorizados.</div></div>',unsafe_allow_html=True)
-with c: st.markdown('<div class="card"><h3>🛹 Times</h3><div class="muted">Organização dos grupos Street, Park, Vert ou mistos.</div></div>',unsafe_allow_html=True)
+if role == "admin":
+    if a.button(f"👤 ATLETAS  •  {athletes_count}",use_container_width=True): st.switch_page("pages/01_Cadastros.py")
+    if b.button(f"🧑‍🏫 TÉCNICOS  •  {tech_count}",use_container_width=True): st.switch_page("pages/01_Cadastros.py")
+else:
+    if a.button("👤 MEU PERFIL",use_container_width=True): st.switch_page("pages/05_Meu_Perfil.py")
+    if b.button("🧑‍🏫 MINHA EQUIPE TÉCNICA",use_container_width=True): st.switch_page("pages/02_Times.py")
+if c.button(f"🛹 TIMES  •  {len(visible_teams)}",use_container_width=True): st.switch_page("pages/02_Times.py")
+d,e=st.columns(2)
+if d.button(f"📚 TREINOS  •  {len(visible_trainings)}",use_container_width=True): st.switch_page("pages/04_Historico_de_Treinos.py")
+if e.button("⚙️ MEU PERFIL",use_container_width=True): st.switch_page("pages/05_Meu_Perfil.py")
 
 if role == "admin":
     st.success("🛡️ Você está conectado como ADMINISTRADOR. Use Cadastros para aprovar usuários.")

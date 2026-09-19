@@ -3,6 +3,7 @@ import io, zipfile
 from datetime import date, timedelta
 import streamlit as st
 from auth_utils import require_login, get_supabase
+from report_engine import read_csv, is_aggregate, parse_raw, parse_aggregate, merge_sessions, make_visual_pdf
 
 st.set_page_config(page_title="Histórico • Skate Performance", page_icon="📚", layout="wide")
 
@@ -129,12 +130,24 @@ for row in rows:
                 b2.download_button("⬇ RELATÓRIO PDF",data=data,file_name=f"{safe}_relatorio.pdf",mime="application/pdf",key=f"report_{row['id']}",use_container_width=True)
             except Exception as exc: b2.caption(f"Relatório indisponível: {exc}")
         else: b2.caption("PDF não arquivado (sessão anterior à V1.9)")
-        if row.get("visual_pdf_path"):
+        # Gera o dashboard com o motor ATUAL a partir dos CSVs arquivados. Assim o
+        # download direto do Histórico nunca fica preso ao layout antigo salvo no Storage.
+        if csv_paths:
             try:
-                data=sb.storage.from_("training-reports").download(row["visual_pdf_path"])
+                sessions=[]
+                for i,path in enumerate(csv_paths,1):
+                    raw=sb.storage.from_("training-csvs").download(path)
+                    class ArchivedFile:
+                        def __init__(self,name,data): self.name=name; self._data=data
+                        def getvalue(self): return self._data
+                    af=ArchivedFile(path.rsplit("/",1)[-1] or f"treino_{i}.csv",raw)
+                    df=read_csv(af)
+                    sessions.append(parse_aggregate(df,af.name) if is_aggregate(df) else parse_raw(df,af.name))
+                merged=merge_sessions(sessions)
+                data=make_visual_pdf(athlete.get("full_name") or "ATLETA",merged,sessions,"TODOS OS TREINOS",None)
                 b3.download_button("⬇ DASHBOARD VISUAL",data=data,file_name=f"{safe}_dashboard_visual.pdf",mime="application/pdf",key=f"visual_{row['id']}",use_container_width=True)
             except Exception as exc: b3.caption(f"Dashboard indisponível: {exc}")
-        else: b3.caption("PDF visual não arquivado (sessão anterior à V1.9)")
+        else: b3.caption("CSVs não disponíveis para gerar o dashboard")
 
         if is_admin:
             confirm=st.checkbox("Confirmar exclusão",key=f"confirm_{row['id']}")

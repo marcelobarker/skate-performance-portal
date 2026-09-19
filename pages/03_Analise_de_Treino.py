@@ -703,10 +703,10 @@ def make_visual_pdf(athlete, cur, sessions, choice, photo_file=None):
         page_bg(); header("MANEUVER ANALYSIS • COMPLETE LIST")
         section("MANOBRAS — CONTINUAÇÃO",H-45*mm)
         tx=12*mm; ty=H-57*mm
-        widths=[11*mm,145*mm,32*mm,32*mm,32*mm,36*mm]
+        widths=[12*mm,220*mm,38*mm,38*mm,38*mm,44*mm]
         headers=["#","MANOBRA","ACERTOS","ERROS","TOTAL","TAXA"]
         c.setFillColor(colors.HexColor("#0d2237")); c.rect(tx,ty-9*mm,sum(widths),9*mm,fill=1,stroke=0)
-        c.setFillColor(muted); c.setFont("Helvetica-Bold",7); xx=tx
+        c.setFillColor(muted); c.setFont("Helvetica-Bold",8.5); xx=tx
         for h,w in zip(headers,widths):
             c.drawString(xx+2*mm,ty-5.8*mm,h); xx+=w
         yy=ty-17*mm
@@ -719,7 +719,7 @@ def make_visual_pdf(athlete, cur, sessions, choice, photo_file=None):
             xx=tx
             for j,(v,w) in enumerate(zip(row,widths)):
                 c.setFillColor(red if j==3 else (blue if j in (2,5) else white))
-                c.setFont("Helvetica-Bold" if j in (1,2,3,5) else "Helvetica",6.5)
+                c.setFont("Helvetica-Bold" if j in (1,2,3,5) else "Helvetica",8.2)
                 c.drawString(xx+2*mm,yy+2.3*mm,v); xx+=w
             yy-=7.6*mm
         c.setFillColor(muted); c.setFont("Helvetica",6)

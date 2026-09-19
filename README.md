@@ -76,3 +76,12 @@ Suba os arquivos no mesmo repositório do Portal e faça commit. O Streamlit Com
 - Download dos CSVs originais aparece somente para Admin.
 - Dashboard Visual PDF: tabela de manobras da primeira página ampliada para a largura do documento e tipografia geral aumentada para melhorar leitura.
 - Nenhuma migration nova é necessária nesta versão.
+
+
+## V2.0.3
+- Quadros de manobras das páginas de continuação do Dashboard Visual com as mesmas dimensões e fontes da página 1.
+- Download visual do Histórico é regenerado com o motor atual usando os CSVs arquivados.
+- Nova página Meu Perfil para atualização dos próprios dados e foto.
+- Times de atleta/técnico carregados a partir dos próprios vínculos.
+- Central da Equipe virou navegação funcional/clicável.
+- Execute `supabase_v2_0_3_migration.sql` uma vez.
