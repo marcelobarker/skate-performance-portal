@@ -86,22 +86,43 @@ for row in rows:
         c1,c2=st.columns([4,1]); c1.markdown(f"#### {row.get('title') or 'Treino'}")
         c1.caption(f"Data do treino: {row.get('training_date') or '—'}"); c2.caption("ARQUIVOS DA SESSÃO")
         safe=re.sub(r"[^A-Za-z0-9_-]+","_",row.get('title') or 'treino')
-        b1,b2,b3=st.columns(3)
+        # V2.0.2 — abrir o MESMO dashboard interativo da tela de análise usando
+        # os CSVs arquivados. Não é apenas um preview do PDF: sessão, filtros e
+        # distribuições continuam selecionáveis como no primeiro upload.
         csv_paths = row.get("csv_paths") or ([row.get("csv_path")] if row.get("csv_path") else [])
+        view_col, b2, b3 = st.columns(3)
         if csv_paths:
-            try:
-                if len(csv_paths) == 1:
-                    data=sb.storage.from_("training-csvs").download(csv_paths[0])
-                    b1.download_button("⬇ CSV",data=data,file_name=f"{safe}.csv",mime="text/csv",key=f"csv_{row['id']}",use_container_width=True)
-                else:
-                    buf=io.BytesIO()
-                    with zipfile.ZipFile(buf,"w",zipfile.ZIP_DEFLATED) as zf:
-                        for i,path in enumerate(csv_paths,1):
-                            data=sb.storage.from_("training-csvs").download(path)
-                            name=path.rsplit("/",1)[-1] or f"treino_{i}.csv"
-                            zf.writestr(name,data)
-                    b1.download_button(f"⬇ {len(csv_paths)} CSVs",data=buf.getvalue(),file_name=f"{safe}_CSVs.zip",mime="application/zip",key=f"csv_{row['id']}",use_container_width=True)
-            except Exception as exc: b1.caption(f"CSV indisponível: {exc}")
+            if view_col.button("👁 VER ANÁLISE INTERATIVA", key=f"view_{row['id']}", use_container_width=True):
+                try:
+                    archived=[]
+                    for i,path in enumerate(csv_paths,1):
+                        raw=sb.storage.from_("training-csvs").download(path)
+                        archived.append({"name": path.rsplit("/",1)[-1] or f"treino_{i}.csv", "data": raw})
+                    st.session_state["history_analysis_view"]={
+                        "session_id": row["id"], "athlete_id": athlete_id,
+                        "title": row.get("title") or "Treino", "training_date": row.get("training_date"),
+                        "files": archived
+                    }
+                    st.switch_page("pages/03_Analise_de_Treino.py")
+                except Exception as exc:
+                    st.error(f"Não foi possível abrir a análise: {exc}")
+
+            # CSV bruto é material de trabalho: somente Admin pode baixar.
+            if is_admin:
+                try:
+                    if len(csv_paths) == 1:
+                        data=sb.storage.from_("training-csvs").download(csv_paths[0])
+                        st.download_button("⬇ CSV ORIGINAL (ADMIN)",data=data,file_name=f"{safe}.csv",mime="text/csv",key=f"csv_{row['id']}",use_container_width=True)
+                    else:
+                        buf=io.BytesIO()
+                        with zipfile.ZipFile(buf,"w",zipfile.ZIP_DEFLATED) as zf:
+                            for i,path in enumerate(csv_paths,1):
+                                data=sb.storage.from_("training-csvs").download(path)
+                                name=path.rsplit("/",1)[-1] or f"treino_{i}.csv"
+                                zf.writestr(name,data)
+                        st.download_button(f"⬇ {len(csv_paths)} CSVs ORIGINAIS (ADMIN)",data=buf.getvalue(),file_name=f"{safe}_CSVs.zip",mime="application/zip",key=f"csv_{row['id']}",use_container_width=True)
+                except Exception as exc:
+                    st.caption(f"CSV indisponível: {exc}")
         if row.get("report_pdf_path"):
             try:
                 data=sb.storage.from_("training-reports").download(row["report_pdf_path"])

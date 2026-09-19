@@ -69,3 +69,10 @@ Suba os arquivos no mesmo repositório do Portal e faça commit. O Streamlit Com
 - Relatório PDF e Dashboard Visual são gerados com os dados consolidados de todos os CSVs do envio.
 - Percentuais nas pizzas do Dashboard Visual PDF receberam fonte maior.
 - Execute somente `supabase_v2_0_1_migration.sql` ao atualizar da V2.0.
+
+## V2.0.2
+- Histórico ganhou **VER ANÁLISE INTERATIVA**: reabre os CSVs arquivados na mesma tela interativa usada no upload original, com seleção de sessão e gráficos clicáveis.
+- Skatista continua sem acesso ao upload/análise nova, mas pode abrir a análise de um treino do próprio Histórico.
+- Download dos CSVs originais aparece somente para Admin.
+- Dashboard Visual PDF: tabela de manobras da primeira página ampliada para a largura do documento e tipografia geral aumentada para melhorar leitura.
+- Nenhuma migration nova é necessária nesta versão.

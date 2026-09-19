@@ -34,7 +34,8 @@ st.markdown("""<style>
 
 
 user, profile = require_login()
-if profile.get("role") == "skatista":
+history_view = st.session_state.get("history_analysis_view")
+if profile.get("role") == "skatista" and not history_view:
     st.info("🛹 Seu perfil de skatista tem acesso ao Histórico de Treinos. As análises e uploads de CSV são realizados pela equipe técnica.")
     st.stop()
 st.markdown("""
@@ -567,15 +568,15 @@ def make_visual_pdf(athlete, cur, sessions, choice, photo_file=None):
     def card(x,y,w,h,label,value,sub="",value_color=None):
         c.setFillColor(panel2); c.roundRect(x,y,w,h,3*mm,fill=1,stroke=0)
         c.setStrokeColor(colors.HexColor("#245071")); c.roundRect(x,y,w,h,3*mm,fill=0,stroke=1)
-        c.setFillColor(muted); c.setFont("Helvetica-Bold",7); c.drawString(x+4*mm,y+h-7*mm,label)
-        c.setFillColor(value_color or white); c.setFont("Helvetica-Bold",18); c.drawString(x+4*mm,y+8*mm,str(value))
+        c.setFillColor(muted); c.setFont("Helvetica-Bold",8.5); c.drawString(x+4*mm,y+h-7*mm,label)
+        c.setFillColor(value_color or white); c.setFont("Helvetica-Bold",21); c.drawString(x+4*mm,y+8*mm,str(value))
         if sub:
-            c.setFillColor(lightblue if value_color is None else value_color); c.setFont("Helvetica",6.5); c.drawString(x+4*mm,y+3.5*mm,sub)
+            c.setFillColor(lightblue if value_color is None else value_color); c.setFont("Helvetica",8); c.drawString(x+4*mm,y+3.5*mm,sub)
 
     def donut(x,y,r,title,data,colorset=None):
         vals=[(str(k),float(v)) for k,v in data.items() if float(v)>0]
         total=sum(v for _,v in vals)
-        c.setFillColor(white); c.setFont("Helvetica-Bold",9); c.drawCentredString(x,y+r+9*mm,title)
+        c.setFillColor(white); c.setFont("Helvetica-Bold",11); c.drawCentredString(x,y+r+9*mm,title)
         if not vals or total<=0:
             c.setFillColor(muted); c.setFont("Helvetica",8); c.drawCentredString(x,y,"SEM DADOS"); return
 
@@ -613,7 +614,7 @@ def make_visual_pdf(athlete, cur, sessions, choice, photo_file=None):
             ty = y + math.sin(mid) * r * .79
             pct = v / total * 100
             c.setFillColor(white)
-            c.setFont("Helvetica-Bold", 9.0 if extent >= 24 else 7.2)
+            c.setFont("Helvetica-Bold", 11.5 if extent >= 24 else 9.0)
             c.drawCentredString(tx, ty-1.5, f"{pct:.0f}%")
             angle+=extent
         c.setFillColor(bg); c.circle(x,y,r*.58,fill=1,stroke=0)
@@ -622,7 +623,7 @@ def make_visual_pdf(athlete, cur, sessions, choice, photo_file=None):
         for i,(lab,v) in enumerate(vals[:8]):
             row=i//2; col=i%2; lx=x-r+col*colw
             c.setFillColor(assigned[i]); c.rect(lx,ly-row*5*mm,2.5*mm,2.5*mm,fill=1,stroke=0)
-            c.setFillColor(white); c.setFont("Helvetica-Bold",5.8)
+            c.setFillColor(white); c.setFont("Helvetica-Bold",7.2)
             pct=v/total*100
             c.drawString(lx+4*mm,ly-row*5*mm,f"{lab[:16]}  {pct:.1f}%")
 
@@ -655,7 +656,7 @@ def make_visual_pdf(athlete, cur, sessions, choice, photo_file=None):
             c.drawImage(im,px+(pw-dw)/2,py+(ph-dh)/2,dw,dh,preserveAspectRatio=True,mask='auto')
         except Exception: pass
     c.setFillColor(white); c.setFont("Helvetica-Bold",15); c.drawString(12*mm,H-101*mm,(athlete or "ATLETA").upper())
-    c.setFillColor(muted); c.setFont("Helvetica",7); c.drawString(12*mm,H-107*mm,f"{len(sessions)} treino(s) • {choice}")
+    c.setFillColor(muted); c.setFont("Helvetica",8.5); c.drawString(12*mm,H-107*mm,f"{len(sessions)} treino(s) • {choice}")
 
     rate=cur["hits"]/cur["attempts"]*100 if cur["attempts"] else 0
     vals=[("TENTATIVAS",f'{cur["attempts"]:.0f}',"volume total",None),
@@ -677,10 +678,10 @@ def make_visual_pdf(athlete, cur, sessions, choice, photo_file=None):
 
     # Maneuver table lower
     section("MANOBRAS",H-221*mm)
-    tx=12*mm; ty=H-232*mm; widths=[11*mm,95*mm,28*mm,28*mm,28*mm,34*mm]
+    tx=12*mm; ty=H-232*mm; widths=[12*mm,220*mm,38*mm,38*mm,38*mm,44*mm]
     headers=["#","MANOBRA","ACERTOS","ERROS","TOTAL","TAXA"]
     c.setFillColor(colors.HexColor("#0d2237")); c.rect(tx,ty-8*mm,sum(widths),8*mm,fill=1,stroke=0)
-    c.setFillColor(muted); c.setFont("Helvetica-Bold",6.5); xx=tx
+    c.setFillColor(muted); c.setFont("Helvetica-Bold",8.5); xx=tx
     for h,w in zip(headers,widths): c.drawString(xx+2*mm,ty-5*mm,h); xx+=w
     yy=ty-15*mm
     all_maneuvers=sorted(cur["maneuvers"].items(),key=lambda z:sum(z[1]),reverse=True)
@@ -690,7 +691,7 @@ def make_visual_pdf(athlete, cur, sessions, choice, photo_file=None):
         c.setFillColor(panel if idx%2 else panel2); c.rect(tx,yy,sum(widths),6.7*mm,fill=1,stroke=0)
         xx=tx
         for j,(v,w) in enumerate(zip(row,widths)):
-            c.setFillColor(red if j==3 else (blue if j in (2,5) else white)); c.setFont("Helvetica-Bold" if j in (1,2,3,5) else "Helvetica",6.3)
+            c.setFillColor(red if j==3 else (blue if j in (2,5) else white)); c.setFont("Helvetica-Bold" if j in (1,2,3,5) else "Helvetica",8.2)
             c.drawString(xx+2*mm,yy+2.2*mm,v); xx+=w
         yy-=7.2*mm
     c.showPage()
@@ -767,62 +768,64 @@ st.markdown("""
 
 st.sidebar.markdown("## 🛹 SKATE **PERFORMANCE**")
 
-# V1.8 — atleta vem do cadastro; RLS limita por perfil (admin/técnico/skatista)
+# V2.0.2 — a análise pode nascer de um upload novo OU de uma sessão já salva.
 sb = get_supabase()
 try:
     athlete_rows = (
         sb.table("profiles")
         .select("id,full_name,email,role,status,modality,stance,category,photo_url")
-        .eq("role", "skatista")
-        .eq("status", "ativo")
-        .order("full_name")
-        .execute()
-        .data or []
+        .eq("role", "skatista").eq("status", "ativo").order("full_name").execute().data or []
     )
 except Exception as e:
-    st.error(f"Não foi possível carregar os skatistas cadastrados: {e}")
-    st.stop()
+    st.error(f"Não foi possível carregar os skatistas cadastrados: {e}"); st.stop()
 
-if not athlete_rows:
-    if profile.get("role") == "tecnico":
-        st.info("Nenhum skatista ativo do seu time está disponível para análise.")
-    elif profile.get("role") == "skatista":
-        st.info("Seu perfil de skatista ainda não está disponível para análise.")
-    else:
-        st.info("Ainda não há skatistas ativos cadastrados. Cadastre/aprove um skatista em Cadastros para iniciar uma análise.")
-    st.stop()
+if history_view:
+    selected_athlete = next((r for r in athlete_rows if r.get("id") == history_view.get("athlete_id")), None)
+    if selected_athlete is None:
+        st.error("Este treino não está disponível para o seu perfil."); st.stop()
+    athlete = selected_athlete.get("full_name") or "ATLETA"
+    photo_url = selected_athlete.get("photo_url")
+    st.sidebar.markdown("### 👁 MODO HISTÓRICO")
+    st.sidebar.caption(f"{history_view.get('title','Treino')} • {history_view.get('training_date') or '—'}")
+    if st.sidebar.button("← VOLTAR AO HISTÓRICO", use_container_width=True):
+        st.session_state.pop("history_analysis_view", None)
+        st.switch_page("pages/04_Historico_de_Treinos.py")
+else:
+    if not athlete_rows:
+        msg = "Nenhum skatista ativo do seu time está disponível para análise." if profile.get("role") == "tecnico" else "Ainda não há skatistas ativos cadastrados. Cadastre/aprove um skatista em Cadastros para iniciar uma análise."
+        st.info(msg); st.stop()
+    athlete_by_label = {f"{r.get('full_name') or 'Sem nome'}" + (f" • {r.get('modality')}" if r.get('modality') else ""): r for r in athlete_rows}
+    athlete_label = st.sidebar.selectbox("ATLETA CADASTRADO", list(athlete_by_label.keys()))
+    selected_athlete = athlete_by_label[athlete_label]
+    athlete = selected_athlete.get("full_name") or "ATLETA"
+    photo_url = selected_athlete.get("photo_url")
 
-athlete_by_label = {
-    f"{r.get('full_name') or 'Sem nome'}" + (f" • {r.get('modality')}" if r.get('modality') else ""): r
-    for r in athlete_rows
-}
-athlete_label = st.sidebar.selectbox("ATLETA CADASTRADO", list(athlete_by_label.keys()))
-selected_athlete = athlete_by_label[athlete_label]
-athlete = selected_athlete.get("full_name") or "ATLETA"
-photo_url = selected_athlete.get("photo_url")
-
-# O PDF visual recebe um objeto de arquivo; para foto pública, carregamos uma cópia em memória.
 photo = None
 if photo_url:
-    try:
-        photo = io.BytesIO(urlopen(photo_url, timeout=8).read())
-    except Exception:
-        photo = None
+    try: photo = io.BytesIO(urlopen(photo_url, timeout=8).read())
+    except Exception: photo = None
 
 st.sidebar.caption(" • ".join([x for x in [selected_athlete.get("modality"), selected_athlete.get("category"), selected_athlete.get("stance")] if x]))
+analysis_photo = None
+if not history_view:
+    analysis_photo = st.sidebar.file_uploader("FOTO PARA A ANÁLISE (OPCIONAL)", type=["jpg", "jpeg", "png", "webp"], accept_multiple_files=False)
+    if analysis_photo is not None: photo = io.BytesIO(analysis_photo.getvalue())
+    training_date = st.sidebar.date_input("DATA DO TREINO", value=date.today())
+    training_title = st.sidebar.text_input("TÍTULO DO TREINO", placeholder="Ex.: Treino Street - manhã")
+    files=st.sidebar.file_uploader("ARQUIVOS CSV (TREINOS)",type=["csv","txt"],accept_multiple_files=True)
+else:
+    class ArchivedUpload(io.BytesIO):
+        def __init__(self, data, name):
+            super().__init__(data); self.name=name
+        def getvalue(self):
+            return super().getvalue()
+    files=[ArchivedUpload(item["data"], item["name"]) for item in history_view.get("files",[])]
+    training_date = date.fromisoformat(history_view["training_date"]) if history_view.get("training_date") else date.today()
+    training_title = history_view.get("title") or "Treino"
 
-# V2.0 — foto opcional específica para a análise/PDF, sem alterar a foto do cadastro.
-analysis_photo = st.sidebar.file_uploader("FOTO PARA A ANÁLISE (OPCIONAL)", type=["jpg", "jpeg", "png", "webp"], accept_multiple_files=False)
-if analysis_photo is not None:
-    photo = io.BytesIO(analysis_photo.getvalue())
-
-# V1.7 — metadados usados ao salvar os CSVs no histórico permanente.
-training_date = st.sidebar.date_input("DATA DO TREINO", value=date.today())
-training_title = st.sidebar.text_input("TÍTULO DO TREINO", placeholder="Ex.: Treino Street - manhã")
-files=st.sidebar.file_uploader("ARQUIVOS CSV (TREINOS)",type=["csv","txt"],accept_multiple_files=True)
 if not files:
     st.title("SKATE PERFORMANCE")
-    st.info("Envie um ou mais CSVs do Sportscode. A V3 reconhece tanto o CSV bruto quanto o CSV agregado/pivotado.")
+    st.info("Envie um ou mais CSVs do Sportscode.")
     st.stop()
 
 sessions=[];problems=[]
@@ -836,7 +839,7 @@ for p in problems:st.sidebar.warning(p)
 # V2.0.1 — um envio com vários CSVs representa UM treino no histórico.
 # Os arquivos originais continuam separados no Storage, mas compartilham um único
 # registro de sessão e um único par de relatórios consolidados.
-if sessions and profile.get("role") in ("admin", "tecnico"):
+if sessions and not history_view and profile.get("role") in ("admin", "tecnico"):
     if st.sidebar.button("💾 SALVAR NO HISTÓRICO", use_container_width=True):
         uploaded_paths = []
         report_path = visual_path = None
