@@ -104,3 +104,10 @@ Suba os arquivos no mesmo repositório do Portal e faça commit. O Streamlit Com
 - Staff técnico continua limitado aos atletas dos times aos quais pertence; Admin mantém controle total.
 
 Execute somente `supabase_v2_2_migration.sql` ao atualizar da V2.1.
+
+## V2.5 — Premium Design System
+- Design system global dark navy/electric blue/cyan aplicado em todas as páginas.
+- Home reconstruída com hero esportivo, KPIs premium, acesso rápido, atletas, próximos eventos e últimos treinos.
+- Botões, inputs, uploads, calendários, dialogs, tabs e sidebar padronizados; nenhum botão branco.
+- Responsividade reforçada para mobile/tablet mantendo a mesma linguagem visual.
+- Sem migration nova: usa a estrutura do banco da V2.4.
