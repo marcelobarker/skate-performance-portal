@@ -25,8 +25,8 @@ def _restore_session():
     if cm is None:
         return False
     try:
-        cookies = cm.get_all() or {}
-        refresh_token = cookies.get(COOKIE_NAME) or cm.get(COOKIE_NAME)
+        cookies = cm.get_all(key="sp_read_auth_cookies") or {}
+        refresh_token = cookies.get(COOKIE_NAME)
         if refresh_token:
             res = get_supabase().auth.refresh_session(refresh_token)
             if getattr(res, "user", None) and getattr(res, "session", None):
@@ -43,9 +43,10 @@ def _restore_session():
         pass
     # CookieManager é um componente de navegador e pode chegar alguns ms depois do Python.
     # Uma única segunda passagem evita cair na tela de login antes de o cookie ser lido.
-    if not st.session_state.get("sp_cookie_probe_done"):
-        st.session_state["sp_cookie_probe_done"] = True
-        time.sleep(0.35)
+    probe = int(st.session_state.get("sp_cookie_probe_count", 0))
+    if probe < 3:
+        st.session_state["sp_cookie_probe_count"] = probe + 1
+        time.sleep(0.45)
         st.rerun()
     return False
 
@@ -76,6 +77,9 @@ def sign_in(email, password, keep_connected=False):
             if keep_connected and getattr(res.session, "refresh_token", None):
                 from datetime import datetime, timedelta
                 cm.set(COOKIE_NAME, res.session.refresh_token, expires_at=datetime.now() + timedelta(days=30), key="sp_keep_cookie")
+                # O componente grava o cookie no navegador de forma assíncrona.
+                # Um pequeno intervalo evita que o rerun interrompa a gravação.
+                time.sleep(0.65)
             else:
                 cm.delete(COOKIE_NAME, key="sp_clear_cookie")
         except Exception:
@@ -97,44 +101,51 @@ def sign_out():
     if cm is not None:
         try: cm.delete(COOKIE_NAME, key="sp_logout_cookie")
         except Exception: pass
-    for k in ("sp_user", "sp_session", "sp_profile", "sp_supabase"):
+    for k in ("sp_user", "sp_session", "sp_profile", "sp_supabase", "sp_cookie_probe_count"):
         st.session_state.pop(k, None)
 
 def _navigation(role):
+    # Navegação compacta exclusiva do celular. No desktop usamos somente a sidebar.
     st.markdown("""<style>
-    .sp-mobile-nav-note{display:none}
+    .st-key-sp_mobile_nav{display:none!important}
     @media(max-width:768px){
-      [data-testid="stPageLink"] a{background:linear-gradient(180deg,#087CFF,#0758EE)!important;border:1px solid #29A8FF!important;color:#fff!important;border-radius:9px!important;min-height:42px!important;box-shadow:0 0 16px rgba(0,124,255,.28)!important}
-      [data-testid="stPopover"] button{background:linear-gradient(180deg,#0d2b46,#08233A)!important;border:1px solid #159BFF!important;color:#fff!important;border-radius:9px!important;min-height:42px!important}
+      .st-key-sp_mobile_nav{display:block!important}
+      .st-key-sp_mobile_nav [data-testid="stPageLink"] a,
+      .st-key-sp_mobile_nav [data-testid="stPopover"] button{
+        background:linear-gradient(180deg,#0d2b46,#08233A)!important;
+        border:1px solid #159BFF!important;color:#fff!important;border-radius:9px!important;
+        min-height:42px!important;box-shadow:0 0 16px rgba(0,124,255,.18)!important
+      }
+      .st-key-sp_mobile_nav [data-testid="stPageLink"] a:hover,
+      .st-key-sp_mobile_nav [data-testid="stPopover"] button:hover{background:#102C46!important;color:#fff!important}
     }
     </style>""", unsafe_allow_html=True)
-    n1,n2,n3=st.columns([1.05,1.05,5.9],gap="small")
-    with n1:
-        st.page_link("Home.py", label="⌂ Início", icon=None, use_container_width=True)
-    with n2:
-        with st.popover("☰ Menu", use_container_width=True):
-            st.page_link("Home.py", label="Início", use_container_width=True)
-            st.page_link("pages/02_Times.py", label="Times", use_container_width=True)
-            st.page_link("pages/06_Calendario.py", label="Calendário", use_container_width=True)
-            if role not in ("skatista","familiar"):
-                st.page_link("pages/03_Analise_de_Treino.py", label="Análise", use_container_width=True)
-            st.page_link("pages/04_Historico_de_Treinos.py", label="Meus Treinos", use_container_width=True)
-            st.page_link("pages/05_Meu_Perfil.py", label="Meu Perfil", use_container_width=True)
-            if role == "admin":
-                st.page_link("pages/01_Cadastros.py", label="Cadastros", use_container_width=True)
+    with st.container(key="sp_mobile_nav"):
+        n1,n2,n3=st.columns([1.05,1.05,5.9],gap="small")
+        with n1:
+            st.page_link("Home.py", label="⌂ Início", icon=None, use_container_width=True)
+        with n2:
+            with st.popover("☰ Menu", use_container_width=True):
+                st.page_link("Home.py", label="Início", use_container_width=True)
+                st.page_link("pages/02_Times.py", label="Times", use_container_width=True)
+                st.page_link("pages/06_Calendario.py", label="Calendário", use_container_width=True)
+                if role not in ("skatista","familiar"):
+                    st.page_link("pages/03_Analise_de_Treino.py", label="Análise", use_container_width=True)
+                st.page_link("pages/04_Historico_de_Treinos.py", label="Meus Treinos", use_container_width=True)
+                st.page_link("pages/05_Meu_Perfil.py", label="Meu Perfil", use_container_width=True)
+                if role == "admin":
+                    st.page_link("pages/01_Cadastros.py", label="Cadastros / Cargos", use_container_width=True)
     with st.sidebar:
         if st.button("⌂ INÍCIO", use_container_width=True, key="sp_global_home"):
             st.switch_page("Home.py")
+        if role == "admin":
+            st.caption("ADMINISTRAÇÃO")
+            st.page_link("pages/01_Cadastros.py", label="👥 Cargos e cadastros", use_container_width=True)
+            st.page_link("pages/02_Times.py", label="🛹 Gerenciar times", use_container_width=True)
     if role != "admin":
-        st.markdown("""<style>
-        [data-testid="stSidebarNav"] a[href*="01_Cadastros"],
-        [data-testid="stSidebarNav"] a[href*="Cadastros"]{display:none!important}
-        </style>""", unsafe_allow_html=True)
+        st.markdown("""<style>[data-testid="stSidebarNav"] a[href*="01_Cadastros"],[data-testid="stSidebarNav"] a[href*="Cadastros"]{display:none!important}</style>""", unsafe_allow_html=True)
     if role in ("skatista", "familiar"):
-        st.markdown("""<style>
-        [data-testid="stSidebarNav"] a[href*="Analise_de_Treino"],
-        [data-testid="stSidebarNav"] a[href*="03_Analise"]{display:none!important}
-        </style>""", unsafe_allow_html=True)
+        st.markdown("""<style>[data-testid="stSidebarNav"] a[href*="Analise_de_Treino"],[data-testid="stSidebarNav"] a[href*="03_Analise"]{display:none!important}</style>""", unsafe_allow_html=True)
 
 def require_login(require_active=True, admin=False):
     user = current_user(); profile = current_profile()

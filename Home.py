@@ -1,5 +1,6 @@
 
 import streamlit as st
+import streamlit.components.v1 as components
 from auth_utils import sign_in, sign_up, sign_out, current_user, current_profile, load_profile, get_supabase, _navigation
 
 from ui_theme import apply_ui_theme
@@ -36,7 +37,7 @@ st.markdown("""
 .stApp,[data-testid="stAppViewContainer"]{background:#06111f!important;color:#eef8ff!important}
 [data-testid="stSidebar"]{background:#081827!important}
 [data-testid="stSidebar"] *{color:#d9eafa!important}
-[data-testid="stHeader"],header[data-testid="stHeader"],[data-testid="stToolbar"],[data-testid="stDecoration"]{display:none!important}
+[data-testid="stToolbar"],[data-testid="stDecoration"]{display:none!important}
 .block-container{max-width:1400px;padding-top:1.2rem!important}
 .hero{background:#0b1d31;border:1px solid #173b5a;border-radius:18px;padding:24px 28px;margin-bottom:22px}
 .brand{font-size:31px;font-weight:900;font-style:italic;letter-spacing:-1px}
@@ -73,8 +74,26 @@ if not user:
     login_tab, signup_tab = st.tabs(["ENTRAR", "CRIAR CONTA"])
 
     with login_tab:
+        # Ajuda Chrome/Safari/Edge a reconhecerem os campos como credenciais salvas.
+        # Streamlit não expõe autocomplete diretamente no st.text_input, então ajustamos
+        # os atributos dos inputs no DOM sem alterar a autenticação Python.
+        components.html("""<script>
+        (function(){
+          function mark(){
+            try{
+              const d=window.parent.document;
+              const inputs=[...d.querySelectorAll('input')];
+              const email=inputs.find(i => (i.getAttribute('aria-label')||'').toLowerCase().includes('e-mail'));
+              const pass=inputs.find(i => i.type==='password');
+              if(email){email.setAttribute('autocomplete','email');email.setAttribute('name','email');email.setAttribute('id','sp-login-email');}
+              if(pass){pass.setAttribute('autocomplete','current-password');pass.setAttribute('name','password');pass.setAttribute('id','sp-login-password');}
+            }catch(e){}
+          }
+          mark(); setTimeout(mark,250); setTimeout(mark,900);
+        })();
+        </script>""", height=0)
         with st.form("login_form"):
-            email = st.text_input("E-mail")
+            email = st.text_input("E-mail", placeholder="seu@email.com")
             password = st.text_input("Senha", type="password")
             keep_connected = st.checkbox("Me manter conectado neste dispositivo")
             submit = st.form_submit_button("Entrar", use_container_width=True)
@@ -182,7 +201,7 @@ def svg(kind):
     'upload':"<svg viewBox='0 0 24 24'><path d='M12 16V4M7 9l5-5 5 5M5 20h14'/></svg>"}
     return icons[kind]
 
-st.caption('Portal V3.0 • atualização 20/09/2026')
+st.caption('Portal V3.1 • atualização 20/09/2026')
 st.markdown(f'''<style>
 .sp-home{{margin-top:2px}} .sp-hero2{{height:300px;border:1px solid rgba(20,145,255,.40);border-radius:12px;position:relative;overflow:hidden;background:linear-gradient(90deg,rgba(2,11,20,.88),rgba(2,11,20,.52) 42%,rgba(2,11,20,.16) 72%,rgba(2,11,20,.34) 100%),linear-gradient(0deg,#03111ee8,transparent 55%),{hero_bg} center center/cover no-repeat;box-shadow:0 12px 36px #0008}}
 .sp-hero-copy{{position:absolute;left:8%;top:50%;transform:translateY(-50%);max-width:620px}}.sp-hero-copy h1{{font-size:38px;margin:0 0 8px;color:#fff!important;text-shadow:0 0 18px #087cff45}}.sp-hero-copy p{{font-size:16px;color:#d3dfeb!important;line-height:1.55;margin:0}}

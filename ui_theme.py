@@ -10,7 +10,10 @@ def apply_ui_theme():
     }
     html,body,[class*="css"]{font-family:Inter,Roboto,Arial,sans-serif!important}
     .stApp,[data-testid="stAppViewContainer"]{background:radial-gradient(circle at 20% 0%,rgba(0,110,255,.08),transparent 35%),linear-gradient(180deg,var(--bg-main),var(--bg-deep))!important;color:var(--text)!important}
-    [data-testid="stHeader"],[data-testid="stToolbar"],[data-testid="stDecoration"]{display:none!important}
+    [data-testid="stHeader"]{background:transparent!important;box-shadow:none!important}
+    [data-testid="stToolbar"],[data-testid="stDecoration"],header [data-testid="stStatusWidget"]{display:none!important}
+    [data-testid="stSidebarCollapsedControl"],button[data-testid="stSidebarCollapsedControl"]{display:flex!important;background:#08233A!important;color:#fff!important;border:1px solid #159BFF!important;border-radius:8px!important;box-shadow:0 0 14px rgba(0,124,255,.18)!important}
+    [data-testid="stSidebarCollapsedControl"] *{color:#fff!important}
     .block-container{max-width:1480px!important;padding-top:1.05rem!important;padding-left:1.45rem!important;padding-right:1.45rem!important;padding-bottom:2rem!important}
     [data-testid="stSidebar"]{background:rgba(2,12,23,.98)!important;border-right:1px solid rgba(30,130,200,.28)!important}
     [data-testid="stSidebar"] *{color:var(--text2)!important}
@@ -53,5 +56,7 @@ def apply_ui_theme():
     [role="tooltip"] *{color:var(--text)!important}
     [data-testid="stDialog"]>div{background:linear-gradient(145deg,rgba(6,25,43,.99),rgba(3,15,27,.99))!important;border:1px solid rgba(0,140,230,.55)!important;border-radius:12px!important;box-shadow:0 16px 50px rgba(0,0,0,.50),0 0 30px rgba(0,120,220,.08)!important}
     [data-testid="stDialog"] button{background:#08233A!important;color:#fff!important;border-color:#135C91!important}
+    button:not([data-testid="stSidebarCollapseButton"]){--button-background-color:#08233A!important}
+    [data-testid="stPopover"] button,[data-testid="stPageLink"] a{background:#08233A!important;color:#dff6ff!important;border-color:#135C91!important}
     @media(max-width:768px){.block-container{padding-left:.75rem!important;padding-right:.75rem!important}.stColumn{min-width:0!important}[data-testid="stSidebar"]{border-right:none!important}}
     </style>''', unsafe_allow_html=True)
