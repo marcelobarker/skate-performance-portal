@@ -41,7 +41,7 @@ def apply_ui_theme():
     [data-testid="stFileUploader"] section,[data-testid="stFileUploaderDropzone"],[data-testid="stFileUploaderFile"]{background:rgba(10,35,55,.55)!important;color:var(--text)!important;border:1px dashed rgba(90,160,210,.65)!important;border-radius:7px!important}
     [data-testid="stFileUploader"] *{color:var(--text)!important}
     [data-testid="stTabs"] [role="tablist"]{gap:8px!important;border-bottom:1px solid var(--border)!important}[data-testid="stTabs"] button{color:#AAB9C8!important}[data-testid="stTabs"] button[aria-selected="true"]{color:var(--cyan)!important;border-bottom-color:#00AFFF!important}
-    [data-testid="stImage"] button,[data-testid="stImage"] [data-testid="stBaseButton-headerNoPadding"]{display:none!important}
+    [data-testid="stImage"] button,[data-testid="stImage"] [data-testid="stBaseButton-headerNoPadding"],[data-testid="stImage"] a,[data-testid="stImage"] [role="button"]{display:none!important}
     [role="tooltip"],[data-baseweb="tooltip"]{background:#102b46!important;color:var(--text)!important;border:1px solid #245274!important}
     [role="tooltip"] *{color:var(--text)!important}
     [data-testid="stDialog"]>div{background:linear-gradient(145deg,rgba(6,25,43,.99),rgba(3,15,27,.99))!important;border:1px solid rgba(0,140,230,.55)!important;border-radius:12px!important;box-shadow:0 16px 50px rgba(0,0,0,.50),0 0 30px rgba(0,120,220,.08)!important}

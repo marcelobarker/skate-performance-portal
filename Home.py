@@ -152,80 +152,74 @@ if status != "ativo":
 
 import base64
 from pathlib import Path
-from datetime import date
+from datetime import date, datetime
 from auth_utils import get_supabase
 
 hero_b64=base64.b64encode((Path(__file__).parent/'hero_skater.png').read_bytes()).decode()
-st.markdown(f"""<style>
-.sp-topbar{{height:56px;background:rgba(2,12,23,.96);border:1px solid rgba(30,130,200,.30);border-radius:10px;padding:0 16px;display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;box-shadow:0 8px 24px #0004}}.sp-logo{{font-weight:900;font-size:18px;letter-spacing:-.5px}}.sp-logo b{{color:#159bff}}.sp-user{{color:#9fb4c8;font-size:12px}}
-.sp-hero{{min-height:245px;border:1px solid rgba(20,145,255,.45);border-radius:12px;padding:46px 34px 30px 39%;background:linear-gradient(90deg,rgba(1,10,20,.10) 0%,rgba(2,13,24,.42) 40%,rgba(2,13,24,.94) 100%),linear-gradient(0deg,rgba(2,10,20,.75),transparent 55%),url(data:image/png;base64,{hero_b64}) left center/48% 100% no-repeat,#071522;box-shadow:0 16px 45px #0007;margin:0 0 -22px;position:relative;overflow:hidden}}.sp-hero:after{{content:'';position:absolute;inset:auto 0 0;height:60px;background:linear-gradient(transparent,#03111e)}}.sp-hero h1{{position:relative;z-index:2;font-size:40px;line-height:1.1;margin:0 0 9px;color:#fff!important;text-shadow:0 0 18px #087cff35}}.sp-hero p{{position:relative;z-index:2;color:#d3dfeb!important;font-size:16px;max-width:650px;line-height:1.5}}
-.sp-kpis{{position:relative;z-index:4}}.sp-kpi{{border-radius:10px;padding:18px;min-height:152px;border:1px solid #ffffff24;box-shadow:0 12px 30px #0005,inset 0 1px 0 #ffffff12;transition:.18s ease}}.sp-kpi:hover{{transform:translateY(-2px);filter:brightness(1.06)}}.sp-icon{{font-size:34px;filter:drop-shadow(0 0 6px rgba(0,200,255,.35))}}.sp-num{{font-size:44px;font-weight:900;line-height:1;margin:10px 0 2px;color:#fff}}.sp-name{{font-size:14px;font-weight:750;color:#fff}}.sp-hint{{font-size:11px;color:#e8f4ffcf;margin-top:13px}}.sp-blue{{background:linear-gradient(135deg,rgba(0,115,255,.88),rgba(0,65,170,.72))}}.sp-green{{background:linear-gradient(135deg,rgba(0,175,105,.80),rgba(0,85,65,.82))}}.sp-purple{{background:linear-gradient(135deg,rgba(145,35,225,.82),rgba(75,20,130,.82))}}.sp-orange{{background:linear-gradient(135deg,rgba(220,100,0,.85),rgba(105,45,0,.88))}}
-.sp-section{{font-size:19px;font-weight:800;margin:25px 0 10px;color:#f5f8fc}}.sp-quick{{background:linear-gradient(145deg,rgba(11,32,52,.95),rgba(5,20,34,.95));border:1px solid rgba(45,130,190,.30);border-radius:10px;padding:18px;text-align:center;min-height:122px;box-shadow:0 8px 24px #0004;transition:.18s ease}}.sp-quick:hover{{transform:translateY(-2px);border-color:rgba(0,170,255,.65);background:#102c46}}.sp-quick-icon{{font-size:32px;filter:drop-shadow(0 0 6px rgba(0,200,255,.35))}}.sp-quick-title{{font-weight:800;margin-top:6px;color:#f5f8fc}}.sp-quick-sub{{font-size:11px;color:#8499ad;margin-top:3px}}
-.sp-person{{background:#071827;border:1px solid rgba(42,102,145,.25);border-radius:9px;padding:10px;min-height:235px;box-shadow:0 8px 24px #0004;transition:.18s ease}}.sp-person:hover{{transform:translateY(-2px);border-color:#087eeb}}.sp-person-name{{font-weight:800;margin-top:7px;color:#f5f8fc}}.sp-person-role{{color:#29a8ff;font-size:12px;font-weight:700}}.sp-person-meta{{color:#9aaec1;font-size:12px;line-height:1.6}}.sp-panel{{background:linear-gradient(145deg,#081b2d,#061727);border:1px solid rgba(50,130,190,.25);border-radius:10px;padding:16px;box-shadow:0 8px 24px #0004;min-height:180px}}.sp-event{{display:flex;gap:12px;align-items:center;padding:10px 0;border-bottom:1px solid rgba(50,130,190,.18)}}.sp-event:last-child{{border:0}}.sp-date{{min-width:58px;text-align:center;background:#0a2945;border-radius:6px;padding:7px;color:#fff;font-weight:800}}.sp-event-name{{font-weight:700;color:#f5f8fc}}.sp-event-loc{{font-size:11px;color:#8499ad}}.sp-train{{background:#071929;border:1px solid rgba(45,100,145,.25);border-radius:8px;padding:12px 14px;min-height:86px}}.sp-train-date{{font-size:17px;font-weight:800}}.sp-train-name{{font-size:11px;color:#9aaec1;margin-top:7px}}
-@media(max-width:768px){{.sp-topbar{{height:auto;min-height:52px}}.sp-hero{{padding:155px 18px 24px;background:linear-gradient(0deg,#071522 36%,rgba(4,16,29,.08) 100%),url(data:image/png;base64,{hero_b64}) center top/100% 170px no-repeat,#071522;min-height:300px;margin-bottom:12px}}.sp-hero h1{{font-size:29px}}.sp-kpi{{min-height:132px;padding:14px}}.sp-num{{font-size:36px}}}}
-</style>""",unsafe_allow_html=True)
 
-st.markdown(f"<div class='sp-topbar'><div class='sp-logo'>🛹 SKATE <b>PERFORMANCE</b></div><div class='sp-user'>{name} · {role.replace('_',' ').title()}</div></div>",unsafe_allow_html=True)
-st.markdown(f"<div class='sp-hero'><h1>Bem-vindo, {name.split()[0]}!</h1><p>Acompanhe o desempenho da sua equipe, veja seus treinos, analise suas manobras e evolua junto com seus atletas.</p></div>",unsafe_allow_html=True)
+def svg(kind):
+    icons={
+    'users':"<svg viewBox='0 0 24 24'><path d='M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8M22 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75'/></svg>",
+    'coach':"<svg viewBox='0 0 24 24'><path d='M20 21a8 8 0 0 0-16 0M12 13a5 5 0 1 0 0-10 5 5 0 0 0 0 10M18 8h4M20 6v4'/></svg>",
+    'team':"<svg viewBox='0 0 24 24'><path d='M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75'/></svg>",
+    'chart':"<svg viewBox='0 0 24 24'><path d='M3 3v18h18M7 16v-5M12 16V7M17 16v-9'/></svg>",
+    'calendar':"<svg viewBox='0 0 24 24'><rect x='3' y='5' width='18' height='16' rx='2'/><path d='M16 3v4M8 3v4M3 10h18M8 14h.01M12 14h.01M16 14h.01M8 18h.01M12 18h.01'/></svg>",
+    'profile':"<svg viewBox='0 0 24 24'><circle cx='12' cy='8' r='4'/><path d='M4 21a8 8 0 0 1 16 0'/></svg>",
+    'upload':"<svg viewBox='0 0 24 24'><path d='M12 16V4M7 9l5-5 5 5M5 20h14'/></svg>"}
+    return icons[kind]
+
+st.markdown(f'''<style>
+.sp-home{{margin-top:2px}} .sp-hero2{{height:260px;border:1px solid rgba(20,145,255,.40);border-radius:12px;position:relative;overflow:hidden;background:linear-gradient(90deg,rgba(2,11,20,.08),rgba(2,11,20,.48) 46%,rgba(2,11,20,.96) 100%),linear-gradient(0deg,#03111ee8,transparent 55%),url(data:image/png;base64,{hero_b64}) left center/cover no-repeat;box-shadow:0 12px 36px #0008}}
+.sp-hero-copy{{position:absolute;left:39%;top:50%;transform:translateY(-50%);max-width:650px}}.sp-hero-copy h1{{font-size:38px;margin:0 0 8px;color:#fff!important;text-shadow:0 0 18px #087cff45}}.sp-hero-copy p{{font-size:16px;color:#d3dfeb!important;line-height:1.55;margin:0}}
+.sp-kpi-grid{{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-top:-30px;position:relative;z-index:3;padding:0 10px}}.sp-kpi2{{height:150px;border-radius:10px;padding:17px 20px;border:1px solid rgba(255,255,255,.18);box-shadow:0 10px 28px #0007,inset 0 1px 0 #ffffff20;position:relative;overflow:hidden}}.sp-kpi2:before{{content:'';position:absolute;width:90px;height:90px;left:-20px;top:-30px;background:#fff2;border-radius:50%;filter:blur(18px)}}.sp-kpi2 svg,.sp-q svg{{width:35px;height:35px;fill:none;stroke:currentColor;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round;filter:drop-shadow(0 0 7px currentColor)}}.sp-kpi2 .num{{font-size:42px;font-weight:850;line-height:1;margin-top:7px}}.sp-kpi2 .label{{position:absolute;left:68px;top:76px;font-size:13px}}.sp-kpi2 .link{{position:absolute;bottom:14px;left:20px;font-size:12px;color:#eaf7ffcc}}.blue{{background:linear-gradient(135deg,#087cffed,#004aafe8);color:#66d6ff}}.green{{background:linear-gradient(135deg,#00a96fe0,#00523fe8);color:#38f3c0}}.purple{{background:linear-gradient(135deg,#9135e6e8,#4c1788ed);color:#e67cff}}.orange{{background:linear-gradient(135deg,#d76a00e8,#6d3000ed);color:#ffbd55}}
+.sp-title{{font-size:19px;font-weight:800;color:#f5f8fc;margin:25px 0 10px}}.sp-quick-grid{{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}}.sp-q{{min-height:122px;background:linear-gradient(145deg,#0b2034,#051422);border:1px solid rgba(45,130,190,.35);border-radius:10px;text-align:center;padding:17px;color:#29dfff;box-shadow:0 8px 22px #0005,inset 0 1px 0 #ffffff08}}.sp-q:hover{{transform:translateY(-2px);border-color:#00afff;box-shadow:0 0 22px #087cff2e}}.sp-q .qt{{font-size:15px;font-weight:800;color:#f5f8fc;margin-top:6px}}.sp-q .qs{{font-size:11px;color:#8499ad;margin-top:3px}}
+.sp-home-panels{{display:grid;grid-template-columns:1.35fr .9fr;gap:14px;margin-top:20px}}.sp-panel2{{background:linear-gradient(145deg,#081b2d,#061727);border:1px solid rgba(50,130,190,.28);border-radius:10px;padding:14px;box-shadow:0 8px 24px #0004}}.sp-ath-grid{{display:grid;grid-template-columns:repeat(3,1fr);gap:9px}}.sp-ath{{display:flex;gap:10px;background:#071827;border:1px solid rgba(42,102,145,.28);border-radius:9px;padding:8px;min-height:112px}}.sp-ath img{{width:82px;height:96px;object-fit:cover;border-radius:8px;border:1px solid #1c6a9d}}.sp-ath .nm{{font-weight:800;color:#fff;margin:4px 0}}.sp-ath .rl{{font-size:11px;color:#29a8ff}}.sp-ath .mt{{font-size:11px;color:#9aaec1;line-height:1.65;margin-top:5px}}.sp-event{{display:flex;gap:10px;padding:9px 0;border-bottom:1px solid #163b5938}}.sp-date{{width:58px;background:#0a2945;border-radius:6px;text-align:center;padding:6px;color:#fff;font-weight:800}}.sp-event b{{font-size:12px}}.sp-event small{{display:block;color:#8499ad}}.sp-training-grid{{display:grid;grid-template-columns:repeat(3,1fr);gap:9px}}.sp-tr{{background:#071929;border:1px solid rgba(45,100,145,.25);border-radius:8px;padding:12px 14px;min-height:82px}}.sp-tr b{{font-size:15px}}.sp-tr small{{display:block;color:#9aaec1;margin-top:7px}}
+@media(max-width:768px){{.sp-hero2{{height:300px;background-position:35% center}}.sp-hero-copy{{left:18px;right:18px;top:auto;bottom:24px;transform:none}}.sp-hero-copy h1{{font-size:29px}}.sp-kpi-grid{{grid-template-columns:repeat(2,1fr);margin-top:10px;padding:0}}.sp-kpi2{{height:132px;padding:13px}}.sp-kpi2 .num{{font-size:34px}}.sp-kpi2 .label{{left:54px;top:67px}}.sp-kpi2 .link{{left:13px;bottom:10px}}.sp-quick-grid{{grid-template-columns:repeat(2,1fr)}}.sp-home-panels{{grid-template-columns:1fr}}.sp-ath-grid{{grid-template-columns:1fr}}.sp-training-grid{{grid-template-columns:1fr}}}}
+</style>''',unsafe_allow_html=True)
+
 try:
     sb=get_supabase(); visible_profiles=sb.table('profiles').select('id,full_name,role,status,photo_url,modality,stance,city,state,birth_date').execute().data or []; visible_teams=sb.table('teams').select('id,name').execute().data or []; visible_trainings=sb.table('training_sessions').select('id,athlete_id,training_date,title,created_at').order('training_date',desc=True).limit(6).execute().data or []
-    try: visible_events=sb.table('events').select('*').gte('event_date',date.today().isoformat()).order('event_date').limit(4).execute().data or []
-    except Exception: visible_events=[]
+    try: visible_events=sb.table('calendar_events').select('*').gte('event_date',date.today().isoformat()).order('event_date').limit(4).execute().data or []
+    except: visible_events=[]
 except Exception as exc:
-    visible_profiles=[];visible_teams=[];visible_trainings=[];visible_events=[];st.warning(f'Não foi possível atualizar a Home: {exc}')
+    visible_profiles=[]; visible_teams=[]; visible_trainings=[]; visible_events=[]; st.warning(f'Não foi possível atualizar a Home: {exc}')
 athletes=[x for x in visible_profiles if x.get('role')=='skatista' and x.get('status')=='ativo']; staff=[x for x in visible_profiles if x.get('role') in ('tecnico','presidente','vice_presidente','chefe_equipe','comissao_tecnica') and x.get('status')=='ativo']
-items=[('👥',len(athletes),'Atletas','sp-blue','Ver equipe →'),('♟',len(staff),'Equipe técnica','sp-green','Ver equipe →'),('🛹',len(visible_teams),'Times','sp-purple','Ver times →'),('▥',len(visible_trainings),'Treinos recentes','sp-orange','Ver histórico →')]
-cols=st.columns(4,gap='small')
-for col,(ico,num,label,klass,hint) in zip(cols,items): col.markdown(f"<div class='sp-kpi {klass}'><div class='sp-icon'>{ico}</div><div class='sp-num'>{num}</div><div class='sp-name'>{label}</div><div class='sp-hint'>{hint}</div></div>",unsafe_allow_html=True)
-
-st.markdown("<div class='sp-section'>Acesso rápido</div>",unsafe_allow_html=True)
-quick=[]
-quick.append(('👥','Times','Veja sua equipe e os membros','pages/02_Times.py'))
-quick.append(('▣','Calendário','Eventos, treinos e campeonatos','pages/06_Calendario.py'))
-if role not in ('skatista','familiar'): quick.append(('▥','Nova Análise','Analisar um novo CSV','pages/03_Analise_de_Treino.py'))
-else: quick.append(('▥','Meus Treinos','Histórico e relatórios','pages/04_Historico_de_Treinos.py'))
-quick.append(('👤','Meu Perfil','Editar meus dados','pages/05_Meu_Perfil.py'))
+first=name.split()[0] if name else 'Atleta'
+st.markdown(f"<div class='sp-home'><div class='sp-hero2'><div class='sp-hero-copy'><h1>Bem-vindo, {first}!</h1><p>Acompanhe o desempenho da sua equipe, veja seus treinos, analise suas manobras e evolua junto com seus atletas.</p></div></div>",unsafe_allow_html=True)
+kpis=[('users',len(athletes),'Atletas','blue','Ver equipe →'),('coach',len(staff),'Técnicos','green','Ver equipe →'),('team',len(visible_teams),'Times','purple','Ver times →'),('chart',len(visible_trainings),'Treinos','orange','Ver histórico →')]
+html="<div class='sp-kpi-grid'>"
+for ic,num,lab,cl,lk in kpis: html+=f"<div class='sp-kpi2 {cl}'>{svg(ic)}<div class='num'>{num}</div><div class='label'>{lab}</div><div class='link'>{lk}</div></div>"
+st.markdown(html+'</div>',unsafe_allow_html=True)
+st.markdown("<div class='sp-title'>Acesso rápido</div>",unsafe_allow_html=True)
+quick=[('team','Times','Veja sua equipe e os membros','pages/02_Times.py'),('calendar','Calendário','Próximos eventos','pages/06_Calendario.py'),('chart','Nova Análise','Analisar um CSV','pages/03_Analise_de_Treino.py'),('profile','Meu Perfil','Editar meus dados','pages/05_Meu_Perfil.py')]
+if role in ('skatista','familiar'): quick[2]=('chart','Meus Treinos','Histórico e relatórios','pages/04_Historico_de_Treinos.py')
+st.markdown("<div class='sp-quick-grid'>"+''.join(f"<div class='sp-q'>{svg(ic)}<div class='qt'>{t}</div><div class='qs'>{sub}</div></div>" for ic,t,sub,_ in quick)+"</div>",unsafe_allow_html=True)
 qcols=st.columns(4,gap='small')
-for i,(ico,title,sub,page) in enumerate(quick):
+for i,(_,t,_,page) in enumerate(quick):
     with qcols[i]:
-        st.markdown(f"<div class='sp-quick'><div class='sp-quick-icon'>{ico}</div><div class='sp-quick-title'>{title}</div><div class='sp-quick-sub'>{sub}</div></div>",unsafe_allow_html=True)
-        if st.button(f'Abrir {title} →',key=f'quick_{i}',use_container_width=True): st.switch_page(page)
+        if st.button(f'Abrir {t}',key=f'qa{i}',use_container_width=True): st.switch_page(page)
 
-left,right=st.columns([1.45,1],gap='large')
-with left:
-    st.markdown("<div class='sp-section'>Atletas da equipe</div>",unsafe_allow_html=True)
-    show_people=athletes[:6]
-    if show_people:
-        pcs=st.columns(3,gap='small')
-        for i,a in enumerate(show_people):
-            with pcs[i%3]:
-                st.markdown("<div class='sp-person'>",unsafe_allow_html=True)
-                if a.get('photo_url'): st.image(a['photo_url'],use_container_width=True)
-                else: st.markdown("<div style='height:120px;display:flex;align-items:center;justify-content:center;font-size:44px;background:#091827;border-radius:8px'>🛹</div>",unsafe_allow_html=True)
-                loc='/'.join(x for x in [a.get('city'),a.get('state')] if x)
-                st.markdown(f"<div class='sp-person-name'>{a.get('full_name') or 'Atleta'}</div><div class='sp-person-role'>Atleta · {a.get('modality') or '—'}</div><div class='sp-person-meta'>◉ {a.get('stance') or 'Base não informada'}<br>⌖ {loc or 'Cidade não informada'}</div></div>",unsafe_allow_html=True)
-                if st.button('Ver equipe →',key=f"home_person_{a['id']}",use_container_width=True): st.switch_page('pages/02_Times.py')
-    else: st.info('Nenhum atleta visível para este perfil.')
-with right:
-    st.markdown("<div class='sp-section'>Próximos eventos</div>",unsafe_allow_html=True)
-    if visible_events:
-        evhtml="<div class='sp-panel'>"
-        for e in visible_events:
-            raw=e.get('event_date') or ''
-            try: d=date.fromisoformat(raw); db=f"{d.day:02d}<br><span style='font-size:10px'>{d.strftime('%b').upper()}</span>"
-            except: db=raw
-            evhtml+=f"<div class='sp-event'><div class='sp-date'>{db}</div><div><div class='sp-event-name'>{e.get('title') or 'Evento'}</div><div class='sp-event-loc'>{e.get('location') or 'Local não informado'}</div></div></div>"
-        st.markdown(evhtml+'</div>',unsafe_allow_html=True)
-    else: st.markdown("<div class='sp-panel'><div style='color:#8499ad'>Nenhum próximo evento cadastrado.</div></div>",unsafe_allow_html=True)
-    if st.button('Ver calendário completo →',use_container_width=True,key='fullcal'): st.switch_page('pages/06_Calendario.py')
-
-st.markdown("<div class='sp-section'>Últimos treinos</div>",unsafe_allow_html=True)
-if visible_trainings:
-    tcols=st.columns(min(3,len(visible_trainings)),gap='small')
-    pmap={p['id']:p.get('full_name','Atleta') for p in visible_profiles}
-    for i,t in enumerate(visible_trainings[:3]):
-        raw=t.get('training_date') or ''
-        try: ds=date.fromisoformat(raw).strftime('%d/%m/%Y')
-        except: ds=raw
-        with tcols[i]: st.markdown(f"<div class='sp-train'><div style='color:#29a8ff;font-size:11px'>TREINO</div><div class='sp-train-date'>{ds}</div><div class='sp-train-name'>{pmap.get(t.get('athlete_id'),'Atleta')} · {t.get('title') or 'Sessão de treino'}</div></div>",unsafe_allow_html=True)
-else: st.caption('Nenhum treino visível ainda.')
+def age(v):
+    try:
+        b=date.fromisoformat(v); td=date.today(); return td.year-b.year-((td.month,td.day)<(b.month,b.day))
+    except:return None
+ath_html="<div class='sp-panel2'><div class='sp-title' style='margin-top:0'>Atletas da equipe</div><div class='sp-ath-grid'>"
+for a in athletes[:6]:
+    loc='/'.join(x for x in [a.get('city'),a.get('state')] if x) or 'Cidade não informada'; ag=age(a.get('birth_date')); img=a.get('photo_url') or ''
+    photo=f"<img src='{img}' alt=''>" if img else "<div style='width:82px;height:96px;border-radius:8px;background:#0a2945;display:grid;place-items:center;font-size:30px'>🛹</div>"
+    ath_html+=f"<div class='sp-ath'>{photo}<div><div class='nm'>{a.get('full_name') or 'Atleta'}</div><div class='rl'>Atleta</div><div class='mt'>♙ {str(ag)+' anos' if ag is not None else '—'}<br>◉ {a.get('modality') or '—'}<br>⌖ {loc}</div></div></div>"
+ath_html+='</div></div>'
+ev_html="<div class='sp-panel2'><div class='sp-title' style='margin-top:0'>Próximos eventos</div>"
+for e in visible_events:
+    try:d=date.fromisoformat(e.get('event_date')); ds=f"{d.day:02d}<br><small>{d.strftime('%b').upper()}</small>"
+    except:ds=e.get('event_date','')
+    ev_html+=f"<div class='sp-event'><div class='sp-date'>{ds}</div><div><b>{e.get('title') or 'Evento'}</b><small>{e.get('location') or 'Local não informado'}</small></div></div>"
+ev_html += ("<div style='color:#8499ad'>Nenhum próximo evento.</div>" if not visible_events else '')+'</div>'
+st.markdown(f"<div class='sp-home-panels'>{ath_html}{ev_html}</div>",unsafe_allow_html=True)
+st.markdown("<div class='sp-title'>Últimos treinos</div>",unsafe_allow_html=True)
+pmap={p['id']:p.get('full_name','Atleta') for p in visible_profiles}; th="<div class='sp-training-grid'>"
+for t in visible_trainings[:3]:
+    try: ds=date.fromisoformat(t.get('training_date')).strftime('%d/%m/%Y')
+    except: ds=t.get('training_date','—')
+    th+=f"<div class='sp-tr'><span style='color:#29a8ff;font-size:11px'>TREINO</span><br><b>{ds}</b><small>{pmap.get(t.get('athlete_id'),'Atleta')} · {t.get('title') or 'Sessão'}</small></div>"
+st.markdown(th+'</div></div>',unsafe_allow_html=True)
