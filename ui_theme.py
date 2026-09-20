@@ -8,7 +8,7 @@ def apply_ui_theme():
       --text:#F5F8FC;--text2:#C4D1DF;--muted:#8499AD;--disabled:#60758A;--border:rgba(50,130,190,.25);--border-active:rgba(0,145,255,.60);
       --r-sm:7px;--r-md:9px;--r-lg:12px;--shadow:0 8px 24px rgba(0,0,0,.20);--blue-shadow:0 0 18px rgba(0,120,255,.25)
     }
-    html,body,[class*="css"]{font-family:Inter,Roboto,Arial,sans-serif!important}
+    html,body,[class*="css"]{font-family:Inter,Roboto,Arial,sans-serif!important;background:#03111E!important} html{background:#03111E!important} body{background:#03111E!important}
     .stApp,[data-testid="stAppViewContainer"]{background:radial-gradient(circle at 20% 0%,rgba(0,110,255,.08),transparent 35%),linear-gradient(180deg,var(--bg-main),var(--bg-deep))!important;color:var(--text)!important}
     [data-testid="stHeader"]{background:transparent!important;box-shadow:none!important}
     [data-testid="stToolbar"],[data-testid="stDecoration"],header [data-testid="stStatusWidget"]{display:none!important}
@@ -66,5 +66,5 @@ def apply_ui_theme():
     button svg,button span,button p,summary span,summary p{color:#F5F8FC!important;fill:currentColor!important}
     [data-baseweb="select"] svg,[data-testid="stSelectbox"] svg{color:#C4D1DF!important;fill:#C4D1DF!important}
     label,legend,[data-testid="stWidgetLabel"] p{color:#C4D1DF!important}
-        @media(max-width:768px){.block-container{padding-left:.75rem!important;padding-right:.75rem!important}.stColumn{min-width:0!important}[data-testid="stSidebar"]{border-right:none!important}}
+        @media(max-width:768px){html,body,#root,[data-testid="stApp"],[data-testid="stAppViewContainer"]{background:#03111E!important}.block-container{padding-left:.75rem!important;padding-right:.75rem!important}.stColumn{min-width:0!important}[data-testid="stSidebar"]{border-right:none!important}}
     </style>''', unsafe_allow_html=True)

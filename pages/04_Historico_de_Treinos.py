@@ -45,6 +45,21 @@ is_admin = role == "admin"
 is_technician = role in ("tecnico","presidente","vice_presidente","chefe_equipe","comissao_tecnica")
 is_family = role == "familiar"
 
+
+st.markdown('''<style>
+/* V3.6 histórico: cards mais compactos e ações legíveis */
+[data-testid="stVerticalBlockBorderWrapper"]{border-radius:14px!important;border-color:rgba(41,168,255,.24)!important;background:linear-gradient(145deg,#081b2d,#061727)!important;box-shadow:0 8px 22px rgba(0,0,0,.22)!important}
+[data-testid="stVerticalBlockBorderWrapper"] h4{font-size:18px!important;margin-bottom:2px!important}
+[data-testid="stVerticalBlockBorderWrapper"] [data-testid="stButton"] button,
+[data-testid="stVerticalBlockBorderWrapper"] [data-testid="stDownloadButton"] button{min-height:48px!important;height:auto!important;white-space:normal!important;line-height:1.15!important;font-size:12px!important;padding:8px 10px!important}
+@media(max-width:768px){
+ [data-testid="stVerticalBlockBorderWrapper"]{padding:4px!important}
+ [data-testid="stVerticalBlockBorderWrapper"] [data-testid="stHorizontalBlock"]{flex-wrap:wrap!important;gap:8px!important}
+ [data-testid="stVerticalBlockBorderWrapper"] [data-testid="stHorizontalBlock"]>[data-testid="stColumn"]{min-width:100%!important;width:100%!important;flex:1 1 100%!important}
+ [data-testid="stVerticalBlockBorderWrapper"] [data-testid="stButton"] button,[data-testid="stVerticalBlockBorderWrapper"] [data-testid="stDownloadButton"] button{font-size:13px!important;min-height:46px!important;width:100%!important}
+}
+</style>''',unsafe_allow_html=True)
+
 st.title("📚 Histórico de Treinos")
 st.caption("Sessões, CSVs e relatórios vinculados a cada skatista.")
 
@@ -97,7 +112,7 @@ for row in rows:
         csv_paths = row.get("csv_paths") or ([row.get("csv_path")] if row.get("csv_path") else [])
         view_col, b2, b3 = st.columns(3)
         if csv_paths:
-            if view_col.button("👁 VER ANÁLISE INTERATIVA", key=f"view_{row['id']}", use_container_width=True):
+            if view_col.button("◉  VER ANÁLISE", key=f"view_{row['id']}", use_container_width=True):
                 try:
                     archived=[]
                     for i,path in enumerate(csv_paths,1):
@@ -142,7 +157,7 @@ for row in rows:
                     report_sessions.append(parse_aggregate(df,af.name) if is_aggregate(df) else parse_raw(df,af.name))
                 report_merged=merge_sessions(report_sessions)
                 report_data=make_pdf(athlete.get("full_name") or "ATLETA",report_merged,report_sessions,"TODOS OS TREINOS")
-                b2.download_button("⬇ RELATÓRIO PDF",data=report_data,file_name=f"{safe}_relatorio.pdf",mime="application/pdf",key=f"report_{row['id']}",use_container_width=True)
+                b2.download_button("▤  RELATÓRIO PDF",data=report_data,file_name=f"{safe}_relatorio.pdf",mime="application/pdf",key=f"report_{row['id']}",use_container_width=True)
             except Exception as exc: b2.caption(f"Relatório indisponível: {exc}")
         else: b2.caption("CSVs não disponíveis para gerar o relatório")
         # Gera o dashboard com o motor ATUAL a partir dos CSVs arquivados. Assim o
@@ -160,7 +175,7 @@ for row in rows:
                     sessions.append(parse_aggregate(df,af.name) if is_aggregate(df) else parse_raw(df,af.name))
                 merged=merge_sessions(sessions)
                 data=make_visual_pdf(athlete.get("full_name") or "ATLETA",merged,sessions,"TODOS OS TREINOS",None)
-                b3.download_button("⬇ DASHBOARD VISUAL",data=data,file_name=f"{safe}_dashboard_visual.pdf",mime="application/pdf",key=f"visual_{row['id']}",use_container_width=True)
+                b3.download_button("▦  DASHBOARD VISUAL",data=data,file_name=f"{safe}_dashboard_visual.pdf",mime="application/pdf",key=f"visual_{row['id']}",use_container_width=True)
             except Exception as exc: b3.caption(f"Dashboard indisponível: {exc}")
         else: b3.caption("CSVs não disponíveis para gerar o dashboard")
 

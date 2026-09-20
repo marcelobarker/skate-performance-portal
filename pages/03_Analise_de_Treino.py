@@ -849,9 +849,32 @@ else:
     training_date = date.fromisoformat(history_view["training_date"]) if history_view.get("training_date") else date.today()
     training_title = history_view.get("title") or "Treino"
 
+# V3.6 — resultados das tentativas em vídeo analisadas pelo staff.
+if selected_athlete.get('id'):
+    try:
+        va=sb.table('trick_video_analyses').select('*').eq('athlete_id',selected_athlete['id']).order('analyzed_at',desc=True).execute().data or []
+    except Exception:
+        va=[]
+    if va:
+        st.markdown("### 🎥 Análise das manobras enviadas")
+        total=len(va); hits=sum(1 for x in va if x.get('result')=='Acerto'); errors=total-hits; rate=(hits/total*100) if total else 0
+        m1,m2,m3,m4=st.columns(4); m1.metric('Tentativas',total); m2.metric('Acertos',hits); m3.metric('Erros',errors); m4.metric('Taxa de acerto',f'{rate:.1f}%')
+        def dist(field):
+            out={}
+            for x in va:
+                v=x.get(field)
+                if v: out[v]=out.get(v,0)+1
+            return out
+        d1,d2,d3,d4=st.columns(4)
+        for col,title,field in [(d1,'Avaliação','evaluation'),(d2,'Dificuldade','difficulty'),(d3,'Risco','risk'),(d4,'Velocidade','speed')]:
+            vals=dist(field); col.markdown(f'**{title}**')
+            if vals: col.caption(' • '.join(f'{k}: {v}' for k,v in vals.items()))
+        st.caption('Cada vídeo analisado conta como uma tentativa. Estes resultados são independentes dos CSVs do Sportscode e ficam vinculados ao atleta.')
+        st.divider()
+
 if not files:
     st.title("SKATE PERFORMANCE")
-    st.info("Envie um ou mais CSVs do Sportscode.")
+    st.info("Envie um ou mais CSVs do Sportscode para a análise completa. Se houver vídeos avaliados, o resumo deles aparece acima.")
     st.stop()
 
 sessions=[];problems=[]

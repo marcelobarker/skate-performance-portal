@@ -118,14 +118,14 @@ def _navigation(role):
       }
       .st-key-sp_mobile_nav [data-testid="stPageLink"] a:hover,
       .st-key-sp_mobile_nav [data-testid="stPopover"] button:hover{background:#102C46!important;color:#fff!important}
+      .st-key-sp_mobile_nav [data-testid="stPopover"] button{font-size:0!important;width:48px!important;min-width:48px!important}
+      .st-key-sp_mobile_nav [data-testid="stPopover"] button:before{content:'☰';font-size:24px!important;color:#20E6FF!important}
     }
     </style>""", unsafe_allow_html=True)
     with st.container(key="sp_mobile_nav"):
-        n1,n2,n3=st.columns([1.05,1.05,5.9],gap="small")
+        n1,n2=st.columns([1.15,6.85],gap="small")
         with n1:
-            st.page_link("Home.py", label="⌂ Início", icon=None, use_container_width=True)
-        with n2:
-            with st.popover("☰ Menu", use_container_width=True):
+            with st.popover("☰", use_container_width=True):
                 st.page_link("Home.py", label="Início", use_container_width=True)
                 st.page_link("pages/02_Times.py", label="Times", use_container_width=True)
                 st.page_link("pages/06_Calendario.py", label="Calendário", use_container_width=True)

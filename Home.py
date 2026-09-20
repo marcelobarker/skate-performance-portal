@@ -194,7 +194,7 @@ def svg(kind):
     'upload':"<svg viewBox='0 0 24 24'><path d='M12 16V4M7 9l5-5 5 5M5 20h14'/></svg>"}
     return icons[kind]
 
-st.caption('Portal V3.4 • atualização 20/09/2026')
+st.caption('Portal V3.6 • atualização 20/09/2026')
 st.markdown(f'''<style>
 .sp-home{{margin-top:2px}} .sp-hero2{{height:300px;border:1px solid rgba(20,145,255,.40);border-radius:12px;position:relative;overflow:hidden;background:linear-gradient(90deg,rgba(2,11,20,.88),rgba(2,11,20,.52) 42%,rgba(2,11,20,.16) 72%,rgba(2,11,20,.34) 100%),linear-gradient(0deg,#03111ee8,transparent 55%),{hero_bg} center center/cover no-repeat;box-shadow:0 12px 36px #0008}}
 .sp-hero-copy{{position:absolute;left:8%;top:50%;transform:translateY(-50%);max-width:620px}}.sp-hero-copy h1{{font-size:38px;margin:0 0 8px;color:#fff!important;text-shadow:0 0 18px #087cff45}}.sp-hero-copy p{{font-size:16px;color:#d3dfeb!important;line-height:1.55;margin:0}}
@@ -229,7 +229,7 @@ if role == 'admin':
 st.markdown(f"<div class='sp-home'><div class='sp-hero2'><div class='sp-hero-copy'><h1>Bem-vindo, {first}!</h1><p>Acompanhe o desempenho da sua equipe, veja seus treinos, analise suas manobras e evolua junto com seus atletas.</p></div></div>",unsafe_allow_html=True)
 kpis=[('users',len(athletes),'Atletas','kblue','Ver equipe →','pages/02_Times.py','home_kpi_athletes'),('coach',len(staff),'Técnicos','kgreen','Ver equipe →','pages/02_Times.py','home_kpi_staff'),('team',len(visible_teams),'Times','kpurple','Ver times →','pages/02_Times.py','home_kpi_teams'),('chart',len(visible_trainings),'Treinos','korange','Ver histórico →','pages/04_Historico_de_Treinos.py','home_kpi_trainings')]
 # Mantém exatamente os cards HTML aprovados; um botão transparente por cima cuida só da navegação.
-st.markdown("<style>.sp-nav-overlay [data-testid='stButton']{margin-top:-150px;height:150px;position:relative;z-index:20}.sp-nav-overlay [data-testid='stButton'] button{height:150px!important;opacity:0!important;cursor:pointer!important;border:0!important}.sp-quick-overlay [data-testid='stButton']{margin-top:-122px;height:122px;position:relative;z-index:20}.sp-quick-overlay [data-testid='stButton'] button{height:122px!important;opacity:0!important;cursor:pointer!important;border:0!important}</style>",unsafe_allow_html=True)
+st.markdown("<style>.sp-nav-overlay [data-testid='stButton']{margin-top:-150px;height:150px;position:relative;z-index:20}.sp-nav-overlay [data-testid='stButton'] button{height:150px!important;opacity:0!important;cursor:pointer!important;border:0!important;color:transparent!important;font-size:0!important;box-shadow:none!important;background:transparent!important}.sp-nav-overlay [data-testid='stButton'] button *{display:none!important}.sp-quick-overlay [data-testid='stButton']{margin-top:-122px;height:122px;position:relative;z-index:20}.sp-quick-overlay [data-testid='stButton'] button{height:122px!important;opacity:0!important;cursor:pointer!important;border:0!important;color:transparent!important;font-size:0!important;box-shadow:none!important;background:transparent!important}.sp-quick-overlay [data-testid='stButton'] button *{display:none!important}</style>",unsafe_allow_html=True)
 kcols=st.columns(4,gap='small')
 for col,(ic,num,lab,cl,lk,page,key) in zip(kcols,kpis):
     with col:
