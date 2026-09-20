@@ -15,6 +15,13 @@ def apply_ui_theme():
     [data-testid="stSidebar"]{background:rgba(2,12,23,.98)!important;border-right:1px solid rgba(30,130,200,.28)!important}
     [data-testid="stSidebar"] *{color:var(--text2)!important}
     [data-testid="stSidebarNav"] a{border-radius:8px!important;margin:3px 7px!important;padding:9px 11px!important}
+    [data-testid="stSidebarNav"] a{position:relative!important;padding-left:40px!important}
+    [data-testid="stSidebarNav"] a:before{content:"◆";position:absolute;left:13px;top:50%;transform:translateY(-50%);font-size:13px;color:#29dfff;filter:drop-shadow(0 0 5px #087cff)}
+    [data-testid="stSidebarNav"] a[href*="Times"]:before{content:"♟"}
+    [data-testid="stSidebarNav"] a[href*="Analise"]:before{content:"▥"}
+    [data-testid="stSidebarNav"] a[href*="Historico"]:before{content:"◷"}
+    [data-testid="stSidebarNav"] a[href*="Perfil"]:before{content:"●"}
+    [data-testid="stSidebarNav"] a[href*="Calendario"]:before{content:"▣"}
     [data-testid="stSidebarNav"] a:hover{background:rgba(20,80,125,.20)!important;color:#fff!important}
     [data-testid="stSidebarNav"] a[aria-current="page"]{background:linear-gradient(90deg,rgba(0,110,235,.75),rgba(0,70,160,.55))!important;border:1px solid rgba(0,140,255,.40)!important;box-shadow:0 0 12px rgba(0,100,255,.15)!important}
     h1,h2,h3,h4,h5,h6{color:var(--text)!important;letter-spacing:-.02em} p,label,span{color:inherit} small,.stCaption{color:var(--muted)!important}
