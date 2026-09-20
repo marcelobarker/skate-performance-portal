@@ -22,7 +22,8 @@ st.title("👤 Meu Perfil")
 st.caption("Atualize seus dados pessoais, esportivos e sua foto. Perfil de acesso e status são controlados pelo administrador.")
 if profile.get("photo_url"): st.image(profile["photo_url"], width=150)
 st.markdown(f"### {profile.get('full_name') or 'Usuário'}")
-st.caption(f"{profile.get('email') or ''} • {(profile.get('role') or '').upper()}")
+role_label = 'ADMINISTRADOR • MEMBRO DO STAFF' if profile.get('role') == 'admin' else (profile.get('role') or '').upper()
+st.caption(f"{profile.get('email') or ''} • {role_label}")
 
 def upload_photo(uploaded):
     ext=(uploaded.name.rsplit('.',1)[-1] if '.' in uploaded.name else 'jpg').lower()

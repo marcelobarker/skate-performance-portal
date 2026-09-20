@@ -31,7 +31,7 @@ st.markdown("""<style>
 [data-baseweb="popover"],[data-baseweb="menu"],[role="listbox"],[data-baseweb="calendar"]{background:#081827!important;color:#eef8ff!important}[role="option"]{background:#081827!important;color:#eef8ff!important}
 </style>""", unsafe_allow_html=True)
 st.markdown("""<style>
-[data-testid="stHeader"],header[data-testid="stHeader"],[data-testid="stToolbar"]{display:none!important}
+[data-testid="stToolbar"]{display:none!important}
 .stApp,[data-testid="stAppViewContainer"]{background:#06111f!important;color:#eef8ff!important}
 [data-testid="stSidebar"]{background:#081827!important}[data-testid="stSidebar"] *{color:#d9eafa!important}
 .block-container{padding-top:1.2rem!important} h1,h2,h3,p,label{color:#eef8ff!important}
@@ -47,7 +47,8 @@ user, me = require_login(admin=True)
 sb = get_supabase()
 
 st.title("👥 Cadastros e permissões")
-st.caption("Gerencie skatistas e técnicos. Novas contas entram como pendentes até sua aprovação.")
+st.caption("Aqui você altera o cargo/função de cada pessoa. Para colocar ou remover pessoas de um time, use Gerenciar Times.")
+st.page_link("pages/02_Times.py", label="🛹 Abrir gerenciamento de times", use_container_width=True)
 
 
 def fetch_profiles():

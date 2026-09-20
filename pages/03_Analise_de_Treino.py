@@ -473,9 +473,9 @@ def make_pdf(athlete, cur, sessions, choice):
     buf=io.BytesIO()
     doc=SimpleDocTemplate(buf,pagesize=landscape(A4),rightMargin=12*mm,leftMargin=12*mm,topMargin=12*mm,bottomMargin=12*mm)
     styles=getSampleStyleSheet()
-    title=ParagraphStyle("T",parent=styles["Title"],fontName="Helvetica-Bold",fontSize=22,textColor=colors.HexColor("#0D4E7A"),alignment=TA_LEFT,spaceAfter=5)
-    h=ParagraphStyle("H",parent=styles["Heading2"],fontName="Helvetica-Bold",fontSize=13,textColor=colors.HexColor("#0D4E7A"),spaceBefore=8,spaceAfter=6)
-    body=ParagraphStyle("B",parent=styles["BodyText"],fontSize=9,textColor=colors.HexColor("#263746"))
+    title=ParagraphStyle("T",parent=styles["Title"],fontName="Helvetica-Bold",fontSize=32,textColor=colors.HexColor("#0D4E7A"),alignment=TA_LEFT,spaceAfter=5)
+    h=ParagraphStyle("H",parent=styles["Heading2"],fontName="Helvetica-Bold",fontSize=20,textColor=colors.HexColor("#0D4E7A"),spaceBefore=8,spaceAfter=6)
+    body=ParagraphStyle("B",parent=styles["BodyText"],fontSize=13,textColor=colors.HexColor("#263746"))
     story=[Paragraph("SKATE PERFORMANCE",title),
            Paragraph(f"{athlete or 'ATLETA'} - {choice}",body),Spacer(1,6)]
     rate=cur["hits"]/cur["attempts"]*100 if cur["attempts"] else 0
@@ -485,7 +485,7 @@ def make_pdf(athlete, cur, sessions, choice):
     kt.setStyle(TableStyle([
         ("BACKGROUND",(0,0),(-1,0),colors.HexColor("#0D4E7A")),("TEXTCOLOR",(0,0),(-1,0),colors.white),
         ("BACKGROUND",(0,1),(-1,1),colors.HexColor("#EDF5FA")),("TEXTCOLOR",(0,1),(-1,1),colors.HexColor("#102536")),
-        ("FONTNAME",(0,0),(-1,-1),"Helvetica-Bold"),("FONTSIZE",(0,0),(-1,0),8),("FONTSIZE",(0,1),(-1,1),16),
+        ("FONTNAME",(0,0),(-1,-1),"Helvetica-Bold"),("FONTSIZE",(0,0),(-1,0),10),("FONTSIZE",(0,1),(-1,1),20),
         ("ALIGN",(0,0),(-1,-1),"CENTER"),("VALIGN",(0,0),(-1,-1),"MIDDLE"),
         ("GRID",(0,0),(-1,-1),0.5,colors.HexColor("#A9C7DA"))
     ]))
@@ -500,7 +500,7 @@ def make_pdf(athlete, cur, sessions, choice):
         ("BACKGROUND",(0,0),(-1,0),colors.HexColor("#102C43")),("TEXTCOLOR",(0,0),(-1,0),colors.white),
         ("ROWBACKGROUNDS",(0,1),(-1,-1),[colors.white,colors.HexColor("#F4F8FB")]),
         ("TEXTCOLOR",(0,1),(-1,-1),colors.HexColor("#1D2D3A")),("FONTNAME",(0,0),(-1,0),"Helvetica-Bold"),
-        ("FONTSIZE",(0,0),(-1,-1),8),("GRID",(0,0),(-1,-1),0.35,colors.HexColor("#C9D9E4")),
+        ("FONTSIZE",(0,0),(-1,-1),10),("GRID",(0,0),(-1,-1),0.35,colors.HexColor("#C9D9E4")),
         ("ALIGN",(1,1),(-1,-1),"CENTER"),("VALIGN",(0,0),(-1,-1),"MIDDLE")
     ]))
     story.append(mt)
@@ -515,7 +515,7 @@ def make_pdf(athlete, cur, sessions, choice):
         et.setStyle(TableStyle([
             ("BACKGROUND",(0,0),(-1,0),colors.HexColor("#102C43")),("TEXTCOLOR",(0,0),(-1,0),colors.white),
             ("ROWBACKGROUNDS",(0,1),(-1,-1),[colors.white,colors.HexColor("#F4F8FB")]),
-            ("GRID",(0,0),(-1,-1),0.35,colors.HexColor("#C9D9E4")),("FONTSIZE",(0,0),(-1,-1),8),
+            ("GRID",(0,0),(-1,-1),0.35,colors.HexColor("#C9D9E4")),("FONTSIZE",(0,0),(-1,-1),10),
             ("FONTNAME",(0,0),(-1,0),"Helvetica-Bold"),("ALIGN",(1,1),(-1,-1),"CENTER")
         ]))
         story.append(et)
@@ -548,41 +548,41 @@ def make_visual_pdf(athlete, cur, sessions, choice, photo_file=None):
         c.setFillColor(panel); c.roundRect(10*mm,H-31*mm,W-20*mm,20*mm,4*mm,fill=1,stroke=0)
         # Cabeçalho com posições calculadas para nunca sobrepor PERFORMANCE / TIME BRASIL
         hx=17*mm
-        c.setFillColor(white); c.setFont("Helvetica-BoldOblique",19)
+        c.setFillColor(white); c.setFont("Helvetica-BoldOblique",23)
         c.drawString(hx,H-22*mm,"SKATE")
-        skate_w=c.stringWidth("SKATE","Helvetica-BoldOblique",19)
+        skate_w=c.stringWidth("SKATE","Helvetica-BoldOblique",23)
 
         perf_x=hx+skate_w+2.0*mm
-        c.setFillColor(blue); c.setFont("Helvetica-BoldOblique",19)
+        c.setFillColor(blue); c.setFont("Helvetica-BoldOblique",23)
         c.drawString(perf_x,H-22*mm,"PERFORMANCE")
-        perf_w=c.stringWidth("PERFORMANCE","Helvetica-BoldOblique",19)
+        perf_w=c.stringWidth("PERFORMANCE","Helvetica-BoldOblique",23)
 
         time_x=perf_x+perf_w+5.5*mm
         c.setStrokeColor(colors.HexColor("#6f8da5")); c.setLineWidth(.6)
         c.line(time_x-2.8*mm,H-26*mm,time_x-2.8*mm,H-16.5*mm)
-        c.setFillColor(white); c.setFont("Helvetica-Bold",9.5)
+        c.setFillColor(white); c.setFont("Helvetica-Bold",11.5)
         c.drawString(time_x,H-22*mm,"TIME BRASIL")
-        c.setFillColor(lightblue); c.setFont("Helvetica",7); c.drawString(17*mm,H-27*mm,sub)
-        c.setFillColor(blue); c.setFont("Helvetica-Bold",8); c.drawRightString(W-17*mm,H-21*mm,"SPORTSCODE ANALYTICS")
-        c.setFillColor(muted); c.setFont("Helvetica",6.5); c.drawRightString(W-17*mm,H-26*mm,"TRAINING DATA DASHBOARD")
+        c.setFillColor(lightblue); c.setFont("Helvetica",8.5); c.drawString(17*mm,H-27*mm,sub)
+        c.setFillColor(blue); c.setFont("Helvetica-Bold",9.5); c.drawRightString(W-17*mm,H-21*mm,"SPORTSCODE ANALYTICS")
+        c.setFillColor(muted); c.setFont("Helvetica",8); c.drawRightString(W-17*mm,H-26*mm,"TRAINING DATA DASHBOARD")
 
     def section(title,y):
-        c.setFillColor(white); c.setFont("Helvetica-Bold",12); c.drawString(12*mm,y,title)
+        c.setFillColor(white); c.setFont("Helvetica-Bold",17); c.drawString(12*mm,y,title)
 
     def card(x,y,w,h,label,value,sub="",value_color=None):
         c.setFillColor(panel2); c.roundRect(x,y,w,h,3*mm,fill=1,stroke=0)
         c.setStrokeColor(colors.HexColor("#245071")); c.roundRect(x,y,w,h,3*mm,fill=0,stroke=1)
-        c.setFillColor(muted); c.setFont("Helvetica-Bold",8.5); c.drawString(x+4*mm,y+h-7*mm,label)
-        c.setFillColor(value_color or white); c.setFont("Helvetica-Bold",21); c.drawString(x+4*mm,y+8*mm,str(value))
+        c.setFillColor(muted); c.setFont("Helvetica-Bold",12.5); c.drawString(x+4*mm,y+h-7*mm,label)
+        c.setFillColor(value_color or white); c.setFont("Helvetica-Bold",30); c.drawString(x+4*mm,y+8*mm,str(value))
         if sub:
-            c.setFillColor(lightblue if value_color is None else value_color); c.setFont("Helvetica",8); c.drawString(x+4*mm,y+3.5*mm,sub)
+            c.setFillColor(lightblue if value_color is None else value_color); c.setFont("Helvetica",11.5); c.drawString(x+4*mm,y+3.5*mm,sub)
 
     def donut(x,y,r,title,data,colorset=None):
         vals=[(str(k),float(v)) for k,v in data.items() if float(v)>0]
         total=sum(v for _,v in vals)
-        c.setFillColor(white); c.setFont("Helvetica-Bold",11); c.drawCentredString(x,y+r+9*mm,title)
+        c.setFillColor(white); c.setFont("Helvetica-Bold",15); c.drawCentredString(x,y+r+9*mm,title)
         if not vals or total<=0:
-            c.setFillColor(muted); c.setFont("Helvetica",8); c.drawCentredString(x,y,"SEM DADOS"); return
+            c.setFillColor(muted); c.setFont("Helvetica",10); c.drawCentredString(x,y,"SEM DADOS"); return
 
         # Cores fixas por significado. Assim pizza e legenda sempre usam a MESMA cor,
         # independentemente da ordem em que o Sportscode exportar as categorias.
@@ -618,7 +618,7 @@ def make_visual_pdf(athlete, cur, sessions, choice, photo_file=None):
             ty = y + math.sin(mid) * r * .79
             pct = v / total * 100
             c.setFillColor(white)
-            c.setFont("Helvetica-Bold", 11.5 if extent >= 24 else 9.0)
+            c.setFont("Helvetica-Bold", 15.5 if extent >= 24 else 12.0)
             c.drawCentredString(tx, ty-1.5, f"{pct:.0f}%")
             angle+=extent
         c.setFillColor(bg); c.circle(x,y,r*.58,fill=1,stroke=0)
@@ -627,12 +627,12 @@ def make_visual_pdf(athlete, cur, sessions, choice, photo_file=None):
         for i,(lab,v) in enumerate(vals[:8]):
             row=i//2; col=i%2; lx=x-r+col*colw
             c.setFillColor(assigned[i]); c.rect(lx,ly-row*5*mm,2.5*mm,2.5*mm,fill=1,stroke=0)
-            c.setFillColor(white); c.setFont("Helvetica-Bold",7.2)
+            c.setFillColor(white); c.setFont("Helvetica-Bold",10.8)
             pct=v/total*100
             c.drawString(lx+4*mm,ly-row*5*mm,f"{lab[:16]}  {pct:.1f}%")
 
     def line_chart(x,y,w,h,title,values,color=blue,suffix=""):
-        c.setFillColor(white); c.setFont("Helvetica-Bold",9); c.drawString(x,y+h+5*mm,title)
+        c.setFillColor(white); c.setFont("Helvetica-Bold",13); c.drawString(x,y+h+5*mm,title)
         c.setStrokeColor(colors.HexColor("#173047")); c.setLineWidth(.5)
         for j in range(5):
             gy=y+j*h/4; c.line(x,gy,x+w,gy)
@@ -644,8 +644,8 @@ def make_visual_pdf(athlete, cur, sessions, choice, photo_file=None):
         for a,b in zip(pts,pts[1:]): c.line(a[0],a[1],b[0],b[1])
         for i,(xx,yy) in enumerate(pts):
             c.setFillColor(color); c.circle(xx,yy,1.7*mm,fill=1,stroke=0)
-            c.setFillColor(white); c.setFont("Helvetica-Bold",6); c.drawCentredString(xx,yy+3*mm,f"{values[i]:.1f}{suffix}")
-            c.setFillColor(muted); c.setFont("Helvetica",5.3); c.drawCentredString(xx,y-4*mm,sessions[i]["name"][:24])
+            c.setFillColor(white); c.setFont("Helvetica-Bold",8); c.drawCentredString(xx,yy+3*mm,f"{values[i]:.1f}{suffix}")
+            c.setFillColor(muted); c.setFont("Helvetica",7); c.drawCentredString(xx,y-4*mm,sessions[i]["name"][:24])
 
     # PAGE 1
     page_bg(); header()
@@ -659,8 +659,8 @@ def make_visual_pdf(athlete, cur, sessions, choice, photo_file=None):
             dw,dh=iw*scale,ih*scale
             c.drawImage(im,px+(pw-dw)/2,py+(ph-dh)/2,dw,dh,preserveAspectRatio=True,mask='auto')
         except Exception: pass
-    c.setFillColor(white); c.setFont("Helvetica-Bold",15); c.drawString(12*mm,H-101*mm,(athlete or "ATLETA").upper())
-    c.setFillColor(muted); c.setFont("Helvetica",8.5); c.drawString(12*mm,H-107*mm,f"{len(sessions)} treino(s) • {choice}")
+    c.setFillColor(white); c.setFont("Helvetica-Bold",22); c.drawString(12*mm,H-101*mm,(athlete or "ATLETA").upper())
+    c.setFillColor(muted); c.setFont("Helvetica",12); c.drawString(12*mm,H-107*mm,f"{len(sessions)} treino(s) • {choice}")
 
     rate=cur["hits"]/cur["attempts"]*100 if cur["attempts"] else 0
     vals=[("TENTATIVAS",f'{cur["attempts"]:.0f}',"volume total",None),
@@ -685,7 +685,7 @@ def make_visual_pdf(athlete, cur, sessions, choice, photo_file=None):
     tx=12*mm; ty=H-232*mm; widths=[12*mm,220*mm,38*mm,38*mm,38*mm,44*mm]
     headers=["#","MANOBRA","ACERTOS","ERROS","TOTAL","TAXA"]
     c.setFillColor(colors.HexColor("#0d2237")); c.rect(tx,ty-8*mm,sum(widths),8*mm,fill=1,stroke=0)
-    c.setFillColor(muted); c.setFont("Helvetica-Bold",8.5); xx=tx
+    c.setFillColor(muted); c.setFont("Helvetica-Bold",10.5); xx=tx
     for h,w in zip(headers,widths): c.drawString(xx+2*mm,ty-5*mm,h); xx+=w
     yy=ty-15*mm
     all_maneuvers=sorted(cur["maneuvers"].items(),key=lambda z:sum(z[1]),reverse=True)
@@ -695,7 +695,7 @@ def make_visual_pdf(athlete, cur, sessions, choice, photo_file=None):
         c.setFillColor(panel if idx%2 else panel2); c.rect(tx,yy,sum(widths),6.7*mm,fill=1,stroke=0)
         xx=tx
         for j,(v,w) in enumerate(zip(row,widths)):
-            c.setFillColor(red if j==3 else (blue if j in (2,5) else white)); c.setFont("Helvetica-Bold" if j in (1,2,3,5) else "Helvetica",8.2)
+            c.setFillColor(red if j==3 else (blue if j in (2,5) else white)); c.setFont("Helvetica-Bold" if j in (1,2,3,5) else "Helvetica",11.5)
             c.drawString(xx+2*mm,yy+2.2*mm,v); xx+=w
         yy-=7.2*mm
     c.showPage()
@@ -710,7 +710,7 @@ def make_visual_pdf(athlete, cur, sessions, choice, photo_file=None):
         widths=[12*mm,220*mm,38*mm,38*mm,38*mm,44*mm]
         headers=["#","MANOBRA","ACERTOS","ERROS","TOTAL","TAXA"]
         c.setFillColor(colors.HexColor("#0d2237")); c.rect(tx,ty-9*mm,sum(widths),9*mm,fill=1,stroke=0)
-        c.setFillColor(muted); c.setFont("Helvetica-Bold",8.5); xx=tx
+        c.setFillColor(muted); c.setFont("Helvetica-Bold",10.5); xx=tx
         for h,w in zip(headers,widths):
             c.drawString(xx+2*mm,ty-5.8*mm,h); xx+=w
         yy=ty-17*mm
@@ -723,10 +723,10 @@ def make_visual_pdf(athlete, cur, sessions, choice, photo_file=None):
             xx=tx
             for j,(v,w) in enumerate(zip(row,widths)):
                 c.setFillColor(red if j==3 else (blue if j in (2,5) else white))
-                c.setFont("Helvetica-Bold" if j in (1,2,3,5) else "Helvetica",8.2)
+                c.setFont("Helvetica-Bold" if j in (1,2,3,5) else "Helvetica",11.5)
                 c.drawString(xx+2*mm,yy+2.3*mm,v); xx+=w
             yy-=7.6*mm
-        c.setFillColor(muted); c.setFont("Helvetica",6)
+        c.setFillColor(muted); c.setFont("Helvetica",8)
         c.drawRightString(W-12*mm,10*mm,f"Manobras {9+chunk_start}–{8+chunk_start+len(chunk)} de {len(all_maneuvers)}")
         c.showPage()
 
@@ -757,6 +757,18 @@ def table_html(mans):
             '<th>#</th><th>MANOBRA</th><th>ACERTOS</th><th>ERROS</th><th>TOTAL</th><th>TAXA DE ACERTO</th>'
             '</tr></thead><tbody>' + "".join(rows) + '</tbody></table></div>')
 
+
+st.markdown("""<style>
+@media(max-width:768px){
+  [data-testid="stHorizontalBlock"]{flex-wrap:wrap!important;gap:.65rem!important}
+  [data-testid="stHorizontalBlock"] > [data-testid="stColumn"]{flex:1 1 100%!important;width:100%!important;min-width:100%!important}
+  [data-testid="stPlotlyChart"]{width:100%!important;max-width:100%!important;overflow:visible!important}
+  [data-testid="stPlotlyChart"] > div{width:100%!important}
+  .js-plotly-plot,.plot-container,.svg-container{width:100%!important;max-width:100%!important}
+  .sk-table{font-size:11px!important;min-width:680px!important}
+  .table-wrap{overflow-x:auto!important;-webkit-overflow-scrolling:touch!important}
+}
+</style>""",unsafe_allow_html=True)
 st.markdown("""
 <div class="site-header">
   <div>
@@ -1421,6 +1433,19 @@ st.markdown("""
 [data-testid="stFileUploader"] button * {
     color:#0b2942 !important;
     -webkit-text-fill-color:#0b2942 !important;
+}
+</style>
+""", unsafe_allow_html=True)
+
+# V3.0 — proteção responsiva para gráficos e controles no celular.
+st.markdown("""
+<style>
+@media (max-width: 768px) {
+  [data-testid="stHorizontalBlock"] { flex-wrap: wrap !important; gap: .75rem !important; }
+  [data-testid="stHorizontalBlock"] > [data-testid="stColumn"] { min-width: 100% !important; width: 100% !important; flex: 1 1 100% !important; }
+  [data-testid="stPlotlyChart"], [data-testid="stPlotlyChart"] > div { width: 100% !important; max-width: 100% !important; overflow: visible !important; }
+  .js-plotly-plot, .plot-container, .svg-container { width: 100% !important; max-width: 100% !important; }
+  .main .block-container { padding-left: .7rem !important; padding-right: .7rem !important; }
 }
 </style>
 """, unsafe_allow_html=True)

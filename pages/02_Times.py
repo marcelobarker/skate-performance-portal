@@ -64,7 +64,13 @@ for team in teams:
                     meta=(f"♙ {str(ag)+' anos' if ag is not None else '—'}<br>◉ {safe(p.get('modality'))}<br>⌖ {safe(loc)}") if p.get('role')=='skatista' else f"◉ {safe(p.get('modality'))}<br>⌖ {safe(loc)}"
                     st.markdown(f"<div class='member-card'>{pic}<div class='member-info'><div class='member-name'>{safe(p.get('full_name'))}</div><div class='badge{orange}'>{safe(rolelbl)}</div><div class='member-meta'>{meta}</div></div></div>",unsafe_allow_html=True)
                     st.markdown("<div class='eye-row'>",unsafe_allow_html=True)
-                    if st.button('👁  Ver cartão',key=f"eye_{tid}_{p['id']}",use_container_width=True): card(p)
+                    if p.get('role')=='skatista':
+                        b1,b2=st.columns(2,gap='small')
+                        if b1.button('👁 Cartão',key=f"eye_{tid}_{p['id']}",use_container_width=True): card(p)
+                        if b2.button('◉ Perfil / Feed',key=f"feed_{tid}_{p['id']}",use_container_width=True):
+                            st.session_state['selected_athlete_id']=p['id']; st.switch_page('pages/07_Perfil_do_Atleta.py')
+                    else:
+                        if st.button('👁  Ver cartão',key=f"eye_{tid}_{p['id']}",use_container_width=True): card(p)
                     st.markdown('</div>',unsafe_allow_html=True)
     if is_admin:
         with st.expander('⚙️ Gerenciar time'):
