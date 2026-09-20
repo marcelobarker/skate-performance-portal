@@ -12,7 +12,7 @@ def apply_ui_theme():
     .stApp,[data-testid="stAppViewContainer"]{background:radial-gradient(circle at 20% 0%,rgba(0,110,255,.08),transparent 35%),linear-gradient(180deg,var(--bg-main),var(--bg-deep))!important;color:var(--text)!important}
     [data-testid="stHeader"]{background:transparent!important;box-shadow:none!important}
     [data-testid="stToolbar"],[data-testid="stDecoration"],header [data-testid="stStatusWidget"]{display:none!important}
-    [data-testid="stSidebarCollapsedControl"],button[data-testid="stSidebarCollapsedControl"]{display:flex!important;background:#08233A!important;color:#fff!important;border:1px solid #159BFF!important;border-radius:8px!important;box-shadow:0 0 14px rgba(0,124,255,.18)!important}
+    [data-testid="stSidebarCollapsedControl"],button[data-testid="stSidebarCollapsedControl"],[data-testid="stSidebarCollapseButton"]{display:flex!important;position:relative!important;z-index:999999!important;background:#08233A!important;color:#fff!important;border:1px solid #159BFF!important;border-radius:8px!important;box-shadow:0 0 14px rgba(0,124,255,.18)!important}
     [data-testid="stSidebarCollapsedControl"] *{color:#fff!important}
     .block-container{max-width:1480px!important;padding-top:1.05rem!important;padding-left:1.45rem!important;padding-right:1.45rem!important;padding-bottom:2rem!important}
     [data-testid="stSidebar"]{background:rgba(2,12,23,.98)!important;border-right:1px solid rgba(30,130,200,.28)!important}
@@ -62,7 +62,7 @@ def apply_ui_theme():
     button:not([data-testid="stSidebarCollapseButton"]){--button-background-color:#08233A!important}
     [data-testid="stPopover"] button,[data-testid="stPageLink"] a{background:#08233A!important;color:#dff6ff!important;border-color:#135C91!important}
     /* V3.2: hard dark rule — no native white controls */
-    button,[role="button"],[data-testid="stBaseButton-secondary"],[data-testid="stBaseButton-tertiary"],summary{background-color:#08233A!important;color:#F5F8FC!important;border-color:#135C91!important}
+    button,[role="button"],[data-testid="stBaseButton-secondary"],[data-testid="stBaseButton-tertiary"],summary,[data-baseweb="select"]>div{background-color:#08233A!important;color:#F5F8FC!important;border-color:#135C91!important}
     button svg,button span,button p,summary span,summary p{color:#F5F8FC!important;fill:currentColor!important}
     [data-baseweb="select"] svg,[data-testid="stSelectbox"] svg{color:#C4D1DF!important;fill:#C4D1DF!important}
     label,legend,[data-testid="stWidgetLabel"] p{color:#C4D1DF!important}

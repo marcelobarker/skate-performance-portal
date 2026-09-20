@@ -130,7 +130,7 @@ def _navigation(role):
                 st.page_link("pages/02_Times.py", label="Times", use_container_width=True)
                 st.page_link("pages/06_Calendario.py", label="Calendário", use_container_width=True)
                 st.page_link("pages/08_Livro_de_Manobras.py", label="Livro de Manobras", use_container_width=True)
-                if role == "skatista": st.page_link("pages/09_Enviar_Manobra.py", label="Enviar Manobra", use_container_width=True)
+                if role in ("skatista","admin","tecnico"): st.page_link("pages/09_Enviar_Manobra.py", label="Enviar Manobra", use_container_width=True)
                 if role not in ("skatista","familiar"):
                     st.page_link("pages/03_Analise_de_Treino.py", label="Análise", use_container_width=True)
                 st.page_link("pages/04_Historico_de_Treinos.py", label="Meus Treinos", use_container_width=True)
@@ -145,6 +145,7 @@ def _navigation(role):
             st.page_link("pages/01_Cadastros.py", label="👥 Cargos e cadastros", use_container_width=True)
             st.page_link("pages/02_Times.py", label="🛹 Gerenciar times", use_container_width=True)
             st.page_link("pages/08_Livro_de_Manobras.py", label="📚 Livro de Manobras", use_container_width=True)
+            st.page_link("pages/09_Enviar_Manobra.py", label="🎥 Enviar Manobra", use_container_width=True)
     if role != "admin":
         st.markdown("""<style>[data-testid="stSidebarNav"] a[href*="01_Cadastros"],[data-testid="stSidebarNav"] a[href*="Cadastros"]{display:none!important}</style>""", unsafe_allow_html=True)
     if role in ("skatista", "familiar"):

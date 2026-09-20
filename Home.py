@@ -201,7 +201,7 @@ def svg(kind):
     'upload':"<svg viewBox='0 0 24 24'><path d='M12 16V4M7 9l5-5 5 5M5 20h14'/></svg>"}
     return icons[kind]
 
-st.caption('Portal V3.1 • atualização 20/09/2026')
+st.caption('Portal V3.3 • atualização 20/09/2026')
 st.markdown(f'''<style>
 .sp-home{{margin-top:2px}} .sp-hero2{{height:300px;border:1px solid rgba(20,145,255,.40);border-radius:12px;position:relative;overflow:hidden;background:linear-gradient(90deg,rgba(2,11,20,.88),rgba(2,11,20,.52) 42%,rgba(2,11,20,.16) 72%,rgba(2,11,20,.34) 100%),linear-gradient(0deg,#03111ee8,transparent 55%),{hero_bg} center center/cover no-repeat;box-shadow:0 12px 36px #0008}}
 .sp-hero-copy{{position:absolute;left:8%;top:50%;transform:translateY(-50%);max-width:620px}}.sp-hero-copy h1{{font-size:38px;margin:0 0 8px;color:#fff!important;text-shadow:0 0 18px #087cff45}}.sp-hero-copy p{{font-size:16px;color:#d3dfeb!important;line-height:1.55;margin:0}}
@@ -234,15 +234,22 @@ if role == 'admin':
                 st.success('Imagem de boas-vindas atualizada.'); st.rerun()
             except Exception as e: st.error(f'Não foi possível salvar a imagem: {e}')
 st.markdown(f"<div class='sp-home'><div class='sp-hero2'><div class='sp-hero-copy'><h1>Bem-vindo, {first}!</h1><p>Acompanhe o desempenho da sua equipe, veja seus treinos, analise suas manobras e evolua junto com seus atletas.</p></div></div>",unsafe_allow_html=True)
-kpis=[('users',len(athletes),'Atletas','kblue','Ver equipe →','?nav=athletes'),('coach',len(staff),'Técnicos','kgreen','Ver equipe →','?nav=staff'),('team',len(visible_teams),'Times','kpurple','Ver times →','?nav=teams'),('chart',len(visible_trainings),'Treinos','korange','Ver histórico →','?nav=trainings')]
-html="<div class='sp-kpi-grid'>"
-for ic,num,lab,cl,lk,route in kpis: html+=f"<a class='sp-card-link' href='{route}' target='_self'><div class='sp-kpi2 {cl}'>{svg(ic)}<div class='num'>{num}</div><div class='label'>{lab}</div><div class='link'>{lk}</div></div></a>"
-st.markdown(html+'</div>',unsafe_allow_html=True)
+kpis=[('👥',len(athletes),'Atletas','Ver equipe →','pages/02_Times.py','kpi_athletes'),('◎',len(staff),'Técnicos','Ver equipe →','pages/02_Times.py','kpi_staff'),('◆',len(visible_teams),'Times','Ver times →','pages/02_Times.py','kpi_teams'),('▥',len(visible_trainings),'Treinos','Ver histórico →','pages/04_Historico_de_Treinos.py','kpi_trainings')]
+st.markdown("""<style>
+.st-key-kpi_athletes button,.st-key-kpi_staff button,.st-key-kpi_teams button,.st-key-kpi_trainings button{height:150px!important;text-align:left!important;justify-content:flex-start!important;font-size:18px!important;font-weight:800!important;border-radius:14px!important;white-space:pre-line!important}
+.st-key-kpi_athletes button{border-color:#087cff!important;box-shadow:0 0 24px #087cff25!important}.st-key-kpi_staff button{border-color:#00c878!important;box-shadow:0 0 24px #00c87822!important}.st-key-kpi_teams button{border-color:#9b35f5!important;box-shadow:0 0 24px #9b35f522!important}.st-key-kpi_trainings button{border-color:#f07b00!important;box-shadow:0 0 24px #f07b0022!important}
+</style>""",unsafe_allow_html=True)
+kcols=st.columns(4,gap="small")
+for col,(ic,num,lab,lk,page,key) in zip(kcols,kpis):
+    with col:
+        if st.button(f"{ic}  {num}\n{lab}\n{lk}",key=key,width="stretch"): st.switch_page(page)
 st.markdown("<div class='sp-title'>Acesso rápido</div>",unsafe_allow_html=True)
-quick=[('team','Times','Veja sua equipe e os membros','pages/02_Times.py'),('calendar','Calendário','Próximos eventos','pages/06_Calendario.py'),('chart','Nova Análise','Analisar um CSV','pages/03_Analise_de_Treino.py'),('profile','Meu Perfil','Editar meus dados','pages/05_Meu_Perfil.py')]
-if role in ('skatista','familiar'): quick[2]=('chart','Meus Treinos','Histórico e relatórios','pages/04_Historico_de_Treinos.py')
-route_map={'pages/02_Times.py':'?nav=teams','pages/06_Calendario.py':'?nav=calendar','pages/03_Analise_de_Treino.py':'?nav=analysis','pages/04_Historico_de_Treinos.py':'?nav=trainings','pages/05_Meu_Perfil.py':'?nav=profile'}
-st.markdown("<div class='sp-quick-grid'>"+''.join(f"<a class='sp-card-link' href='{route_map.get(page,'/')}' target='_self'><div class='sp-q'>{svg(ic)}<div class='qt'>{t}</div><div class='qs'>{sub}</div></div></a>" for ic,t,sub,page in quick)+"</div>",unsafe_allow_html=True)
+quick=[('Times','Veja sua equipe e os membros','pages/02_Times.py'),('Calendário','Próximos eventos','pages/06_Calendario.py'),('Nova Análise','Analisar um CSV','pages/03_Analise_de_Treino.py'),('Meu Perfil','Editar meus dados','pages/05_Meu_Perfil.py')]
+if role in ('skatista','familiar'): quick[2]=('Meus Treinos','Histórico e relatórios','pages/04_Historico_de_Treinos.py')
+qcols=st.columns(4,gap="small")
+for i,(t,sub,page) in enumerate(quick):
+    with qcols[i]:
+        if st.button(f"{t}\n{sub}",key=f"quick_{i}",width="stretch"): st.switch_page(page)
 
 def age(v):
     try:
