@@ -9,7 +9,10 @@ import streamlit as st
 import streamlit.components.v1 as components
 from PIL import Image
 
+from ui_theme import apply_ui_theme
+
 st.set_page_config(page_title="Skate Performance", page_icon="🛹", layout="wide")
+apply_ui_theme()
 
 st.markdown("""<style>
 /* V2.0 — controles globais escuros */

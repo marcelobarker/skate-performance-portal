@@ -3,7 +3,10 @@ from datetime import date
 import streamlit as st
 from auth_utils import require_login, get_supabase, load_profile
 
+from ui_theme import apply_ui_theme
+
 st.set_page_config(page_title="Meu Perfil • Skate Performance", page_icon="👤", layout="wide")
+apply_ui_theme()
 st.markdown("""<style>
 .stApp,[data-testid="stAppViewContainer"]{background:#06111f!important;color:#eef8ff!important}
 [data-testid="stSidebar"]{background:#081827!important}[data-testid="stSidebar"] *{color:#d9eafa!important}

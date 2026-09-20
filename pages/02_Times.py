@@ -2,7 +2,10 @@ from datetime import date
 import streamlit as st
 from auth_utils import require_login, get_supabase
 
+from ui_theme import apply_ui_theme
+
 st.set_page_config(page_title="Times • Skate Performance", page_icon="🛹", layout="wide")
+apply_ui_theme()
 st.markdown("""<style>
 .stApp,[data-testid="stAppViewContainer"]{background:#06111f!important;color:#eef8ff!important}[data-testid="stSidebar"]{background:#081827!important}[data-testid="stSidebar"] *{color:#d9eafa!important}[data-testid="stHeader"],[data-testid="stToolbar"]{display:none!important}.block-container{padding-top:1.2rem!important}h1,h2,h3,p,label{color:#eef8ff!important}
 [data-testid="stButton"] button,[data-testid="stFormSubmitButton"] button{background:#0b1d31!important;color:#eef8ff!important;border:1px solid #245274!important;border-radius:10px!important}
@@ -12,10 +15,24 @@ st.markdown("""<style>
 user,profile=require_login(); sb=get_supabase(); is_admin=profile.get("role")=="admin"
 ROLE_LABELS={"admin":"Admin","skatista":"Atleta","tecnico":"Técnico","presidente":"Presidente","vice_presidente":"Vice-presidente","chefe_equipe":"Chefe de Equipe","comissao_tecnica":"Comissão Técnica","familiar":"Familiar"}
 STAFF_ROLES={"admin","tecnico","presidente","vice_presidente","chefe_equipe","comissao_tecnica"}
-@st.dialog("Foto do membro")
-def show_photo(name,url):
-    st.markdown(f"### {name}")
-    st.image(url,use_container_width=True)
+@st.dialog("Cartão do membro", width="large")
+def show_photo(person):
+    name=person.get("full_name") or "Membro"
+    url=person.get("photo_url")
+    role_label=ROLE_LABELS.get(person.get("role"),person.get("role") or "Membro")
+    years=age(person.get("birth_date"))
+    loc=" / ".join([x for x in [person.get("city"),person.get("state")] if x]) or "—"
+    base=person.get("stance") or "—"
+    modality=person.get("modality") or "—"
+    st.markdown("<style>.sp-card{background:linear-gradient(145deg,#0b1d31,#081827);border:1px solid #245274;border-radius:22px;padding:22px;box-shadow:0 18px 50px #0007}.sp-card-name{font-size:30px;font-weight:900;margin:4px 0 2px}.sp-pill{display:inline-block;background:#0b63ce;border:1px solid #1398ff;padding:5px 11px;border-radius:999px;font-size:12px;font-weight:800;margin-bottom:16px}.sp-info{background:#0a1725;border:1px solid #173b5a;border-radius:13px;padding:11px 14px;margin:7px 0;color:#dcecff}.sp-label{color:#6bc1f7;font-size:11px;text-transform:uppercase;letter-spacing:.8px}</style>",unsafe_allow_html=True)
+    left,right=st.columns([1.05,1.35],gap="large")
+    with left:
+        if url: st.image(url,use_container_width=True)
+        else: st.markdown("## 👤")
+    with right:
+        age_text=(str(years)+" anos") if years is not None else "—"
+        card=f"""<div class='sp-card'><div class='sp-label'>SKATE PERFORMANCE • EQUIPE</div><div class='sp-card-name'>{name}</div><div class='sp-pill'>{role_label}</div><div class='sp-info'>🎂 <b>Idade</b><br>{age_text}</div><div class='sp-info'>🛹 <b>Base</b><br>{base}</div><div class='sp-info'>📍 <b>Cidade</b><br>{loc}</div><div class='sp-info'>⚡ <b>Modalidade</b><br>{modality}</div></div>"""
+        st.markdown(card,unsafe_allow_html=True)
 st.title("🛹 Times"); st.caption("Equipe, técnicos e skatistas vinculados a cada time.")
 
 def age(v):
@@ -60,7 +77,7 @@ for team in teams:
                 if p.get("photo_url"):
                     st.image(p["photo_url"],width=95)
                     if st.button("👁",key=f"eye_{tid}_{p['id']}",help="Ampliar foto"):
-                        show_photo(p.get("full_name") or "Membro",p["photo_url"])
+                        show_photo(p)
                 else: st.markdown("### 👤")
             with ic:
                 role_label=ROLE_LABELS.get(p.get("role"),p.get("role","")).upper()

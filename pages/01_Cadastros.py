@@ -4,7 +4,10 @@ from datetime import date
 import streamlit as st
 from auth_utils import require_login, get_supabase
 
+from ui_theme import apply_ui_theme
+
 st.set_page_config(page_title="Cadastros • Skate Performance", page_icon="👥", layout="wide")
+apply_ui_theme()
 
 st.markdown("""<style>
 /* V2.0 — controles globais escuros */

@@ -5,7 +5,10 @@ import streamlit as st
 from auth_utils import require_login, get_supabase
 from report_engine import read_csv, is_aggregate, parse_raw, parse_aggregate, merge_sessions, make_visual_pdf
 
+from ui_theme import apply_ui_theme
+
 st.set_page_config(page_title="Histórico • Skate Performance", page_icon="📚", layout="wide")
+apply_ui_theme()
 
 st.markdown("""<style>
 /* V2.0 — controles globais escuros */

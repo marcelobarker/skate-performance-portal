@@ -2,7 +2,10 @@
 import streamlit as st
 from auth_utils import sign_in, sign_up, sign_out, current_user, current_profile, load_profile
 
+from ui_theme import apply_ui_theme
+
 st.set_page_config(page_title="Skate Performance • Portal", page_icon="🛹", layout="wide")
+apply_ui_theme()
 
 st.markdown("""<style>
 /* V2.0 — controles globais escuros */
@@ -147,8 +150,15 @@ if status != "ativo":
     st.write("Assim que for aprovado, as áreas de equipe e análise serão liberadas.")
     st.stop()
 
-st.header("Central da equipe")
-# V2.0 — números reais do Supabase. O RLS mantém cada perfil limitado ao que pode consultar.
+st.markdown("""<style>
+.sp-home-title{font-size:27px;font-weight:900;margin:10px 0 3px}.sp-home-sub{color:#9bb2c8;margin-bottom:16px}
+.sp-kpi{border-radius:18px;padding:20px 18px;min-height:142px;border:1px solid #245274;box-shadow:0 14px 34px #0005;position:relative;overflow:hidden}
+.sp-kpi:after{content:'';position:absolute;width:100px;height:100px;border-radius:50%;background:#fff0;box-shadow:0 0 70px #ffffff20;right:-35px;top:-35px}
+.sp-blue{background:linear-gradient(145deg,#0b4e92,#0877cf)}.sp-green{background:linear-gradient(145deg,#07573e,#07845c)}.sp-purple{background:linear-gradient(145deg,#44207c,#6e2ca5)}.sp-orange{background:linear-gradient(145deg,#713b00,#a85b00)}.sp-red{background:linear-gradient(145deg,#651c2a,#9a2940)}
+.sp-icon{font-size:30px}.sp-num{font-size:38px;font-weight:950;line-height:1;margin:10px 0 3px}.sp-name{font-size:14px;font-weight:800}.sp-hint{font-size:11px;color:#dcecffcc;margin-top:12px}
+.sp-section{font-size:19px;font-weight:900;margin:26px 0 10px}.sp-quick{background:#0b1d31;border:1px solid #173b5a;border-radius:16px;padding:17px;text-align:center;min-height:104px}.sp-quick-icon{font-size:27px}.sp-quick-title{font-weight:850;margin-top:5px}.sp-quick-sub{font-size:11px;color:#9bb2c8}
+</style>""",unsafe_allow_html=True)
+st.markdown("<div class='sp-home-title'>Central da Equipe</div><div class='sp-home-sub'>Visão rápida da estrutura e dos treinos disponíveis para o seu perfil.</div>",unsafe_allow_html=True)
 try:
     from auth_utils import get_supabase
     sb = get_supabase()
@@ -157,29 +167,33 @@ try:
     visible_trainings = sb.table("training_sessions").select("id").execute().data or []
     athletes_count = sum(1 for x in visible_profiles if x.get("role") == "skatista" and x.get("status") == "ativo")
     tech_count = sum(1 for x in visible_profiles if x.get("role") in ("tecnico","presidente","vice_presidente","chefe_equipe","comissao_tecnica") and x.get("status") == "ativo")
-    pending_count = sum(1 for x in visible_profiles if x.get("status") == "pendente") if role == "admin" else None
-    cols = st.columns(5 if role == "admin" else 4)
-    cols[0].metric("Atletas", athletes_count)
-    cols[1].metric("Técnicos", tech_count)
-    cols[2].metric("Times", len(visible_teams))
-    cols[3].metric("Treinos", len(visible_trainings))
-    if role == "admin": cols[4].metric("Pendentes", pending_count)
+    pending_count = sum(1 for x in visible_profiles if x.get("status") == "pendente") if role == "admin" else 0
 except Exception as exc:
+    athletes_count=tech_count=pending_count=0; visible_teams=[]; visible_trainings=[]
     st.warning(f"Não foi possível atualizar a Central da equipe: {exc}")
-
-st.caption("ATALHOS — clique para abrir")
-a,b,c=st.columns(3)
-if role == "admin":
-    if a.button(f"👤 ATLETAS  •  {athletes_count}",use_container_width=True): st.switch_page("pages/01_Cadastros.py")
-    if b.button(f"🧑‍🏫 TÉCNICOS  •  {tech_count}",use_container_width=True): st.switch_page("pages/01_Cadastros.py")
-else:
-    if a.button("👤 MEU PERFIL",use_container_width=True): st.switch_page("pages/05_Meu_Perfil.py")
-    if b.button("🧑‍🏫 MINHA EQUIPE TÉCNICA",use_container_width=True): st.switch_page("pages/02_Times.py")
-if c.button(f"🛹 TIMES  •  {len(visible_teams)}",use_container_width=True): st.switch_page("pages/02_Times.py")
-d,e=st.columns(2)
-if d.button(f"📚 TREINOS  •  {len(visible_trainings)}",use_container_width=True): st.switch_page("pages/04_Historico_de_Treinos.py")
-if e.button("⚙️ MEU PERFIL",use_container_width=True): st.switch_page("pages/05_Meu_Perfil.py")
-
+items=[("👥",athletes_count,"Atletas","sp-blue"),("🧑‍🏫",tech_count,"Equipe técnica","sp-green"),("🛹",len(visible_teams),"Times","sp-purple"),("📊",len(visible_trainings),"Treinos","sp-orange")]
+if role=="admin": items.append(("🔔",pending_count,"Pendentes","sp-red"))
+cols=st.columns(len(items))
+for col,(ico,num,label,klass) in zip(cols,items):
+    col.markdown(f"<div class='sp-kpi {klass}'><div class='sp-icon'>{ico}</div><div class='sp-num'>{num}</div><div class='sp-name'>{label}</div><div class='sp-hint'>Acessar →</div></div>",unsafe_allow_html=True)
+st.markdown("<div class='sp-section'>Acesso rápido</div>",unsafe_allow_html=True)
+q1,q2,q3,q4=st.columns(4)
+with q1:
+    st.markdown("<div class='sp-quick'><div class='sp-quick-icon'>🛹</div><div class='sp-quick-title'>Times</div><div class='sp-quick-sub'>Veja sua equipe e os membros</div></div>",unsafe_allow_html=True)
+    if st.button("Abrir Times →",key="home_times",use_container_width=True): st.switch_page("pages/02_Times.py")
+with q2:
+    st.markdown("<div class='sp-quick'><div class='sp-quick-icon'>🗓️</div><div class='sp-quick-title'>Histórico</div><div class='sp-quick-sub'>Treinos e relatórios salvos</div></div>",unsafe_allow_html=True)
+    if st.button("Abrir Histórico →",key="home_hist",use_container_width=True): st.switch_page("pages/04_Historico_de_Treinos.py")
+with q3:
+    if role not in ("skatista","familiar"):
+        st.markdown("<div class='sp-quick'><div class='sp-quick-icon'>📈</div><div class='sp-quick-title'>Nova Análise</div><div class='sp-quick-sub'>Analisar um novo CSV</div></div>",unsafe_allow_html=True)
+        if st.button("Nova Análise →",key="home_analysis",use_container_width=True): st.switch_page("pages/03_Analise_de_Treino.py")
+    else:
+        st.markdown("<div class='sp-quick'><div class='sp-quick-icon'>👁️</div><div class='sp-quick-title'>Meus Treinos</div><div class='sp-quick-sub'>Visualize suas análises</div></div>",unsafe_allow_html=True)
+        if st.button("Ver Treinos →",key="home_mytrain",use_container_width=True): st.switch_page("pages/04_Historico_de_Treinos.py")
+with q4:
+    st.markdown("<div class='sp-quick'><div class='sp-quick-icon'>👤</div><div class='sp-quick-title'>Meu Perfil</div><div class='sp-quick-sub'>Foto e informações pessoais</div></div>",unsafe_allow_html=True)
+    if st.button("Abrir Perfil →",key="home_profile",use_container_width=True): st.switch_page("pages/05_Meu_Perfil.py")
 if role == "admin":
     st.success("🛡️ Você está conectado como ADMINISTRADOR. Use Cadastros para aprovar usuários.")
 elif role in ("tecnico","presidente","vice_presidente","chefe_equipe","comissao_tecnica"):
