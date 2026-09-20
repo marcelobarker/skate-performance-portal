@@ -67,10 +67,11 @@ def sign_in(email, password, keep_connected=False):
             pass
     return res
 
-def sign_up(full_name, email, password, role, modality):
+def sign_up(full_name, email, password, role, modality, linked_athlete_id=None):
     sb = get_supabase()
-    return sb.auth.sign_up({"email": email.strip(), "password": password,
-        "options": {"data": {"full_name": full_name.strip(), "role": role, "modality": modality}}})
+    data={"full_name":full_name.strip(),"role":role,"modality":modality}
+    if linked_athlete_id: data["linked_athlete_id"]=linked_athlete_id
+    return sb.auth.sign_up({"email":email.strip(),"password":password,"options":{"data":data}})
 
 def sign_out():
     sb = st.session_state.get("sp_supabase")
@@ -95,7 +96,7 @@ def _navigation(role):
         [data-testid="stSidebarNav"] a[href*="01_Cadastros"],
         [data-testid="stSidebarNav"] a[href*="Cadastros"]{display:none!important}
         </style>""", unsafe_allow_html=True)
-    if role == "skatista":
+    if role in ("skatista", "familiar"):
         st.markdown("""<style>
         [data-testid="stSidebarNav"] a[href*="Analise_de_Treino"],
         [data-testid="stSidebarNav"] a[href*="03_Analise"]{display:none!important}

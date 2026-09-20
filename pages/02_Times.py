@@ -10,6 +10,12 @@ st.markdown("""<style>
 .member{border-top:1px solid #173b5a;padding:12px 0}.member:first-child{border-top:0}
 </style>""",unsafe_allow_html=True)
 user,profile=require_login(); sb=get_supabase(); is_admin=profile.get("role")=="admin"
+ROLE_LABELS={"admin":"Admin","skatista":"Atleta","tecnico":"Técnico","presidente":"Presidente","vice_presidente":"Vice-presidente","chefe_equipe":"Chefe de Equipe","comissao_tecnica":"Comissão Técnica","familiar":"Familiar"}
+STAFF_ROLES={"admin","tecnico","presidente","vice_presidente","chefe_equipe","comissao_tecnica"}
+@st.dialog("Foto do membro")
+def show_photo(name,url):
+    st.markdown(f"### {name}")
+    st.image(url,use_container_width=True)
 st.title("🛹 Times"); st.caption("Equipe, técnicos e skatistas vinculados a cada time.")
 
 def age(v):
@@ -33,7 +39,7 @@ def fetch_data():
     except Exception as exc: st.error(f"Não foi possível carregar os times: {exc}"); return [],[],[]
 
 def label_person(p):
-    role={"skatista":"Skatista","tecnico":"Técnico","admin":"Admin"}.get(p.get("role"),p.get("role", "")); return f"{p.get('full_name') or p.get('email') or 'Sem nome'} • {role}"
+    role=ROLE_LABELS.get(p.get("role"),p.get("role", "")); return f"{p.get('full_name') or p.get('email') or 'Sem nome'} • {role}"
 
 if is_admin:
     with st.expander("➕ Criar novo time"):
@@ -43,25 +49,28 @@ if is_admin:
 teams,profiles,memberships=fetch_data(); byid={p["id"]:p for p in profiles}
 if not teams: st.info("Nenhum time cadastrado ainda."); st.stop()
 for team in teams:
-    tid=team["id"]; ids=[m["profile_id"] for m in memberships if m["team_id"]==tid]; people=[byid[x] for x in ids if x in byid]; athletes=[p for p in people if p.get("role")=="skatista"]; staff=[p for p in people if p.get("role") in ("tecnico","admin")]
+    tid=team["id"]; ids=[m["profile_id"] for m in memberships if m["team_id"]==tid]; people=[byid[x] for x in ids if x in byid]; athletes=[p for p in people if p.get("role")=="skatista"]; staff=[p for p in people if p.get("role") in STAFF_ROLES]
     with st.container(border=True):
         a,b,c=st.columns([4,1.2,1.2]); a.markdown(f"## {team.get('name','Time')}"); a.caption(f"Modalidade: {team.get('modality') or '—'}"); b.metric("Skatistas",len(athletes)); c.metric("Técnicos",len(staff))
         st.markdown("### 👥 Membros do time")
         if not people: st.caption("Este time ainda não possui membros.")
-        for p in sorted(people,key=lambda x:(0 if x.get('role') in ('tecnico','admin') else 1,(x.get('full_name') or '').lower())):
+        for p in sorted(people,key=lambda x:(0 if x.get('role') in STAFF_ROLES else 1,(x.get('full_name') or '').lower())):
             pc,ic=st.columns([1,5])
             with pc:
-                if p.get("photo_url"): st.image(p["photo_url"],width=95)
+                if p.get("photo_url"):
+                    st.image(p["photo_url"],width=95)
+                    if st.button("👁",key=f"eye_{tid}_{p['id']}",help="Ampliar foto"):
+                        show_photo(p.get("full_name") or "Membro",p["photo_url"])
                 else: st.markdown("### 👤")
             with ic:
-                role_label="TÉCNICO" if p.get("role") in ("tecnico","admin") else "ATLETA"
+                role_label=ROLE_LABELS.get(p.get("role"),p.get("role","")).upper()
                 st.markdown(f"#### {p.get('full_name') or 'Sem nome'}  ·  {role_label}")
                 loc=" / ".join([x for x in [p.get('city'),p.get('state')] if x]) or "—"
                 if p.get("role")=="skatista":
                     years=age(p.get("birth_date")); st.write(f"**Idade:** {str(years)+' anos' if years is not None else '—'}   |   **Base:** {p.get('stance') or '—'}   |   **Cidade:** {loc}")
                     st.caption(f"Modalidade: {p.get('modality') or '—'}")
                 else:
-                    st.write(f"**Função:** Técnico / Staff   |   **Cidade:** {loc}")
+                    st.write(f"**Função:** {ROLE_LABELS.get(p.get('role'),p.get('role','—'))}   |   **Cidade:** {loc}")
             st.divider()
         if is_admin:
             with st.expander("⚙️ Gerenciar time"):

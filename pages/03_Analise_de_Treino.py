@@ -36,7 +36,7 @@ st.markdown("""<style>
 
 user, profile = require_login()
 history_view = st.session_state.get("history_analysis_view")
-if profile.get("role") == "skatista" and not history_view:
+if profile.get("role") in ("skatista","familiar") and not history_view:
     st.info("🛹 Seu perfil de skatista tem acesso ao Histórico de Treinos. As análises e uploads de CSV são realizados pela equipe técnica.")
     st.stop()
 st.markdown("""
@@ -803,7 +803,7 @@ else:
         st.sidebar.caption("Análise temporária: o convidado não é cadastrado nem salvo no Histórico.")
     else:
         if not athlete_rows:
-            msg = "Nenhum skatista ativo do seu time está disponível para análise." if profile.get("role") == "tecnico" else "Ainda não há skatistas ativos cadastrados. Use Atleta convidado para uma análise sem cadastro."
+            msg = "Nenhum skatista ativo do seu time está disponível para análise." if profile.get("role") in ("tecnico","presidente","vice_presidente","chefe_equipe","comissao_tecnica") else "Ainda não há skatistas ativos cadastrados. Use Atleta convidado para uma análise sem cadastro."
             st.info(msg); st.stop()
         athlete_by_label = {f"{r.get('full_name') or 'Sem nome'}" + (f" • {r.get('modality')}" if r.get('modality') else ""): r for r in athlete_rows}
         athlete_label = st.sidebar.selectbox("ATLETA CADASTRADO", list(athlete_by_label.keys()))
@@ -850,7 +850,7 @@ for p in problems:st.sidebar.warning(p)
 # V2.0.1 — um envio com vários CSVs representa UM treino no histórico.
 # Os arquivos originais continuam separados no Storage, mas compartilham um único
 # registro de sessão e um único par de relatórios consolidados.
-if sessions and not history_view and profile.get("role") in ("admin", "tecnico") and selected_athlete.get("id"):
+if sessions and not history_view and profile.get("role") in ("admin","tecnico","presidente","vice_presidente","chefe_equipe","comissao_tecnica") and selected_athlete.get("id"):
     if st.sidebar.button("💾 SALVAR NO HISTÓRICO", use_container_width=True):
         uploaded_paths = []
         report_path = visual_path = None

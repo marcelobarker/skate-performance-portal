@@ -23,6 +23,9 @@ st.markdown("""<style>
 }
 [data-testid="stDateInput"] button,[data-testid="stTimeInput"] button{background:#0b1d2d!important;color:#eef8ff!important;}
 [data-baseweb="input"],[data-baseweb="select"]>div,[data-baseweb="textarea"]{background:#0b1d2d!important;color:#eef8ff!important;}
+[data-baseweb="popover"],[data-baseweb="menu"],[role="listbox"],[data-baseweb="calendar"]{background:#081827!important;color:#eef8ff!important;}
+[data-baseweb="menu"] li,[role="option"],[data-baseweb="calendar"] button{background:#081827!important;color:#eef8ff!important;}
+[data-baseweb="menu"] li:hover,[role="option"]:hover{background:#12304b!important;}
 </style>""", unsafe_allow_html=True)
 
 st.markdown("""
@@ -85,7 +88,17 @@ if not user:
             full_name = st.text_input("Nome completo")
             email2 = st.text_input("E-mail")
             password2 = st.text_input("Senha", type="password", help="Use pelo menos 6 caracteres.")
-            role_label = st.selectbox("Quero me cadastrar como", ["Skatista", "Técnico"])
+            role_label = st.selectbox("Quero me cadastrar como", ["Skatista", "Técnico", "Presidente", "Vice-presidente", "Chefe de Equipe", "Comissão Técnica", "Familiar"])
+            linked_athlete_id=None
+            if role_label == "Familiar":
+                try:
+                    avail=get_supabase().rpc("signup_athletes").execute().data or []
+                except Exception: avail=[]
+                if avail:
+                    amap={a.get("full_name") or "Atleta":a["id"] for a in avail}
+                    linked_athlete_id=amap[st.selectbox("Atleta que ficará vinculado a esta conta",list(amap))]
+                else:
+                    st.info("Ainda não há atleta ativo disponível para vínculo.")
             modality = st.selectbox("Modalidade principal", ["Street","Park","Vert","Outro"])
             accept = st.checkbox("Confirmo que os dados acima estão corretos.")
             create = st.form_submit_button("Solicitar cadastro", use_container_width=True)
@@ -94,8 +107,9 @@ if not user:
                 st.error("Preencha os campos, use uma senha com pelo menos 6 caracteres e confirme os dados.")
             else:
                 try:
-                    role = "skatista" if role_label == "Skatista" else "tecnico"
-                    res = sign_up(full_name, email2, password2, role, modality)
+                    role_map={"Skatista":"skatista","Técnico":"tecnico","Presidente":"presidente","Vice-presidente":"vice_presidente","Chefe de Equipe":"chefe_equipe","Comissão Técnica":"comissao_tecnica","Familiar":"familiar"}
+                    role = role_map[role_label]
+                    res = sign_up(full_name, email2, password2, role, modality, linked_athlete_id)
                     if getattr(res, "session", None):
                         st.session_state["sp_user"] = res.user
                         st.session_state["sp_session"] = res.session
@@ -114,7 +128,7 @@ name = (profile or {}).get("full_name", getattr(user,"email","Usuário"))
 
 if role != "admin":
     st.markdown("""<style>[data-testid="stSidebarNav"] a[href*="01_Cadastros"],[data-testid="stSidebarNav"] a[href*="Cadastros"]{display:none!important}</style>""", unsafe_allow_html=True)
-if role == "skatista":
+if role in ("skatista","familiar"):
     st.markdown("""<style>[data-testid="stSidebarNav"] a[href*="Analise_de_Treino"],[data-testid="stSidebarNav"] a[href*="03_Analise"]{display:none!important}</style>""", unsafe_allow_html=True)
 
 top1, top2 = st.columns([5,1])
@@ -142,7 +156,7 @@ try:
     visible_teams = sb.table("teams").select("id").execute().data or []
     visible_trainings = sb.table("training_sessions").select("id").execute().data or []
     athletes_count = sum(1 for x in visible_profiles if x.get("role") == "skatista" and x.get("status") == "ativo")
-    tech_count = sum(1 for x in visible_profiles if x.get("role") == "tecnico" and x.get("status") == "ativo")
+    tech_count = sum(1 for x in visible_profiles if x.get("role") in ("tecnico","presidente","vice_presidente","chefe_equipe","comissao_tecnica") and x.get("status") == "ativo")
     pending_count = sum(1 for x in visible_profiles if x.get("status") == "pendente") if role == "admin" else None
     cols = st.columns(5 if role == "admin" else 4)
     cols[0].metric("Atletas", athletes_count)
@@ -168,7 +182,7 @@ if e.button("⚙️ MEU PERFIL",use_container_width=True): st.switch_page("pages
 
 if role == "admin":
     st.success("🛡️ Você está conectado como ADMINISTRADOR. Use Cadastros para aprovar usuários.")
-elif role == "tecnico":
+elif role in ("tecnico","presidente","vice_presidente","chefe_equipe","comissao_tecnica"):
     st.info("🎯 Perfil TÉCNICO: você acessa somente os times e skatistas vinculados a você.")
 else:
     st.info("🛹 Perfil SKATISTA: seu acesso é limitado ao próprio perfil e ao Histórico de Treinos.")

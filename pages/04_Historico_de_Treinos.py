@@ -39,7 +39,8 @@ user, profile = require_login()
 sb = get_supabase()
 role = profile.get("role")
 is_admin = role == "admin"
-is_technician = role == "tecnico"
+is_technician = role in ("tecnico","presidente","vice_presidente","chefe_equipe","comissao_tecnica")
+is_family = role == "familiar"
 
 st.title("📚 Histórico de Treinos")
 st.caption("Sessões, CSVs e relatórios vinculados a cada skatista.")
@@ -51,7 +52,7 @@ try:
                     .eq("role", "skatista").eq("status", "ativo")
                     .order("full_name").execute().data or [])
         if not athletes:
-            msg = "Ainda não há skatistas cadastrados para consultar." if is_admin else "Nenhum skatista do seu time está disponível para consulta."
+            msg = "Ainda não há skatistas cadastrados para consultar." if is_admin else ("Nenhum atleta está vinculado a este familiar." if is_family else "Nenhum skatista do seu time está disponível para consulta.")
             st.info(msg); st.stop()
         amap = {f"{a.get('full_name') or 'Sem nome'}" + (f" • {a.get('modality')}" if a.get('modality') else ""): a for a in athletes}
         label = st.selectbox("Skatista", list(amap.keys()))

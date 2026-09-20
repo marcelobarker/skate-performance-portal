@@ -93,3 +93,14 @@ Suba os arquivos no mesmo repositório do Portal e faça commit. O Streamlit Com
 - Análise: atleta convidado/sem cadastro, data com tema escuro, seletor de sessão visível no conteúdo/mobile e correção do bloco vazio sobre a foto.
 - Navegação: Cadastros oculto para Técnico/Skatista e atalho Início em todas as páginas autenticadas.
 - Execute `supabase_v2_1_migration.sql` uma vez após subir esta versão.
+
+## V2.2
+- Data de nascimento exibida/editada em DD/MM/AAAA.
+- Tema escuro reforçado para botões, menus e popovers.
+- Foto dos membros do time ampliada em modal interno pelo botão 👁.
+- Novos cargos: Presidente, Vice-presidente, Chefe de Equipe, Comissão Técnica e Familiar.
+- Admin pode alterar cargos em Cadastros.
+- Familiar escolhe um atleta no cadastro e acessa somente o histórico/treinos desse atleta; admin pode corrigir o vínculo depois.
+- Staff técnico continua limitado aos atletas dos times aos quais pertence; Admin mantém controle total.
+
+Execute somente `supabase_v2_2_migration.sql` ao atualizar da V2.1.

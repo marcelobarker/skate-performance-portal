@@ -25,6 +25,7 @@ st.markdown("""<style>
 }
 [data-testid="stDateInput"] button,[data-testid="stTimeInput"] button{background:#0b1d2d!important;color:#eef8ff!important;}
 [data-baseweb="input"],[data-baseweb="select"]>div,[data-baseweb="textarea"]{background:#0b1d2d!important;color:#eef8ff!important;}
+[data-baseweb="popover"],[data-baseweb="menu"],[role="listbox"],[data-baseweb="calendar"]{background:#081827!important;color:#eef8ff!important}[role="option"]{background:#081827!important;color:#eef8ff!important}
 </style>""", unsafe_allow_html=True)
 st.markdown("""<style>
 [data-testid="stHeader"],header[data-testid="stHeader"],[data-testid="stToolbar"]{display:none!important}
@@ -76,9 +77,8 @@ def editor(r):
     modality_value = r.get("modality") or "Street"
     stance_value = r.get("stance") or "Regular"
 
-    role_opts = ["skatista", "tecnico"]
-    if role_value == "admin":
-        role_opts = ["admin", "skatista", "tecnico"]
+    role_opts = ["skatista","tecnico","presidente","vice_presidente","chefe_equipe","comissao_tecnica","familiar"]
+    if role_value == "admin": role_opts = ["admin"] + role_opts
 
     with st.expander("✏️ Editar cadastro"):
         with st.form(f"edit_{r['id']}"):
@@ -99,14 +99,22 @@ def editor(r):
                                   index=stance_opts.index(stance_value) if stance_value in stance_opts else 2)
 
             c6,c7,c8 = st.columns([1.3,2,1])
-            try: birth_value=date.fromisoformat(r.get("birth_date")) if r.get("birth_date") else date(2000,1,1)
-            except Exception: birth_value=date(2000,1,1)
-            birth_date=c6.date_input("Data de nascimento",value=birth_value,min_value=date(1940,1,1),max_value=date.today())
+            try: birth_value=date.fromisoformat(r.get("birth_date")) if r.get("birth_date") else None
+            except Exception: birth_value=None
+            birth_text=c6.text_input("Data de nascimento", value=birth_value.strftime("%d/%m/%Y") if birth_value else "", placeholder="DD/MM/AAAA")
             city=c7.text_input("Cidade",value=r.get("city") or "")
             states=["","AC","AL","AP","AM","BA","CE","DF","ES","GO","MA","MT","MS","MG","PA","PB","PR","PE","PI","RJ","RN","RS","RO","RR","SC","SP","SE","TO","EXTERIOR"]
             sv=(r.get("state") or "").upper(); state=c8.selectbox("Estado/UF",states,index=states.index(sv) if sv in states else 0)
-            photo = st.file_uploader("Foto do perfil", type=["jpg", "jpeg", "png", "webp"],
-                                     key=f"photo_{r['id']}")
+            photo = st.file_uploader("Foto do perfil", type=["jpg", "jpeg", "png", "webp"], key=f"photo_{r['id']}")
+            family_athlete_id = None
+            if role == "familiar":
+                athletes = sb.table("profiles").select("id,full_name,email").eq("role","skatista").eq("status","ativo").order("full_name").execute().data or []
+                links = sb.table("family_athletes").select("athlete_id").eq("family_id",r["id"]).execute().data or []
+                linked = links[0]["athlete_id"] if links else None
+                labels={f"{a.get('full_name') or 'Sem nome'} • {a.get('email') or ''}":a["id"] for a in athletes}
+                keys=list(labels); current=next((i for i,k in enumerate(keys) if labels[k]==linked),0) if keys else 0
+                if keys: family_athlete_id=labels[st.selectbox("Atleta vinculado ao familiar",keys,index=current)]
+                else: st.caption("Cadastre/aprove um skatista antes de vincular este familiar.")
             submitted = st.form_submit_button("💾 Salvar alterações", use_container_width=True)
 
         if submitted:
@@ -115,13 +123,16 @@ def editor(r):
                     "full_name": full_name.strip() or r.get("full_name") or "Sem nome",
                     "modality": modality,
                     "stance": None if stance == "Não informado" else stance,
-                    "birth_date": birth_date.isoformat(), "city": city.strip() or None, "state": state or None,
+                    "birth_date": (date(int(birth_text[6:10]),int(birth_text[3:5]),int(birth_text[0:2])).isoformat() if birth_text.strip() else None), "city": city.strip() or None, "state": state or None,
                 }
                 if not is_self:
                     payload["role"] = role
                 if photo is not None:
                     payload["photo_url"] = upload_photo(r["id"], photo)
                 sb.table("profiles").update(payload).eq("id", r["id"]).execute()
+                sb.table("family_athletes").delete().eq("family_id",r["id"]).execute()
+                if role == "familiar" and family_athlete_id:
+                    sb.table("family_athletes").insert({"family_id":r["id"],"athlete_id":family_athlete_id}).execute()
                 st.success("Cadastro atualizado.")
                 st.rerun()
             except Exception as exc:
