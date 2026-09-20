@@ -131,3 +131,8 @@ Correções verificáveis: cards Home navegáveis, menu mobile global, data fina
 - Livro de Manobras por categorias.
 - Envio de manobras em vídeo pelo atleta.
 - Requer executar `supabase_v3_2_migration.sql` uma vez.
+
+## V3.4
+- Restaura o visual aprovado dos cards neon e Acesso rápido da Home; navegação passa a usar st.switch_page por overlay transparente, sem links HTML.
+- Atalho explícito Perfil/Feed para atletas na Home e em Times.
+- Calendário refeito sem expander/select mensal: Data inicial + Data final sempre visíveis e navegação mensal por setas.
