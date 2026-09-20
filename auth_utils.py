@@ -1,4 +1,5 @@
 import streamlit as st
+import time
 from supabase import create_client
 
 COOKIE_NAME = "skate_performance_refresh"
@@ -19,20 +20,34 @@ def get_supabase():
 
 def _restore_session():
     if st.session_state.get("sp_user"):
-        return
+        return True
     cm = _cookie_manager()
     if cm is None:
-        return
+        return False
     try:
-        refresh_token = cm.get(COOKIE_NAME)
+        cookies = cm.get_all() or {}
+        refresh_token = cookies.get(COOKIE_NAME) or cm.get(COOKIE_NAME)
         if refresh_token:
             res = get_supabase().auth.refresh_session(refresh_token)
             if getattr(res, "user", None) and getattr(res, "session", None):
                 st.session_state["sp_user"] = res.user
                 st.session_state["sp_session"] = res.session
                 load_profile(res.user.id)
+                # Renova o cookie com o refresh token mais recente emitido pelo Supabase.
+                new_refresh = getattr(res.session, "refresh_token", None)
+                if new_refresh:
+                    from datetime import datetime, timedelta
+                    cm.set(COOKIE_NAME, new_refresh, expires_at=datetime.now() + timedelta(days=30), key="sp_refresh_cookie")
+                return True
     except Exception:
         pass
+    # CookieManager é um componente de navegador e pode chegar alguns ms depois do Python.
+    # Uma única segunda passagem evita cair na tela de login antes de o cookie ser lido.
+    if not st.session_state.get("sp_cookie_probe_done"):
+        st.session_state["sp_cookie_probe_done"] = True
+        time.sleep(0.35)
+        st.rerun()
+    return False
 
 def current_user():
     _restore_session()
@@ -86,8 +101,27 @@ def sign_out():
         st.session_state.pop(k, None)
 
 def _navigation(role):
-    # Home rápido no conteúdo e na sidebar; o primeiro continua visível no celular.
-    st.page_link("Home.py", label="⌂ Início", icon=None)
+    st.markdown("""<style>
+    .sp-mobile-nav-note{display:none}
+    @media(max-width:768px){
+      [data-testid="stPageLink"] a{background:linear-gradient(180deg,#087CFF,#0758EE)!important;border:1px solid #29A8FF!important;color:#fff!important;border-radius:9px!important;min-height:42px!important;box-shadow:0 0 16px rgba(0,124,255,.28)!important}
+      [data-testid="stPopover"] button{background:linear-gradient(180deg,#0d2b46,#08233A)!important;border:1px solid #159BFF!important;color:#fff!important;border-radius:9px!important;min-height:42px!important}
+    }
+    </style>""", unsafe_allow_html=True)
+    n1,n2,n3=st.columns([1.05,1.05,5.9],gap="small")
+    with n1:
+        st.page_link("Home.py", label="⌂ Início", icon=None, use_container_width=True)
+    with n2:
+        with st.popover("☰ Menu", use_container_width=True):
+            st.page_link("Home.py", label="Início", use_container_width=True)
+            st.page_link("pages/02_Times.py", label="Times", use_container_width=True)
+            st.page_link("pages/06_Calendario.py", label="Calendário", use_container_width=True)
+            if role not in ("skatista","familiar"):
+                st.page_link("pages/03_Analise_de_Treino.py", label="Análise", use_container_width=True)
+            st.page_link("pages/04_Historico_de_Treinos.py", label="Meus Treinos", use_container_width=True)
+            st.page_link("pages/05_Meu_Perfil.py", label="Meu Perfil", use_container_width=True)
+            if role == "admin":
+                st.page_link("pages/01_Cadastros.py", label="Cadastros", use_container_width=True)
     with st.sidebar:
         if st.button("⌂ INÍCIO", use_container_width=True, key="sp_global_home"):
             st.switch_page("Home.py")

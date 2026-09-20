@@ -111,3 +111,16 @@ Execute somente `supabase_v2_2_migration.sql` ao atualizar da V2.1.
 - Botões, inputs, uploads, calendários, dialogs, tabs e sidebar padronizados; nenhum botão branco.
 - Responsividade reforçada para mobile/tablet mantendo a mesma linguagem visual.
 - Sem migration nova: usa a estrutura do banco da V2.4.
+
+## V2.9
+- Calendário com data inicial e data final de evento (executar `supabase_v2_9_migration.sql` uma vez).
+- Sessão persistente revisada para o modo "Me manter conectado".
+- Cards neon da Home e cards de Acesso rápido navegáveis; botões duplicados removidos.
+- Menu rápido expansível no topo para mobile e botão Início azul no mobile.
+- Dashboard interativo responsivo no mobile (gráficos empilhados, sem pizzas cortadas).
+- Fontes ampliadas no relatório PDF e no Dashboard Visual PDF; histórico regenera PDFs com o motor atual.
+- Administrador identificado também como membro do Staff e incluído na contagem de Técnicos/Staff.
+
+
+## V3.0
+Correções verificáveis: cards Home navegáveis, menu mobile global, data final de evento, dashboard mobile responsivo e PDFs com fontes maiores. A Home exibe “Portal V3.0” para confirmar o deploy.
