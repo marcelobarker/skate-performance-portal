@@ -124,3 +124,10 @@ Execute somente `supabase_v2_2_migration.sql` ao atualizar da V2.1.
 
 ## V3.0
 Correções verificáveis: cards Home navegáveis, menu mobile global, data final de evento, dashboard mobile responsivo e PDFs com fontes maiores. A Home exibe “Portal V3.0” para confirmar o deploy.
+
+## V3.2
+- Calendário redesenhado com período inicial/final e tema dark consistente.
+- Perfil/feed do atleta com vídeos, curtidas e comentários.
+- Livro de Manobras por categorias.
+- Envio de manobras em vídeo pelo atleta.
+- Requer executar `supabase_v3_2_migration.sql` uma vez.

@@ -25,6 +25,9 @@ def apply_ui_theme():
     [data-testid="stSidebarNav"] a[href*="Historico"]:before{content:"◷"}
     [data-testid="stSidebarNav"] a[href*="Perfil"]:before{content:"●"}
     [data-testid="stSidebarNav"] a[href*="Calendario"]:before{content:"▣"}
+    [data-testid="stSidebarNav"] a[href*="Perfil_do_Atleta"]:before{content:"◉"}
+    [data-testid="stSidebarNav"] a[href*="Livro_de_Manobras"]:before{content:"▤"}
+    [data-testid="stSidebarNav"] a[href*="Enviar_Manobra"]:before{content:"▶"}
     [data-testid="stSidebarNav"] a:hover{background:rgba(20,80,125,.20)!important;color:#fff!important}
     [data-testid="stSidebarNav"] a[aria-current="page"]{background:linear-gradient(90deg,rgba(0,110,235,.75),rgba(0,70,160,.55))!important;border:1px solid rgba(0,140,255,.40)!important;box-shadow:0 0 12px rgba(0,100,255,.15)!important}
     h1,h2,h3,h4,h5,h6{color:var(--text)!important;letter-spacing:-.02em} p,label,span{color:inherit} small,.stCaption{color:var(--muted)!important}
@@ -58,5 +61,10 @@ def apply_ui_theme():
     [data-testid="stDialog"] button{background:#08233A!important;color:#fff!important;border-color:#135C91!important}
     button:not([data-testid="stSidebarCollapseButton"]){--button-background-color:#08233A!important}
     [data-testid="stPopover"] button,[data-testid="stPageLink"] a{background:#08233A!important;color:#dff6ff!important;border-color:#135C91!important}
-    @media(max-width:768px){.block-container{padding-left:.75rem!important;padding-right:.75rem!important}.stColumn{min-width:0!important}[data-testid="stSidebar"]{border-right:none!important}}
+    /* V3.2: hard dark rule — no native white controls */
+    button,[role="button"],[data-testid="stBaseButton-secondary"],[data-testid="stBaseButton-tertiary"],summary{background-color:#08233A!important;color:#F5F8FC!important;border-color:#135C91!important}
+    button svg,button span,button p,summary span,summary p{color:#F5F8FC!important;fill:currentColor!important}
+    [data-baseweb="select"] svg,[data-testid="stSelectbox"] svg{color:#C4D1DF!important;fill:#C4D1DF!important}
+    label,legend,[data-testid="stWidgetLabel"] p{color:#C4D1DF!important}
+        @media(max-width:768px){.block-container{padding-left:.75rem!important;padding-right:.75rem!important}.stColumn{min-width:0!important}[data-testid="stSidebar"]{border-right:none!important}}
     </style>''', unsafe_allow_html=True)
