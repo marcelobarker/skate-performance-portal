@@ -155,13 +155,13 @@ from pathlib import Path
 from datetime import date, datetime
 from auth_utils import get_supabase
 
-hero_b64=base64.b64encode((Path(__file__).parent/'hero_skater.png').read_bytes()).decode()
+hero_b64=base64.b64encode((Path(__file__).parent/'hero_skater.jpg').read_bytes()).decode()
 try:
     _hs=get_supabase().table('portal_settings').select('value').eq('key','home_hero_url').maybe_single().execute()
     hero_url=(_hs.data or {}).get('value') if _hs else None
 except Exception:
     hero_url=None
-hero_bg = f"url('{hero_url}')" if hero_url else f"url(data:image/png;base64,{hero_b64})"
+hero_bg = f"url('{hero_url}')" if hero_url else f"url(data:image/jpeg;base64,{hero_b64})"
 
 def svg(kind):
     icons={
@@ -175,8 +175,8 @@ def svg(kind):
     return icons[kind]
 
 st.markdown(f'''<style>
-.sp-home{{margin-top:2px}} .sp-hero2{{height:300px;border:1px solid rgba(20,145,255,.40);border-radius:12px;position:relative;overflow:hidden;background:linear-gradient(90deg,rgba(2,11,20,.08),rgba(2,11,20,.48) 46%,rgba(2,11,20,.96) 100%),linear-gradient(0deg,#03111ee8,transparent 55%),{hero_bg} left center/cover no-repeat;box-shadow:0 12px 36px #0008}}
-.sp-hero-copy{{position:absolute;left:39%;top:50%;transform:translateY(-50%);max-width:650px}}.sp-hero-copy h1{{font-size:38px;margin:0 0 8px;color:#fff!important;text-shadow:0 0 18px #087cff45}}.sp-hero-copy p{{font-size:16px;color:#d3dfeb!important;line-height:1.55;margin:0}}
+.sp-home{{margin-top:2px}} .sp-hero2{{height:300px;border:1px solid rgba(20,145,255,.40);border-radius:12px;position:relative;overflow:hidden;background:linear-gradient(90deg,rgba(2,11,20,.88),rgba(2,11,20,.52) 42%,rgba(2,11,20,.16) 72%,rgba(2,11,20,.34) 100%),linear-gradient(0deg,#03111ee8,transparent 55%),{hero_bg} center center/cover no-repeat;box-shadow:0 12px 36px #0008}}
+.sp-hero-copy{{position:absolute;left:8%;top:50%;transform:translateY(-50%);max-width:620px}}.sp-hero-copy h1{{font-size:38px;margin:0 0 8px;color:#fff!important;text-shadow:0 0 18px #087cff45}}.sp-hero-copy p{{font-size:16px;color:#d3dfeb!important;line-height:1.55;margin:0}}
 .sp-kpi-grid{{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-top:18px;position:relative;z-index:3;padding:0 10px}}.sp-kpi2{{height:150px;border-radius:10px;padding:17px 20px;border:1px solid rgba(255,255,255,.18);box-shadow:0 10px 28px #0007,inset 0 1px 0 #ffffff20;position:relative;overflow:hidden}}.sp-kpi2:before{{content:'';position:absolute;width:90px;height:90px;left:-20px;top:-30px;background:#fff2;border-radius:50%;filter:blur(18px)}}.sp-kpi2 svg,.sp-q svg{{width:35px;height:35px;fill:none;stroke:currentColor;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round;filter:drop-shadow(0 0 7px currentColor)}}.sp-kpi2 .num{{font-size:42px;font-weight:850;line-height:1;margin-top:7px}}.sp-kpi2 .label{{position:absolute;left:68px;top:76px;font-size:13px}}.sp-kpi2 .link{{position:absolute;bottom:14px;left:20px;font-size:12px;color:#eaf7ffcc}}.kblue{{background:linear-gradient(135deg,#087cffed,#004aafe8);color:#66d6ff}}.kgreen{{background:linear-gradient(135deg,#00a96fe0,#00523fe8);color:#38f3c0}}.kpurple{{background:linear-gradient(135deg,#9135e6e8,#4c1788ed);color:#e67cff}}.korange{{background:linear-gradient(135deg,#d76a00e8,#6d3000ed);color:#ffbd55}}
 .sp-title{{font-size:19px;font-weight:800;color:#f5f8fc;margin:25px 0 10px}}.sp-quick-grid{{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}}.sp-q{{min-height:122px;background:linear-gradient(145deg,#0b2034,#051422);border:1px solid rgba(45,130,190,.35);border-radius:10px;text-align:center;padding:17px;color:#29dfff;box-shadow:0 8px 22px #0005,inset 0 1px 0 #ffffff08}}.sp-q:hover{{transform:translateY(-2px);border-color:#00afff;box-shadow:0 0 22px #087cff2e}}.sp-q .qt{{font-size:15px;font-weight:800;color:#f5f8fc;margin-top:6px}}.sp-q .qs{{font-size:11px;color:#8499ad;margin-top:3px}}
 .sp-home-panels{{display:grid;grid-template-columns:1.35fr .9fr;gap:14px;margin-top:20px}}.sp-panel2{{background:linear-gradient(145deg,#081b2d,#061727);border:1px solid rgba(50,130,190,.28);border-radius:10px;padding:14px;box-shadow:0 8px 24px #0004}}.sp-ath-grid{{display:grid;grid-template-columns:repeat(3,1fr);gap:9px}}.sp-ath{{display:flex;gap:10px;background:#071827;border:1px solid rgba(42,102,145,.28);border-radius:9px;padding:8px;min-height:112px}}.sp-ath img{{width:82px;height:96px;object-fit:cover;border-radius:8px;border:1px solid #1c6a9d}}.sp-ath .nm{{font-weight:800;color:#fff;margin:4px 0}}.sp-ath .rl{{font-size:11px;color:#29a8ff}}.sp-ath .mt{{font-size:11px;color:#9aaec1;line-height:1.65;margin-top:5px}}.sp-event{{display:flex;gap:10px;padding:9px 0;border-bottom:1px solid #163b5938}}.sp-date{{width:58px;background:#0a2945;border-radius:6px;text-align:center;padding:6px;color:#fff;font-weight:800}}.sp-event b{{font-size:12px}}.sp-event small{{display:block;color:#8499ad}}.sp-training-grid{{display:grid;grid-template-columns:repeat(3,1fr);gap:9px}}.sp-tr{{background:#071929;border:1px solid rgba(45,100,145,.25);border-radius:8px;padding:12px 14px;min-height:82px}}.sp-tr b{{font-size:15px}}.sp-tr small{{display:block;color:#9aaec1;margin-top:7px}}
