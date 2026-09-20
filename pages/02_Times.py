@@ -17,7 +17,7 @@ def safe(v): return html.escape(str(v or '—'))
 st.markdown('''<style>
 .team-head{height:122px;border:1px solid rgba(20,145,255,.45);border-radius:11px;padding:20px 24px;display:flex;align-items:center;gap:18px;background:linear-gradient(90deg,#061727ee,#061727a8),radial-gradient(circle at 85% 40%,#087cff38,transparent 35%),#071827;box-shadow:0 10px 28px #0006}.team-logo{width:82px;height:82px;border:1px solid #3299df;border-radius:10px;display:grid;place-items:center;font-size:36px;background:#020b14cc}.team-name{font-size:25px;font-weight:850;color:#fff}.team-meta{color:#c4d1df;font-size:13px;margin-top:5px}.tabs-fake{display:flex;gap:30px;border-bottom:1px solid #163b59;margin:8px 0 16px}.tabs-fake span{padding:9px 2px;color:#aab9c8;font-size:12px}.tabs-fake .on{color:#00d9ff;border-bottom:2px solid #00afff}.member-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}.member-card{height:132px;background:#071827;border:1px solid rgba(42,102,145,.28);border-radius:9px;display:flex;overflow:hidden;box-shadow:0 8px 22px #0004}.member-photo{width:96px;min-width:96px;height:132px;object-fit:cover;border-right:1px solid #164f78}.member-placeholder{width:96px;min-width:96px;height:132px;display:grid;place-items:center;font-size:34px;background:#0a2945}.member-info{padding:12px 10px}.member-name{font-weight:800;color:#fff;font-size:14px}.badge{display:inline-block;font-size:10px;color:#29a8ff;margin:3px 0 6px}.badge.orange{color:#ffb13b}.member-meta{font-size:11px;color:#a9bdd0;line-height:1.75}.eye-row [data-testid="stButton"] button{min-height:31px!important;height:31px!important;padding:0 12px!important;border-radius:8px!important}.team-section{font-size:17px;font-weight:800;margin:14px 0 8px;color:#fff}
 [data-testid="stImage"] button{display:none!important}
-@media(max-width:900px){.member-grid{grid-template-columns:repeat(2,1fr)}}@media(max-width:600px){.member-grid{grid-template-columns:1fr}.team-head{height:auto}.member-card{height:auto;min-height:128px;width:100%;overflow:hidden}.member-photo,.member-placeholder{width:96px;min-width:96px;height:128px}.member-info{min-width:0;overflow:hidden}.member-name,.member-meta{white-space:normal;overflow-wrap:anywhere}[data-testid='stHorizontalBlock']{flex-wrap:wrap!important}[data-testid='stHorizontalBlock']>[data-testid='stColumn']{min-width:100%!important;width:100%!important;flex:1 1 100%!important}.eye-row [data-testid='stHorizontalBlock']>[data-testid='stColumn']{min-width:0!important;width:auto!important;flex:1 1 0!important}}
+@media(max-width:900px){.member-grid{grid-template-columns:repeat(2,1fr)}}@media(max-width:600px){.member-grid{grid-template-columns:1fr}.team-head{height:auto}.member-card{height:126px;width:100%;max-width:100%;overflow:hidden}.member-photo,.member-placeholder{width:92px;min-width:92px;height:126px}.member-info{min-width:0;flex:1;padding:10px}.member-name{font-size:13px;white-space:normal;overflow-wrap:anywhere}.member-meta{font-size:10px;line-height:1.6;white-space:normal;overflow-wrap:anywhere}.eye-row [data-testid='stHorizontalBlock']{display:flex!important;flex-wrap:nowrap!important;gap:8px!important}.eye-row [data-testid='stHorizontalBlock']>[data-testid='stColumn']{min-width:0!important;width:50%!important;flex:1 1 50%!important}.eye-row button{font-size:12px!important;padding:0 8px!important}}
 </style>''',unsafe_allow_html=True)
 
 @st.dialog('Perfil do membro',width='large')
@@ -61,16 +61,16 @@ for team in teams:
                 with cols[j]:
                     ag=age(p.get('birth_date'));loc='/'.join(x for x in [p.get('city'),p.get('state')] if x) or '—'; ph=p.get('photo_url'); rolelbl=ROLE.get(p.get('role'),'Membro'); orange=' orange' if p.get('role')=='chefe_equipe' else ''
                     pic=f"<img class='member-photo' src='{safe(ph)}'>" if ph else "<div class='member-placeholder'>🛹</div>"
-                    meta=(f"♙ {str(ag)+' anos' if ag is not None else '—'}<br>◉ {safe(p.get('modality'))}<br>⌖ {safe(loc)}") if p.get('role')=='skatista' else f"◉ {safe(p.get('modality'))}<br>⌖ {safe(loc)}"
+                    meta=(f"Idade: {str(ag)+' anos' if ag is not None else '—'}<br>Modalidade: {safe(p.get('modality'))}<br>Local: {safe(loc)}") if p.get('role')=='skatista' else f"Modalidade: {safe(p.get('modality'))}<br>Local: {safe(loc)}"
                     st.markdown(f"<div class='member-card'>{pic}<div class='member-info'><div class='member-name'>{safe(p.get('full_name'))}</div><div class='badge{orange}'>{safe(rolelbl)}</div><div class='member-meta'>{meta}</div></div></div>",unsafe_allow_html=True)
                     st.markdown("<div class='eye-row'>",unsafe_allow_html=True)
                     if p.get('role')=='skatista':
                         b1,b2=st.columns(2,gap='small')
-                        if b1.button('👁 Cartão',key=f"eye_{tid}_{p['id']}",use_container_width=True): card(p)
-                        if b2.button('◉ Perfil / Feed',key=f"feed_{tid}_{p['id']}",use_container_width=True):
+                        if b1.button('Cartão',key=f"eye_{tid}_{p['id']}",use_container_width=True): card(p)
+                        if b2.button('Perfil / Feed',key=f"feed_{tid}_{p['id']}",use_container_width=True):
                             st.session_state['selected_athlete_id']=p['id']; st.switch_page('pages/07_Perfil_do_Atleta.py')
                     else:
-                        if st.button('👁  Ver cartão',key=f"eye_{tid}_{p['id']}",use_container_width=True): card(p)
+                        if st.button('Ver cartão',key=f"eye_{tid}_{p['id']}",use_container_width=True): card(p)
                     st.markdown('</div>',unsafe_allow_html=True)
     if is_admin:
         with st.expander('⚙️ Gerenciar time'):

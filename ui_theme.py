@@ -8,7 +8,7 @@ def apply_ui_theme():
       --text:#F5F8FC;--text2:#C4D1DF;--muted:#8499AD;--disabled:#60758A;--border:rgba(50,130,190,.25);--border-active:rgba(0,145,255,.60);
       --r-sm:7px;--r-md:9px;--r-lg:12px;--shadow:0 8px 24px rgba(0,0,0,.20);--blue-shadow:0 0 18px rgba(0,120,255,.25)
     }
-    html,body,[class*="css"]{font-family:Inter,Roboto,Arial,sans-serif!important;background:#03111E!important} html{background:#03111E!important} body{background:#03111E!important}
+    html,body,#root,[data-testid="stApp"],[class*="css"]{font-family:Inter,Roboto,Arial,sans-serif!important;background:#03111E!important;background-color:#03111E!important} html{background:#03111E!important} body{background:#03111E!important}
     .stApp,[data-testid="stAppViewContainer"]{background:radial-gradient(circle at 20% 0%,rgba(0,110,255,.08),transparent 35%),linear-gradient(180deg,var(--bg-main),var(--bg-deep))!important;color:var(--text)!important}
     [data-testid="stHeader"]{background:transparent!important;box-shadow:none!important}
     [data-testid="stToolbar"],[data-testid="stDecoration"],header [data-testid="stStatusWidget"]{display:none!important}
@@ -20,14 +20,14 @@ def apply_ui_theme():
     [data-testid="stSidebarNav"] a{border-radius:8px!important;margin:3px 7px!important;padding:9px 11px!important}
     [data-testid="stSidebarNav"] a{position:relative!important;padding-left:40px!important}
     [data-testid="stSidebarNav"] a:before{content:"◆";position:absolute;left:13px;top:50%;transform:translateY(-50%);font-size:13px;color:#29dfff;filter:drop-shadow(0 0 5px #087cff)}
-    [data-testid="stSidebarNav"] a[href*="Times"]:before{content:"♟"}
-    [data-testid="stSidebarNav"] a[href*="Analise"]:before{content:"▥"}
-    [data-testid="stSidebarNav"] a[href*="Historico"]:before{content:"◷"}
+    [data-testid="stSidebarNav"] a[href*="Times"]:before{content:"●"}
+    [data-testid="stSidebarNav"] a[href*="Analise"]:before{content:"●"}
+    [data-testid="stSidebarNav"] a[href*="Historico"]:before{content:"●"}
     [data-testid="stSidebarNav"] a[href*="Perfil"]:before{content:"●"}
-    [data-testid="stSidebarNav"] a[href*="Calendario"]:before{content:"▣"}
+    [data-testid="stSidebarNav"] a[href*="Calendario"]:before{content:"●"}
     [data-testid="stSidebarNav"] a[href*="Perfil_do_Atleta"]:before{content:"◉"}
-    [data-testid="stSidebarNav"] a[href*="Livro_de_Manobras"]:before{content:"▤"}
-    [data-testid="stSidebarNav"] a[href*="Enviar_Manobra"]:before{content:"▶"}
+    [data-testid="stSidebarNav"] a[href*="Livro_de_Manobras"]:before{content:"●"}
+    [data-testid="stSidebarNav"] a[href*="Enviar_Manobra"]:before{content:"●"}
     [data-testid="stSidebarNav"] a:hover{background:rgba(20,80,125,.20)!important;color:#fff!important}
     [data-testid="stSidebarNav"] a[aria-current="page"]{background:linear-gradient(90deg,rgba(0,110,235,.75),rgba(0,70,160,.55))!important;border:1px solid rgba(0,140,255,.40)!important;box-shadow:0 0 12px rgba(0,100,255,.15)!important}
     h1,h2,h3,h4,h5,h6{color:var(--text)!important;letter-spacing:-.02em} p,label,span{color:inherit} small,.stCaption{color:var(--muted)!important}
