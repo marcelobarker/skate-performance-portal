@@ -150,53 +150,56 @@ if status != "ativo":
     st.write("Assim que for aprovado, as áreas de equipe e análise serão liberadas.")
     st.stop()
 
-st.markdown("""<style>
-.sp-home-title{font-size:27px;font-weight:900;margin:10px 0 3px}.sp-home-sub{color:#9bb2c8;margin-bottom:16px}
-.sp-kpi{border-radius:18px;padding:20px 18px;min-height:142px;border:1px solid #245274;box-shadow:0 14px 34px #0005;position:relative;overflow:hidden}
-.sp-kpi:after{content:'';position:absolute;width:100px;height:100px;border-radius:50%;background:#fff0;box-shadow:0 0 70px #ffffff20;right:-35px;top:-35px}
-.sp-blue{background:linear-gradient(145deg,#0b4e92,#0877cf)}.sp-green{background:linear-gradient(145deg,#07573e,#07845c)}.sp-purple{background:linear-gradient(145deg,#44207c,#6e2ca5)}.sp-orange{background:linear-gradient(145deg,#713b00,#a85b00)}.sp-red{background:linear-gradient(145deg,#651c2a,#9a2940)}
-.sp-icon{font-size:30px}.sp-num{font-size:38px;font-weight:950;line-height:1;margin:10px 0 3px}.sp-name{font-size:14px;font-weight:800}.sp-hint{font-size:11px;color:#dcecffcc;margin-top:12px}
-.sp-section{font-size:19px;font-weight:900;margin:26px 0 10px}.sp-quick{background:#0b1d31;border:1px solid #173b5a;border-radius:16px;padding:17px;text-align:center;min-height:104px}.sp-quick-icon{font-size:27px}.sp-quick-title{font-weight:850;margin-top:5px}.sp-quick-sub{font-size:11px;color:#9bb2c8}
+import base64
+from pathlib import Path
+hero_b64=base64.b64encode((Path(__file__).parent/'hero_skater.png').read_bytes()).decode()
+st.markdown(f"""<style>
+.sp-hero{{min-height:245px;border:1px solid #173b5a;border-radius:20px;padding:42px 34px 30px 38%;background:linear-gradient(90deg,rgba(4,16,29,.08) 0%,rgba(4,16,29,.65) 38%,rgba(4,16,29,.96) 72%),url(data:image/png;base64,{hero_b64}) left center/42% 100% no-repeat,#071522;box-shadow:0 18px 48px #0006;margin:8px 0 22px}}
+.sp-hero h1{{font-size:38px;margin:0 0 8px;color:#fff!important}}.sp-hero p{{color:#c6d8e8!important;font-size:16px;max-width:650px}}
+.sp-kpi{{border-radius:18px;padding:20px 18px;min-height:145px;border:1px solid #ffffff22;box-shadow:0 14px 34px #0005}}.sp-icon{{font-size:31px}}.sp-num{{font-size:39px;font-weight:950;line-height:1;margin:10px 0 3px}}.sp-name{{font-size:14px;font-weight:800}}.sp-hint{{font-size:11px;color:#e8f4ffcc;margin-top:12px}}
+.sp-blue{{background:linear-gradient(145deg,#0759a8,#087fe3)}}.sp-green{{background:linear-gradient(145deg,#066044,#07976a)}}.sp-purple{{background:linear-gradient(145deg,#4b2186,#7d31b7)}}.sp-orange{{background:linear-gradient(145deg,#7b4100,#bd6800)}}
+.sp-section{{font-size:20px;font-weight:900;margin:27px 0 10px}}.sp-quick{{background:linear-gradient(145deg,#0d2238,#091827);border:1px solid #245274;border-radius:16px;padding:18px;text-align:center;min-height:112px;box-shadow:0 12px 26px #0004}}.sp-quick-icon{{font-size:29px}}.sp-quick-title{{font-weight:900;margin-top:6px}}.sp-quick-sub{{font-size:11px;color:#9bb2c8}}
+.sp-person{{background:#0b1d31;border:1px solid #173b5a;border-radius:16px;padding:10px;min-height:210px;box-shadow:0 10px 24px #0004}}.sp-person-name{{font-weight:900;margin-top:7px}}.sp-person-meta{{color:#9bb2c8;font-size:12px}}
+@media(max-width:700px){{.sp-hero{{padding:165px 18px 20px;background:linear-gradient(0deg,#071522 38%,rgba(4,16,29,.1) 100%),url(data:image/png;base64,{hero_b64}) center top/100% 165px no-repeat,#071522;min-height:300px}}.sp-hero h1{{font-size:28px}}}}
 </style>""",unsafe_allow_html=True)
-st.markdown("<div class='sp-home-title'>Central da Equipe</div><div class='sp-home-sub'>Visão rápida da estrutura e dos treinos disponíveis para o seu perfil.</div>",unsafe_allow_html=True)
+st.markdown(f"<div class='sp-hero'><h1>Bem-vindo, {name.split()[0]}!</h1><p>Acompanhe o desempenho da sua equipe, veja seus treinos, analise manobras e evolua junto com seus atletas.</p></div>",unsafe_allow_html=True)
 try:
     from auth_utils import get_supabase
-    sb = get_supabase()
-    visible_profiles = sb.table("profiles").select("id,role,status").execute().data or []
-    visible_teams = sb.table("teams").select("id").execute().data or []
-    visible_trainings = sb.table("training_sessions").select("id").execute().data or []
-    athletes_count = sum(1 for x in visible_profiles if x.get("role") == "skatista" and x.get("status") == "ativo")
-    tech_count = sum(1 for x in visible_profiles if x.get("role") in ("tecnico","presidente","vice_presidente","chefe_equipe","comissao_tecnica") and x.get("status") == "ativo")
-    pending_count = sum(1 for x in visible_profiles if x.get("status") == "pendente") if role == "admin" else 0
+    sb=get_supabase(); visible_profiles=sb.table('profiles').select('id,full_name,role,status,photo_url,modality,stance,city,state').execute().data or []; visible_teams=sb.table('teams').select('id,name').execute().data or []; visible_trainings=sb.table('training_sessions').select('id').execute().data or []
 except Exception as exc:
-    athletes_count=tech_count=pending_count=0; visible_teams=[]; visible_trainings=[]
-    st.warning(f"Não foi possível atualizar a Central da equipe: {exc}")
-items=[("👥",athletes_count,"Atletas","sp-blue"),("🧑‍🏫",tech_count,"Equipe técnica","sp-green"),("🛹",len(visible_teams),"Times","sp-purple"),("📊",len(visible_trainings),"Treinos","sp-orange")]
-if role=="admin": items.append(("🔔",pending_count,"Pendentes","sp-red"))
-cols=st.columns(len(items))
-for col,(ico,num,label,klass) in zip(cols,items):
-    col.markdown(f"<div class='sp-kpi {klass}'><div class='sp-icon'>{ico}</div><div class='sp-num'>{num}</div><div class='sp-name'>{label}</div><div class='sp-hint'>Acessar →</div></div>",unsafe_allow_html=True)
+    visible_profiles=[];visible_teams=[];visible_trainings=[];st.warning(f'Não foi possível atualizar a Home: {exc}')
+athletes=[x for x in visible_profiles if x.get('role')=='skatista' and x.get('status')=='ativo']; staff=[x for x in visible_profiles if x.get('role') in ('tecnico','presidente','vice_presidente','chefe_equipe','comissao_tecnica') and x.get('status')=='ativo']
+items=[('👥',len(athletes),'Atletas','sp-blue'),('🧑‍🏫',len(staff),'Equipe técnica','sp-green'),('🛹',len(visible_teams),'Times','sp-purple'),('📊',len(visible_trainings),'Treinos','sp-orange')]
+cols=st.columns(4)
+for col,(ico,num,label,klass) in zip(cols,items): col.markdown(f"<div class='sp-kpi {klass}'><div class='sp-icon'>{ico}</div><div class='sp-num'>{num}</div><div class='sp-name'>{label}</div><div class='sp-hint'>DADOS DA EQUIPE →</div></div>",unsafe_allow_html=True)
 st.markdown("<div class='sp-section'>Acesso rápido</div>",unsafe_allow_html=True)
 q1,q2,q3,q4=st.columns(4)
 with q1:
     st.markdown("<div class='sp-quick'><div class='sp-quick-icon'>🛹</div><div class='sp-quick-title'>Times</div><div class='sp-quick-sub'>Veja sua equipe e os membros</div></div>",unsafe_allow_html=True)
-    if st.button("Abrir Times →",key="home_times",use_container_width=True): st.switch_page("pages/02_Times.py")
+    if st.button('Abrir Times →',key='home_times',use_container_width=True): st.switch_page('pages/02_Times.py')
 with q2:
-    st.markdown("<div class='sp-quick'><div class='sp-quick-icon'>🗓️</div><div class='sp-quick-title'>Histórico</div><div class='sp-quick-sub'>Treinos e relatórios salvos</div></div>",unsafe_allow_html=True)
-    if st.button("Abrir Histórico →",key="home_hist",use_container_width=True): st.switch_page("pages/04_Historico_de_Treinos.py")
+    st.markdown("<div class='sp-quick'><div class='sp-quick-icon'>📅</div><div class='sp-quick-title'>Calendário</div><div class='sp-quick-sub'>Eventos, treinos e campeonatos</div></div>",unsafe_allow_html=True)
+    if st.button('Abrir Calendário →',key='home_cal',use_container_width=True): st.switch_page('pages/06_Calendario.py')
 with q3:
-    if role not in ("skatista","familiar"):
+    if role not in ('skatista','familiar'):
         st.markdown("<div class='sp-quick'><div class='sp-quick-icon'>📈</div><div class='sp-quick-title'>Nova Análise</div><div class='sp-quick-sub'>Analisar um novo CSV</div></div>",unsafe_allow_html=True)
-        if st.button("Nova Análise →",key="home_analysis",use_container_width=True): st.switch_page("pages/03_Analise_de_Treino.py")
+        if st.button('Nova Análise →',key='home_analysis',use_container_width=True): st.switch_page('pages/03_Analise_de_Treino.py')
     else:
-        st.markdown("<div class='sp-quick'><div class='sp-quick-icon'>👁️</div><div class='sp-quick-title'>Meus Treinos</div><div class='sp-quick-sub'>Visualize suas análises</div></div>",unsafe_allow_html=True)
-        if st.button("Ver Treinos →",key="home_mytrain",use_container_width=True): st.switch_page("pages/04_Historico_de_Treinos.py")
+        st.markdown("<div class='sp-quick'><div class='sp-quick-icon'>📊</div><div class='sp-quick-title'>Meus Treinos</div><div class='sp-quick-sub'>Histórico e relatórios</div></div>",unsafe_allow_html=True)
+        if st.button('Ver Treinos →',key='home_train',use_container_width=True): st.switch_page('pages/04_Historico_de_Treinos.py')
 with q4:
-    st.markdown("<div class='sp-quick'><div class='sp-quick-icon'>👤</div><div class='sp-quick-title'>Meu Perfil</div><div class='sp-quick-sub'>Foto e informações pessoais</div></div>",unsafe_allow_html=True)
-    if st.button("Abrir Perfil →",key="home_profile",use_container_width=True): st.switch_page("pages/05_Meu_Perfil.py")
-if role == "admin":
-    st.success("🛡️ Você está conectado como ADMINISTRADOR. Use Cadastros para aprovar usuários.")
-elif role in ("tecnico","presidente","vice_presidente","chefe_equipe","comissao_tecnica"):
-    st.info("🎯 Perfil TÉCNICO: você acessa somente os times e skatistas vinculados a você.")
-else:
-    st.info("🛹 Perfil SKATISTA: seu acesso é limitado ao próprio perfil e ao Histórico de Treinos.")
+    st.markdown("<div class='sp-quick'><div class='sp-quick-icon'>👤</div><div class='sp-quick-title'>Meu Perfil</div><div class='sp-quick-sub'>Editar meus dados</div></div>",unsafe_allow_html=True)
+    if st.button('Abrir Perfil →',key='home_profile',use_container_width=True): st.switch_page('pages/05_Meu_Perfil.py')
+
+show_people=athletes[:6] if role!='skatista' else ([next((a for a in athletes if a.get('id')==user.id),None)] if any(a.get('id')==user.id for a in athletes) else athletes[:4])
+if show_people:
+    st.markdown("<div class='sp-section'>Atletas da equipe</div>",unsafe_allow_html=True)
+    pcs=st.columns(min(4,len(show_people)))
+    for i,a in enumerate(show_people):
+        with pcs[i%len(pcs)]:
+            st.markdown("<div class='sp-person'>",unsafe_allow_html=True)
+            if a.get('photo_url'): st.image(a['photo_url'],use_container_width=True)
+            else: st.markdown("<div style='height:105px;display:flex;align-items:center;justify-content:center;font-size:42px;background:#091827;border-radius:12px'>🛹</div>",unsafe_allow_html=True)
+            loc=' / '.join(x for x in [a.get('city'),a.get('state')] if x)
+            st.markdown(f"<div class='sp-person-name'>{a.get('full_name') or 'Atleta'}</div><div class='sp-person-meta'>{a.get('modality') or '—'} • {a.get('stance') or 'Base não informada'}<br>{loc or 'Cidade não informada'}</div></div>",unsafe_allow_html=True)
+            if st.button('Ver equipe →',key=f"home_person_{a['id']}",use_container_width=True): st.switch_page('pages/02_Times.py')
