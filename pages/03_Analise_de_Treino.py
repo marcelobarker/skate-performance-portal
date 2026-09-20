@@ -29,6 +29,7 @@ st.markdown("""<style>
   background:#0b1d2d!important;color:#eef8ff!important;border-color:#245274!important;
 }
 [data-testid="stDateInput"] button,[data-testid="stTimeInput"] button{background:#0b1d2d!important;color:#eef8ff!important;}
+[data-testid="stDateInput"]>div,[data-testid="stDateInput"] div[data-baseweb="input"]{background:#0b1d2d!important;color:#eef8ff!important;}
 [data-baseweb="input"],[data-baseweb="select"]>div,[data-baseweb="textarea"]{background:#0b1d2d!important;color:#eef8ff!important;}
 </style>""", unsafe_allow_html=True)
 
@@ -773,7 +774,7 @@ sb = get_supabase()
 try:
     athlete_rows = (
         sb.table("profiles")
-        .select("id,full_name,email,role,status,modality,stance,category,photo_url")
+        .select("id,full_name,email,role,status,modality,stance,photo_url,birth_date,city,state")
         .eq("role", "skatista").eq("status", "ativo").order("full_name").execute().data or []
     )
 except Exception as e:
@@ -791,21 +792,31 @@ if history_view:
         st.session_state.pop("history_analysis_view", None)
         st.switch_page("pages/04_Historico_de_Treinos.py")
 else:
-    if not athlete_rows:
-        msg = "Nenhum skatista ativo do seu time está disponível para análise." if profile.get("role") == "tecnico" else "Ainda não há skatistas ativos cadastrados. Cadastre/aprove um skatista em Cadastros para iniciar uma análise."
-        st.info(msg); st.stop()
-    athlete_by_label = {f"{r.get('full_name') or 'Sem nome'}" + (f" • {r.get('modality')}" if r.get('modality') else ""): r for r in athlete_rows}
-    athlete_label = st.sidebar.selectbox("ATLETA CADASTRADO", list(athlete_by_label.keys()))
-    selected_athlete = athlete_by_label[athlete_label]
-    athlete = selected_athlete.get("full_name") or "ATLETA"
-    photo_url = selected_athlete.get("photo_url")
+    analysis_subject = st.sidebar.radio("QUEM SERÁ ANALISADO?", ["Atleta cadastrado", "Atleta convidado / sem cadastro"], horizontal=False)
+    guest_mode = analysis_subject.startswith("Atleta convidado")
+    if guest_mode:
+        guest_name = st.sidebar.text_input("NOME DO ATLETA CONVIDADO", placeholder="Ex.: John Doe")
+        guest_modality = st.sidebar.selectbox("MODALIDADE DO CONVIDADO", ["Street","Park","Vert","Outro"])
+        guest_stance = st.sidebar.selectbox("BASE DO CONVIDADO", ["Regular","Goofy","Não informado"])
+        selected_athlete={"id":None,"full_name":guest_name.strip() or "ATLETA CONVIDADO","modality":guest_modality,"stance":None if guest_stance=="Não informado" else guest_stance,"photo_url":None}
+        athlete=selected_athlete["full_name"]; photo_url=None
+        st.sidebar.caption("Análise temporária: o convidado não é cadastrado nem salvo no Histórico.")
+    else:
+        if not athlete_rows:
+            msg = "Nenhum skatista ativo do seu time está disponível para análise." if profile.get("role") == "tecnico" else "Ainda não há skatistas ativos cadastrados. Use Atleta convidado para uma análise sem cadastro."
+            st.info(msg); st.stop()
+        athlete_by_label = {f"{r.get('full_name') or 'Sem nome'}" + (f" • {r.get('modality')}" if r.get('modality') else ""): r for r in athlete_rows}
+        athlete_label = st.sidebar.selectbox("ATLETA CADASTRADO", list(athlete_by_label.keys()))
+        selected_athlete = athlete_by_label[athlete_label]
+        athlete = selected_athlete.get("full_name") or "ATLETA"
+        photo_url = selected_athlete.get("photo_url")
 
 photo = None
 if photo_url:
     try: photo = io.BytesIO(urlopen(photo_url, timeout=8).read())
     except Exception: photo = None
 
-st.sidebar.caption(" • ".join([x for x in [selected_athlete.get("modality"), selected_athlete.get("category"), selected_athlete.get("stance")] if x]))
+st.sidebar.caption(" • ".join([x for x in [selected_athlete.get("modality"), selected_athlete.get("stance")] if x]))
 analysis_photo = None
 if not history_view:
     analysis_photo = st.sidebar.file_uploader("FOTO PARA A ANÁLISE (OPCIONAL)", type=["jpg", "jpeg", "png", "webp"], accept_multiple_files=False)
@@ -839,7 +850,7 @@ for p in problems:st.sidebar.warning(p)
 # V2.0.1 — um envio com vários CSVs representa UM treino no histórico.
 # Os arquivos originais continuam separados no Storage, mas compartilham um único
 # registro de sessão e um único par de relatórios consolidados.
-if sessions and not history_view and profile.get("role") in ("admin", "tecnico"):
+if sessions and not history_view and profile.get("role") in ("admin", "tecnico") and selected_athlete.get("id"):
     if st.sidebar.button("💾 SALVAR NO HISTÓRICO", use_container_width=True):
         uploaded_paths = []
         report_path = visual_path = None
@@ -892,14 +903,16 @@ if sessions and not history_view and profile.get("role") in ("admin", "tecnico")
             st.sidebar.error(f"Não foi possível salvar o histórico: {exc}")
 
 names=[s["name"] for s in sessions]
-choice=st.sidebar.selectbox("SESSÃO",["TODOS OS TREINOS"]+names)
+choice=st.sidebar.selectbox("SESSÃO",["TODOS OS TREINOS"]+names, key="session_sidebar")
+# No celular a sidebar costuma ficar recolhida; o mesmo seletor fica visível no conteúdo.
+if len(sessions)>1:
+    choice=st.selectbox("📱 VISUALIZAR SESSÃO / CSV", ["TODOS OS TREINOS"]+names, index=(["TODOS OS TREINOS"]+names).index(choice), key="session_mobile_main")
 cur=merge_sessions(sessions) if choice=="TODOS OS TREINOS" else next(s for s in sessions if s["name"]==choice)
 st.sidebar.success(f"{len(sessions)} CSV(s) importado(s)")
 for n in names:st.sidebar.markdown(f'<span class="session-pill">✓ {n}</span>',unsafe_allow_html=True)
 
 head1,head2=st.columns([1.05,4.5])
 with head1:
-    st.markdown('<div class="hero">',unsafe_allow_html=True)
     if analysis_photo is not None:
         st.image(analysis_photo, use_container_width=True)
     elif photo_url:
@@ -907,11 +920,10 @@ with head1:
     else:
         st.markdown("### 📷 FOTO")
     st.markdown(f"### {athlete or 'ATLETA'}")
-    sport_info = " • ".join([x for x in [selected_athlete.get("modality"), selected_athlete.get("category"), selected_athlete.get("stance")] if x])
+    sport_info = " • ".join([x for x in [selected_athlete.get("modality"), selected_athlete.get("stance")] if x])
     if sport_info:
         st.caption(sport_info)
     st.caption(f"{len(sessions)} treino(s) carregado(s)")
-    st.markdown("</div>",unsafe_allow_html=True)
 with head2:
     rate=cur["hits"]/cur["attempts"]*100 if cur["attempts"] else 0
     st.markdown(f"""

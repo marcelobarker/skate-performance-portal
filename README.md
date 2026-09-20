@@ -85,3 +85,11 @@ Suba os arquivos no mesmo repositório do Portal e faça commit. O Streamlit Com
 - Times de atleta/técnico carregados a partir dos próprios vínculos.
 - Central da Equipe virou navegação funcional/clicável.
 - Execute `supabase_v2_0_3_migration.sql` uma vez.
+
+## V2.1
+- Perfil: data de nascimento, cidade/UF e foto; campo Categoria removido da interface.
+- Times: membros em lista visual com foto, função, idade, base e cidade; skatistas enxergam técnicos do próprio time.
+- Login: opção “Me manter conectado” usando refresh token de sessão (30 dias; pode expirar/revogar antes).
+- Análise: atleta convidado/sem cadastro, data com tema escuro, seletor de sessão visível no conteúdo/mobile e correção do bloco vazio sobre a foto.
+- Navegação: Cadastros oculto para Técnico/Skatista e atalho Início em todas as páginas autenticadas.
+- Execute `supabase_v2_1_migration.sql` uma vez após subir esta versão.

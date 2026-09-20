@@ -70,10 +70,11 @@ if not user:
         with st.form("login_form"):
             email = st.text_input("E-mail")
             password = st.text_input("Senha", type="password")
+            keep_connected = st.checkbox("Me manter conectado neste dispositivo")
             submit = st.form_submit_button("Entrar", use_container_width=True)
         if submit:
             try:
-                sign_in(email, password)
+                sign_in(email, password, keep_connected=keep_connected)
                 st.success("Login realizado.")
                 st.rerun()
             except Exception:
@@ -111,11 +112,10 @@ status = (profile or {}).get("status","pendente")
 role = (profile or {}).get("role","skatista")
 name = (profile or {}).get("full_name", getattr(user,"email","Usuário"))
 
+if role != "admin":
+    st.markdown("""<style>[data-testid="stSidebarNav"] a[href*="01_Cadastros"],[data-testid="stSidebarNav"] a[href*="Cadastros"]{display:none!important}</style>""", unsafe_allow_html=True)
 if role == "skatista":
-    st.markdown("""<style>
-    [data-testid="stSidebarNav"] a[href*="Analise_de_Treino"],
-    [data-testid="stSidebarNav"] a[href*="03_Analise"]{display:none!important}
-    </style>""", unsafe_allow_html=True)
+    st.markdown("""<style>[data-testid="stSidebarNav"] a[href*="Analise_de_Treino"],[data-testid="stSidebarNav"] a[href*="03_Analise"]{display:none!important}</style>""", unsafe_allow_html=True)
 
 top1, top2 = st.columns([5,1])
 with top1:

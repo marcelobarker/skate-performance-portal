@@ -1,5 +1,6 @@
 import mimetypes
 import uuid
+from datetime import date
 import streamlit as st
 from auth_utils import require_login, get_supabase
 
@@ -74,7 +75,6 @@ def editor(r):
     role_value = r.get("role") or "skatista"
     modality_value = r.get("modality") or "Street"
     stance_value = r.get("stance") or "Regular"
-    category_value = r.get("category") or ""
 
     role_opts = ["skatista", "tecnico"]
     if role_value == "admin":
@@ -98,8 +98,13 @@ def editor(r):
             stance = c5.selectbox("Base", stance_opts,
                                   index=stance_opts.index(stance_value) if stance_value in stance_opts else 2)
 
-            category = st.text_input("Categoria", value=category_value,
-                                     placeholder="Ex.: Masculino, Feminino, Sub-16, Open...")
+            c6,c7,c8 = st.columns([1.3,2,1])
+            try: birth_value=date.fromisoformat(r.get("birth_date")) if r.get("birth_date") else date(2000,1,1)
+            except Exception: birth_value=date(2000,1,1)
+            birth_date=c6.date_input("Data de nascimento",value=birth_value,min_value=date(1940,1,1),max_value=date.today())
+            city=c7.text_input("Cidade",value=r.get("city") or "")
+            states=["","AC","AL","AP","AM","BA","CE","DF","ES","GO","MA","MT","MS","MG","PA","PB","PR","PE","PI","RJ","RN","RS","RO","RR","SC","SP","SE","TO","EXTERIOR"]
+            sv=(r.get("state") or "").upper(); state=c8.selectbox("Estado/UF",states,index=states.index(sv) if sv in states else 0)
             photo = st.file_uploader("Foto do perfil", type=["jpg", "jpeg", "png", "webp"],
                                      key=f"photo_{r['id']}")
             submitted = st.form_submit_button("💾 Salvar alterações", use_container_width=True)
@@ -110,7 +115,7 @@ def editor(r):
                     "full_name": full_name.strip() or r.get("full_name") or "Sem nome",
                     "modality": modality,
                     "stance": None if stance == "Não informado" else stance,
-                    "category": category.strip() or None,
+                    "birth_date": birth_date.isoformat(), "city": city.strip() or None, "state": state or None,
                 }
                 if not is_self:
                     payload["role"] = role
@@ -143,7 +148,7 @@ def render_people(items, mode):
             info_col.write(role_label)
 
             sport_col.write(f"**Modalidade:** {r.get('modality') or '—'}")
-            sport_col.caption(f"Base: {r.get('stance') or '—'}  •  Categoria: {r.get('category') or '—'}")
+            sport_col.caption(f"Base: {r.get('stance') or '—'}  •  {r.get('city') or '—'}{'/'+r.get('state') if r.get('state') else ''}")
 
             if mode == "pending":
                 if action_col.button("✅ Aprovar", key=f"ap_{r['id']}", use_container_width=True):
