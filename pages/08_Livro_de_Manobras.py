@@ -18,11 +18,23 @@ if can_edit:
         with t1:
             with st.form("new_trick"):
                 cmap={c["name"]:c["id"] for c in cats}; cn=st.selectbox("Categoria",list(cmap)); name=st.text_input("Nome da manobra"); desc=st.text_input("Descrição / observação"); ok=st.form_submit_button("Adicionar manobra",type="primary",width="stretch")
-            if ok and name.strip(): sb.table("tricks").insert({"category_id":cmap[cn],"name":name.strip(),"description":desc.strip() or None,"created_by":user.id}).execute(); st.rerun()
+            if ok and name.strip():
+                try:
+                    sb.table("tricks").insert({"category_id":cmap[cn],"name":name.strip(),"description":desc.strip() or None,"created_by":user.id}).execute()
+                    st.success("Manobra adicionada ao livro.")
+                    st.rerun()
+                except Exception:
+                    st.error("Não foi possível adicionar a manobra. Verifique se a migration V3.5 foi executada no Supabase.")
         with t2:
             with st.form("new_cat"):
                 cname=st.text_input("Nome da categoria"); order=st.number_input("Ordem",0,999,100); ok2=st.form_submit_button("Adicionar categoria",width="stretch")
-            if ok2 and cname.strip(): sb.table("trick_categories").insert({"name":cname.strip(),"sort_order":int(order)}).execute(); st.rerun()
+            if ok2 and cname.strip():
+                try:
+                    sb.table("trick_categories").insert({"name":cname.strip(),"sort_order":int(order)}).execute()
+                    st.success("Categoria adicionada.")
+                    st.rerun()
+                except Exception:
+                    st.error("Não foi possível adicionar a categoria. Verifique se a migration V3.5 foi executada no Supabase.")
 edit_id=st.session_state.get("edit_trick_id")
 if edit_id and can_edit:
     t=next((x for x in tricks if x["id"]==edit_id),None)
@@ -32,7 +44,13 @@ if edit_id and can_edit:
         with st.form("edit_trick_form"):
             a,b=st.columns(2); newname=a.text_input("Nome",value=t["name"]); newcat=b.selectbox("Categoria",names,index=names.index(current)); newdesc=st.text_input("Descrição",value=t.get("description") or ""); save=st.form_submit_button("Salvar alterações",type="primary",width="stretch")
         if save and newname.strip():
-            sb.table("tricks").update({"name":newname.strip(),"category_id":cmap[newcat],"description":newdesc.strip() or None}).eq("id",edit_id).execute(); st.session_state.pop("edit_trick_id",None); st.rerun()
+            try:
+                sb.table("tricks").update({"name":newname.strip(),"category_id":cmap[newcat],"description":newdesc.strip() or None}).eq("id",edit_id).execute()
+                st.session_state.pop("edit_trick_id",None)
+                st.success("Manobra atualizada.")
+                st.rerun()
+            except Exception:
+                st.error("Não foi possível editar a manobra. Verifique as permissões do Livro de Manobras.")
 if not cats: st.info("Nenhuma categoria cadastrada."); st.stop()
 tabs=st.tabs([c["name"] for c in cats])
 for tab,c in zip(tabs,cats):
@@ -46,4 +64,9 @@ for tab,c in zip(tabs,cats):
                 with ecol:
                     if st.button("Editar",key="edit_"+t["id"],width="stretch"): st.session_state["edit_trick_id"]=t["id"]; st.rerun()
                 with dcol:
-                    if st.button("Excluir",key="del_"+t["id"],width="stretch"): sb.table("tricks").delete().eq("id",t["id"]).execute(); st.rerun()
+                    if st.button("Excluir",key="del_"+t["id"],width="stretch"):
+                        try:
+                            sb.table("tricks").delete().eq("id",t["id"]).execute()
+                            st.rerun()
+                        except Exception:
+                            st.error("Não foi possível excluir a manobra. Verifique as permissões do Livro de Manobras.")

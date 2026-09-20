@@ -136,3 +136,6 @@ Correções verificáveis: cards Home navegáveis, menu mobile global, data fina
 - Restaura o visual aprovado dos cards neon e Acesso rápido da Home; navegação passa a usar st.switch_page por overlay transparente, sem links HTML.
 - Atalho explícito Perfil/Feed para atletas na Home e em Times.
 - Calendário refeito sem expander/select mensal: Data inicial + Data final sempre visíveis e navegação mensal por setas.
+
+
+V3.5: corrige RLS do Livro de Manobras e impede erros de banco de derrubarem a página. Execute supabase_v3_5_migration.sql uma vez.
