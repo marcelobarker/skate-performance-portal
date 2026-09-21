@@ -86,6 +86,24 @@ def sign_in(email, password, keep_connected=False):
             pass
     return res
 
+def send_password_recovery(email):
+    """Envia o e-mail oficial do Supabase para o próprio usuário redefinir a senha."""
+    sb = get_supabase()
+    return sb.auth.reset_password_for_email(
+        email.strip(),
+        {"redirect_to": "https://skateperformance.streamlit.app/"}
+    )
+
+def set_recovery_session(access_token, refresh_token):
+    """Ativa no cliente Supabase a sessão temporária recebida pelo link de recuperação."""
+    sb = get_supabase()
+    return sb.auth.set_session(access_token, refresh_token)
+
+def update_password(new_password):
+    """Troca a senha do usuário autenticado pela sessão de recuperação."""
+    sb = get_supabase()
+    return sb.auth.update_user({"password": new_password})
+
 def sign_up(full_name, email, password, role, modality, linked_athlete_id=None):
     sb = get_supabase()
     data={"full_name":full_name.strip(),"role":role,"modality":modality}

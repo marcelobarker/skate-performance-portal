@@ -30,7 +30,29 @@ if not posts: st.info("Ainda não há vídeos no feed."); st.stop()
 for post in posts:
     a=pm.get(post.get('athlete_id'),{}); name=a.get('full_name') or 'Atleta'
     with st.container(border=True):
-        st.markdown(f"<div class='post-title'>{html.escape(name)}</div><span class='pill'>{html.escape(post.get('session_title') or 'VÍDEO DE TREINO')}</span>",unsafe_allow_html=True)
+        photo=a.get('photo_url')
+        if photo:
+            st.markdown(
+                f"""<div style='display:flex;align-items:center;gap:11px;margin-bottom:5px'>
+                <img src='{html.escape(photo, quote=True)}'
+                     style='width:46px;height:46px;border-radius:50%;object-fit:cover;border:1px solid #163b59'>
+                <div><div class='post-title'>{html.escape(name)}</div>
+                <span class='pill'>{html.escape(post.get('session_title') or 'VÍDEO DE TREINO')}</span></div>
+                </div>""",
+                unsafe_allow_html=True
+            )
+        else:
+            initials=''.join(x[0].upper() for x in name.split()[:2]) or 'A'
+            st.markdown(
+                f"""<div style='display:flex;align-items:center;gap:11px;margin-bottom:5px'>
+                <div style='width:46px;height:46px;border-radius:50%;display:flex;align-items:center;
+                            justify-content:center;background:#0b2136;border:1px solid #163b59;
+                            color:#20e6ff;font-weight:900'>{html.escape(initials)}</div>
+                <div><div class='post-title'>{html.escape(name)}</div>
+                <span class='pill'>{html.escape(post.get('session_title') or 'VÍDEO DE TREINO')}</span></div>
+                </div>""",
+                unsafe_allow_html=True
+            )
         if post.get('caption'): st.caption(post['caption'])
         try:
             if is_drive_path(post.get('video_path')):

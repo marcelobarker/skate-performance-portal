@@ -1,7 +1,9 @@
 
 import streamlit as st
 import streamlit.components.v1 as components
-from auth_utils import sign_in, sign_up, sign_out, current_user, current_profile, load_profile, get_supabase, _navigation
+from auth_utils import (sign_in, sign_up, sign_out, current_user, current_profile, load_profile,
+                        get_supabase, _navigation, send_password_recovery,
+                        set_recovery_session, update_password)
 
 from ui_theme import apply_ui_theme
 
@@ -63,6 +65,56 @@ h1,h2,h3,p,label{color:#eef8ff}
 st.markdown("""<div class="hero"><div class="brand">SKATE<span class="blue">PERFORMANCE</span><span class="time">BRASIL</span></div>
 <div class="sub">ATHLETE MANAGEMENT • TRAINING INTELLIGENCE</div></div>""", unsafe_allow_html=True)
 
+# Recuperação de senha: o Supabase devolve os tokens no fragmento (#) da URL.
+# Este pequeno bridge traz o fragmento para query params, que o Streamlit consegue ler.
+components.html("""<script>
+(function(){
+  try {
+    const p = window.parent;
+    const h = p.location.hash || '';
+    if (h && h.includes('type=recovery') && h.includes('access_token=')) {
+      const u = new URL(p.location.href);
+      u.hash = '';
+      u.searchParams.set('recovery_fragment', h.substring(1));
+      p.location.replace(u.toString());
+    }
+  } catch(e) {}
+})();
+</script>""", height=0)
+
+recovery_fragment = st.query_params.get("recovery_fragment")
+if recovery_fragment:
+    try:
+        from urllib.parse import parse_qs
+        vals = parse_qs(recovery_fragment)
+        access_token = (vals.get("access_token") or [""])[0]
+        refresh_token = (vals.get("refresh_token") or [""])[0]
+        if access_token and refresh_token:
+            set_recovery_session(access_token, refresh_token)
+            st.title("Criar nova senha")
+            st.caption("Defina sua nova senha. O administrador não terá acesso a ela.")
+            with st.form("recovery_password_form"):
+                new_password = st.text_input("Nova senha", type="password")
+                confirm_password = st.text_input("Confirmar nova senha", type="password")
+                change_password = st.form_submit_button("Salvar nova senha", use_container_width=True)
+            if change_password:
+                if len(new_password) < 6:
+                    st.error("A senha precisa ter pelo menos 6 caracteres.")
+                elif new_password != confirm_password:
+                    st.error("As duas senhas não são iguais.")
+                else:
+                    update_password(new_password)
+                    st.query_params.clear()
+                    sign_out()
+                    st.success("Senha alterada com sucesso. Entre novamente com a nova senha.")
+                    st.rerun()
+            st.stop()
+    except Exception:
+        st.error("Este link de recuperação é inválido ou expirou. Solicite um novo link.")
+        if st.button("Voltar ao login"):
+            st.query_params.clear(); st.rerun()
+        st.stop()
+
 user = current_user()
 profile = current_profile()
 if user and not profile:
@@ -104,6 +156,24 @@ if not user:
                 st.rerun()
             except Exception:
                 st.error("Não foi possível entrar. Confira e-mail, senha e se o e-mail já foi confirmado.")
+
+        with st.expander("Esqueci minha senha"):
+            st.caption("Informe seu e-mail. Você receberá um link para criar uma nova senha.")
+            recovery_email = st.text_input("E-mail para recuperação", key="recovery_email")
+            if st.button("Enviar link de redefinição", key="send_recovery", use_container_width=True):
+                if not recovery_email.strip() or "@" not in recovery_email:
+                    st.error("Informe um e-mail válido.")
+                else:
+                    try:
+                        send_password_recovery(recovery_email)
+                        st.success("Se o e-mail estiver cadastrado, enviaremos um link para redefinir a senha.")
+                    except Exception as e:
+                        msg = str(e).lower()
+                        if "rate limit" in msg:
+                            st.warning("O serviço de e-mail atingiu o limite temporário de envios. Aguarde um pouco e tente novamente.")
+                        else:
+                            # Mensagem neutra para não revelar se um e-mail existe ou não no sistema.
+                            st.info("Se o e-mail estiver cadastrado, enviaremos um link para redefinir a senha.")
 
     with signup_tab:
         with st.form("signup_form"):
