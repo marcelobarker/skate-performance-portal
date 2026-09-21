@@ -1,15 +1,6 @@
 import streamlit as st
 
 def apply_ui_theme():
-    # Ferramentas operacionais ficam dentro da Central de Performance;
-    # Perfil/Histórico são acessados a partir do cartão do atleta.
-    st.markdown(r'''<style>
-    [data-testid="stSidebarNav"] a[href*="03_Analise_de_Treino"],
-    [data-testid="stSidebarNav"] a[href*="04_Historico_de_Treinos"],
-    [data-testid="stSidebarNav"] a[href*="07_Perfil_do_Atleta"],
-    [data-testid="stSidebarNav"] a[href*="08_Livro_de_Manobras"],
-    [data-testid="stSidebarNav"] a[href*="10_Codificar_Sessao"]{display:none!important}
-    </style>''', unsafe_allow_html=True)
     st.markdown(r'''<style>
     :root{
       --bg-deep:#020B14;--bg-main:#03111E;--bg-panel:#061727;--bg-card:#081B2D;--bg-elev:#0B2136;--bg-input:#10263B;--bg-hover:#102C46;

@@ -162,3 +162,10 @@ V3.5: corrige RLS do Livro de Manobras e impede erros de banco de derrubarem a p
 - Confirmação antes da exclusão.
 - Botão para reabrir sidebar permanece visível após recolher.
 - Execute supabase_v3_18_migration.sql uma vez.
+
+## V3.19
+- Corrige ImportError de `drive_player_geometry` com fallback compatível.
+- Remove a navegação automática do Streamlit e usa um menu lateral explícito.
+- Menu principal: Home, Times, Feed, Calendário, Meu Perfil, Enviar Vídeo e Central de Performance conforme o cargo.
+- Análise, Histórico, Perfil do Atleta, Livro de Manobras e Codificação não aparecem mais no menu.
+- Cadastros também não aparece no menu principal; Admin usa apenas `Cargos e cadastros` na seção Administração.

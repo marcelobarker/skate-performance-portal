@@ -3,7 +3,12 @@ from datetime import datetime,date
 import streamlit as st
 from auth_utils import require_login,get_supabase
 from ui_theme import apply_ui_theme
-from drive_utils import is_drive_path, drive_stream_url, drive_preview_url, drive_player_geometry
+from drive_utils import is_drive_path, drive_stream_url, drive_preview_url
+try:
+    from drive_utils import drive_player_geometry
+except ImportError:
+    def drive_player_geometry(path_or_id):
+        return {'max_width':525,'aspect':'16/9','orientation':'unknown'}
 from video_utils import can_delete_post, delete_video_post
 st.set_page_config(page_title='Perfil do Atleta • Skate Performance',page_icon='🛹',layout='wide'); apply_ui_theme(); user,me=require_login(); sb=get_supabase()
 STAFF_ROLES=('admin','tecnico','presidente','vice_presidente','chefe_equipe','comissao_tecnica')
