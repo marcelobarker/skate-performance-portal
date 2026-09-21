@@ -2,7 +2,7 @@ import html
 import streamlit as st
 from auth_utils import require_login, get_supabase
 from ui_theme import apply_ui_theme
-from drive_utils import is_drive_path, drive_stream_url
+from drive_utils import is_drive_path, drive_stream_url, drive_preview_url
 
 st.set_page_config(page_title="Feed • Skate Performance", page_icon="▶", layout="wide")
 apply_ui_theme(); user, me = require_login(); sb=get_supabase()
@@ -28,10 +28,15 @@ for post in posts:
         if post.get('caption'): st.caption(post['caption'])
         try:
             if is_drive_path(post.get('video_path')):
-                url=drive_stream_url(post['video_path'])
+                # No feed usamos o player nativo do Google Drive: ele reproduz o mesmo
+                # arquivo que já funciona no Drive e não depende do endpoint de download.
+                preview=drive_preview_url(post['video_path'])
+                st.markdown(f"""<div style='width:min(100%,420px);margin:12px auto;border-radius:14px;overflow:hidden;background:#020b14;aspect-ratio:16/9;border:1px solid #163b59'>
+                <iframe src='{preview}' style='width:100%;height:100%;border:0;display:block' allow='autoplay; fullscreen' allowfullscreen></iframe>
+                </div>""",unsafe_allow_html=True)
             else:
                 signed=sb.storage.from_('trick-videos').create_signed_url(post['video_path'],3600); url=signed.get('signedURL') or signed.get('signedUrl') or signed.get('signed_url')
-            st.markdown("<div class='feed-video'>",unsafe_allow_html=True); st.video(url); st.markdown("</div>",unsafe_allow_html=True)
+                st.markdown("<div class='feed-video'>",unsafe_allow_html=True); st.video(url); st.markdown("</div>",unsafe_allow_html=True)
         except Exception: st.caption("Vídeo indisponível temporariamente.")
         c1,c2=st.columns([1,5]); likes=sb.table('post_likes').select('user_id').eq('post_id',post['id']).execute().data or []; mine=any(x['user_id']==user.id for x in likes)
         if c1.button(('♥' if mine else '♡')+f' {len(likes)}',key='feed_like_'+post['id'],use_container_width=True):

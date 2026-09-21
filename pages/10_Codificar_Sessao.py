@@ -30,7 +30,7 @@ except Exception as e:
 
 st.markdown("""<style>
 .code-title{font-size:30px;font-weight:900;color:#f5f8fc}.code-sub{color:#8499ad;margin-bottom:12px}
-.video-wrap{max-width:520px;margin:0 auto}.video-wrap [data-testid='stVideo']{max-width:520px!important;width:100%!important}
+.video-wrap{max-width:460px;margin:0 auto}.video-wrap [data-testid='stVideo']{max-width:460px!important;width:100%!important}
 .event-card{background:#071a2b;border:1px solid #163b59;border-radius:10px;padding:8px 11px;margin:5px 0}
 .event-time{color:#20e6ff;font-weight:900}.event-hit{color:#00e4a4;font-weight:800}.event-err{color:#ff5c68;font-weight:800}
 @media(max-width:700px){.video-wrap,.video-wrap [data-testid='stVideo']{max-width:100%!important}}
@@ -68,9 +68,9 @@ try:
         """,
         css="""
         .coder-shell{font-family:var(--st-font);color:#f5f8fc;background:#061727;border:1px solid #163b59;border-radius:14px;padding:14px;box-sizing:border-box}
-        .player-box{max-width:560px;margin:0 auto 8px;background:#020b14;border-radius:12px;overflow:hidden;border:1px solid #163b59}
-        video{display:block;width:100%;max-height:350px;background:#000;object-fit:contain}
-        .time-row{max-width:560px;margin:0 auto 14px;display:flex;align-items:center;justify-content:space-between;gap:12px}
+        .player-box{max-width:460px;margin:0 auto 8px;background:#020b14;border-radius:12px;overflow:hidden;border:1px solid #163b59}
+        video{display:block;width:100%;max-height:290px;background:#000;object-fit:contain}
+        .time-row{max-width:460px;margin:0 auto 14px;display:flex;align-items:center;justify-content:space-between;gap:12px}
         #clock{font-size:20px;font-weight:900;color:#20e6ff;font-variant-numeric:tabular-nums}.hint{font-size:12px;color:#8499ad;text-align:right}
         .grid{display:grid;gap:10px;margin:9px 0}.two{grid-template-columns:1fr 2fr}.four{grid-template-columns:repeat(4,1fr)}
         label{display:flex;flex-direction:column;gap:5px;font-size:12px;font-weight:800;color:#c4d1df}
