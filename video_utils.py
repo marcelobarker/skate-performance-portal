@@ -1,7 +1,7 @@
 from drive_utils import is_drive_path, delete_drive_file
 
 def can_delete_post(me, user_id, post):
-    return me.get("role") == "admin" or post.get("athlete_id") == user_id
+    return me.get("role") == "admin"
 
 def delete_video_post(sb, post):
     path = post.get("video_path")

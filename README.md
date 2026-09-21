@@ -169,3 +169,16 @@ V3.5: corrige RLS do Livro de Manobras e impede erros de banco de derrubarem a p
 - Menu principal: Home, Times, Feed, Calendário, Meu Perfil, Enviar Vídeo e Central de Performance conforme o cargo.
 - Análise, Histórico, Perfil do Atleta, Livro de Manobras e Codificação não aparecem mais no menu.
 - Cadastros também não aparece no menu principal; Admin usa apenas `Cargos e cadastros` na seção Administração.
+
+## V3.20
+- Remove a navegação móvel duplicada que estava aparecendo no desktop.
+- Menu lateral controlado: sem Análise, Codificação ou Cadastros redundantes no menu principal.
+- Codificação usa o player oficial do Google Drive para evitar o vídeo travado em 0:00.
+- Player de codificação compacto (máx. 560 px).
+- Sem migration nova.
+
+## V3.21
+- Exclusão de vídeo disponível somente para Admin.
+- Interface reduzida para um único botão `Excluir vídeo`.
+- Removidos expander, checkbox e textos extras de exclusão.
+- Execute `supabase_v3_21_migration.sql` para restringir também a permissão no banco.

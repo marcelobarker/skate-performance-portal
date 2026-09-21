@@ -105,58 +105,25 @@ def sign_out():
         st.session_state.pop(k, None)
 
 def _navigation(role):
-    """Navegação explícita. Páginas internas continuam acessíveis por botões/cards,
-    mas não aparecem como atalhos no menu lateral."""
-    st.markdown("""<style>
-    .st-key-sp_mobile_nav{display:none!important}
-    @media(max-width:768px){
-      .st-key-sp_mobile_nav{display:block!important}
-      .st-key-sp_mobile_nav [data-testid="stPageLink"] a,
-      .st-key-sp_mobile_nav [data-testid="stPopover"] button{
-        background:linear-gradient(180deg,#0d2b46,#08233A)!important;
-        border:1px solid #159BFF!important;color:#fff!important;border-radius:9px!important;
-        min-height:42px!important;box-shadow:0 0 16px rgba(0,124,255,.18)!important
-      }
-      .st-key-sp_mobile_nav [data-testid="stPopover"] button{font-size:0!important;width:48px!important;min-width:48px!important}
-      .st-key-sp_mobile_nav [data-testid="stPopover"] button:before{content:'☰';font-size:24px!important;color:#20E6FF!important}
-    }
-    </style>""", unsafe_allow_html=True)
-
-    # Mobile: um único menu.
-    with st.container(key="sp_mobile_nav"):
-        n1,n2=st.columns([1.15,6.85],gap="small")
-        with n1:
-            with st.popover("☰", use_container_width=True):
-                st.page_link("Home.py", label="⌂ Home", use_container_width=True)
-                st.page_link("pages/02_Times.py", label="◉ Times", use_container_width=True)
-                st.page_link("pages/11_Feed.py", label="▶ Feed", use_container_width=True)
-                st.page_link("pages/06_Calendario.py", label="▣ Calendário", use_container_width=True)
-                st.page_link("pages/05_Meu_Perfil.py", label="◎ Meu Perfil", use_container_width=True)
-                if role in ("skatista","admin","tecnico","presidente","vice_presidente","chefe_equipe","comissao_tecnica"):
-                    st.page_link("pages/09_Enviar_Manobra.py", label="＋ Enviar Vídeo", use_container_width=True)
-                if role not in ("skatista","familiar"):
-                    st.page_link("pages/12_Central_do_Treinador.py", label="⚡ Central de Performance", use_container_width=True)
-                if role == "admin":
-                    st.divider()
-                    st.page_link("pages/01_Cadastros.py", label="👥 Cargos e cadastros", use_container_width=True)
-
-    # Desktop: somente atalhos realmente úteis.
+    """Menu lateral limpo. Ferramentas internas são abertas pelos cards/páginas corretas."""
     with st.sidebar:
-        st.page_link("Home.py", label="⌂ Home", use_container_width=True)
-        st.page_link("pages/02_Times.py", label="◉ Times", use_container_width=True)
-        st.page_link("pages/11_Feed.py", label="▶ Feed", use_container_width=True)
-        st.page_link("pages/06_Calendario.py", label="▣ Calendário", use_container_width=True)
-        st.page_link("pages/05_Meu_Perfil.py", label="◎ Meu Perfil", use_container_width=True)
+        st.page_link("Home.py", label="Home", use_container_width=True)
+        st.page_link("pages/02_Times.py", label="Times", use_container_width=True)
+        st.page_link("pages/11_Feed.py", label="Feed", use_container_width=True)
+        st.page_link("pages/06_Calendario.py", label="Calendário", use_container_width=True)
+        st.page_link("pages/05_Meu_Perfil.py", label="Meu Perfil", use_container_width=True)
+
         if role in ("skatista","admin","tecnico","presidente","vice_presidente","chefe_equipe","comissao_tecnica"):
-            st.page_link("pages/09_Enviar_Manobra.py", label="＋ Enviar Vídeo", use_container_width=True)
+            st.page_link("pages/09_Enviar_Manobra.py", label="Enviar Vídeo", use_container_width=True)
+
         if role not in ("skatista","familiar"):
-            st.page_link("pages/12_Central_do_Treinador.py", label="⚡ Central de Performance", use_container_width=True)
+            st.page_link("pages/12_Central_do_Treinador.py", label="Central de Performance", use_container_width=True)
 
         if role == "admin":
             st.divider()
             st.caption("ADMINISTRAÇÃO")
-            st.page_link("pages/01_Cadastros.py", label="👥 Cargos e cadastros", use_container_width=True)
-            st.page_link("pages/02_Times.py", label="🛹 Gerenciar times", use_container_width=True)
+            st.page_link("pages/01_Cadastros.py", label="Cargos e cadastros", use_container_width=True)
+            st.page_link("pages/02_Times.py", label="Gerenciar times", use_container_width=True)
 
 
 def require_login(require_active=True, admin=False):

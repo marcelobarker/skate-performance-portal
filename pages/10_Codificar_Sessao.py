@@ -3,7 +3,7 @@ from collections import Counter
 import streamlit as st
 from auth_utils import require_login, get_supabase
 from ui_theme import apply_ui_theme
-from drive_utils import is_drive_path, drive_stream_url
+from drive_utils import is_drive_path, drive_stream_url, drive_preview_url
 
 st.set_page_config(page_title="Codificar Sessão • Skate Performance", page_icon="🎬", layout="wide")
 apply_ui_theme(); user, me = require_login(); sb = get_supabase()

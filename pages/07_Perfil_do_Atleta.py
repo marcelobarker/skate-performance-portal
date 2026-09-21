@@ -48,14 +48,11 @@ for post in posts:
                 st.markdown("<div class='feed-video'>",unsafe_allow_html=True); st.video(url); st.markdown("</div>",unsafe_allow_html=True)
         except Exception: st.caption('Vídeo privado indisponível temporariamente.')
         if can_delete_post(me, user.id, post):
-            with st.expander('⋯ Opções do vídeo', expanded=False):
-                st.caption('A exclusão remove este post e o arquivo de vídeo do armazenamento.')
-                confirm=st.checkbox('Confirmo que quero excluir este vídeo',key='profile_del_confirm_'+post['id'])
-                if st.button('🗑 Excluir vídeo',key='profile_del_'+post['id'],use_container_width=True,disabled=not confirm):
-                    try:
-                        delete_video_post(sb,post); st.success('Vídeo excluído.'); st.rerun()
-                    except Exception as e:
-                        st.error(f'Não foi possível excluir. Execute a migration V3.18. Detalhes: {e}')
+            if st.button('🗑 Excluir vídeo', key='profile_del_'+post['id'], use_container_width=False):
+                try:
+                    delete_video_post(sb,post); st.success('Vídeo excluído.'); st.rerun()
+                except Exception as e:
+                    st.error(f'Não foi possível excluir o vídeo. Detalhes: {e}')
         if me.get('role') == 'admin':
             if st.button('🎬 Codificar sessão / várias tentativas', key='code_session_'+post['id'], use_container_width=True):
                 st.session_state['selected_video_post_id']=post['id']

@@ -46,14 +46,11 @@ for post in posts:
                 st.markdown("<div class='feed-video'>",unsafe_allow_html=True); st.video(url); st.markdown("</div>",unsafe_allow_html=True)
         except Exception: st.caption("Vídeo indisponível temporariamente.")
         if can_delete_post(me, user.id, post):
-            with st.expander('⋯ Opções do vídeo', expanded=False):
-                st.caption('A exclusão remove este post e o arquivo de vídeo do armazenamento.')
-                confirm=st.checkbox('Confirmo que quero excluir este vídeo',key='del_confirm_'+post['id'])
-                if st.button('🗑 Excluir vídeo',key='del_feed_'+post['id'],use_container_width=True,disabled=not confirm):
-                    try:
-                        delete_video_post(sb,post); st.success('Vídeo excluído.'); st.rerun()
-                    except Exception as e:
-                        st.error(f'Não foi possível excluir. Execute a migration V3.18. Detalhes: {e}')
+            if st.button('🗑 Excluir vídeo', key='del_feed_'+post['id'], use_container_width=False):
+                try:
+                    delete_video_post(sb,post); st.success('Vídeo excluído.'); st.rerun()
+                except Exception as e:
+                    st.error(f'Não foi possível excluir o vídeo. Detalhes: {e}')
         c1,c2=st.columns([1,5]); likes=sb.table('post_likes').select('user_id').eq('post_id',post['id']).execute().data or []; mine=any(x['user_id']==user.id for x in likes)
         if c1.button(('♥' if mine else '♡')+f' {len(likes)}',key='feed_like_'+post['id'],use_container_width=True):
             if mine: sb.table('post_likes').delete().eq('post_id',post['id']).eq('user_id',user.id).execute()
