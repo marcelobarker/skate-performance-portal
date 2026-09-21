@@ -234,3 +234,11 @@ V3.5: corrige RLS do Livro de Manobras e impede erros de banco de derrubarem a p
 - Mantém `showSidebarNavigation=false`.
 - Mantém as alterações da V3.26.
 - Sem migration.
+
+## V3.28 NAV FIX
+- Corrige a causa visual do menu duplicado: `stSidebarNav` automático é ocultado também via CSS.
+- Menu principal fica somente Home, Times, Feed, Calendário, Meu Perfil, Enviar Vídeo e Central de Performance.
+- Remove visualmente do sidebar: Cadastros, Análise de Treino, Histórico de Treinos, Perfil do Atleta, Livro de Manobras e Codificar Sessão.
+- Admin: Cargos e cadastros permanece somente na seção Administração no final.
+- Corrige `_navigation()` para aceitar o cargo em string enviado pela Home.
+- Sem migration.

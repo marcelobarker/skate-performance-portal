@@ -105,13 +105,13 @@ def sign_out():
         st.session_state.pop(k, None)
 
 def _navigation(me=None):
-    """Menu lateral controlado pelo portal. Aceita profile dict ou Supabase User."""
+    """Menu lateral único do portal."""
     role = None
-    if isinstance(me, dict):
+    if isinstance(me, str):
+        role = me
+    elif isinstance(me, dict):
         role = me.get("role")
     elif me is not None:
-        # As páginas existentes chamam _navigation(user). Buscamos o profile real
-        # sem assumir que o objeto Supabase User possui .get().
         try:
             sb = get_supabase()
             uid = getattr(me, "id", None)
@@ -121,6 +121,8 @@ def _navigation(me=None):
                     role = rows[0].get("role")
         except Exception:
             role = None
+
+    # Menu principal — somente estes acessos.
     st.sidebar.page_link("Home.py", label="Home")
     st.sidebar.page_link("pages/02_Times.py", label="Times")
     st.sidebar.page_link("pages/11_Feed.py", label="Feed")
@@ -130,16 +132,15 @@ def _navigation(me=None):
     if role in ("skatista","admin","tecnico","presidente","vice_presidente","chefe_equipe","comissao_tecnica"):
         st.sidebar.page_link("pages/09_Enviar_Manobra.py", label="Enviar Vídeo")
 
-    if role not in ("skatista","familiar"):
+    if role not in ("skatista","familiar",None):
         st.sidebar.page_link("pages/12_Central_do_Treinador.py", label="Central de Performance")
 
-    # Cadastros permanece somente na Administração, no final da barra.
+    # Administração fica isolada no final. Cadastros aparece somente aqui.
     if role == "admin":
         st.sidebar.markdown("---")
         st.sidebar.markdown("### Administração")
         st.sidebar.page_link("pages/01_Cadastros.py", label="Cargos e cadastros")
         st.sidebar.page_link("pages/04_Gerenciar_Times.py", label="Gerenciar times")
-
 
 def require_login(require_active=True, admin=False):
     user = current_user(); profile = current_profile()

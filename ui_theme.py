@@ -122,4 +122,18 @@ def apply_ui_theme():
     /* V3.25: remover navegação mobile/legada duplicada no web. */
     .mobile-nav,.mobile-nav-container,.mobile-quick-nav,.bottom-nav,
     [class*="mobile-nav"],[id*="mobile-nav"]{display:none!important}
+
+    /* V3.28: esconder definitivamente o menu multipage automático do Streamlit.
+       Mantém somente o menu controlado pelo portal via st.sidebar.page_link. */
+    [data-testid="stSidebarNav"],
+    [data-testid="stSidebarNavItems"],
+    nav[data-testid="stSidebarNav"]{
+      display:none!important;
+      visibility:hidden!important;
+      height:0!important;
+      min-height:0!important;
+      overflow:hidden!important;
+      margin:0!important;
+      padding:0!important;
+    }
 </style>''', unsafe_allow_html=True)
