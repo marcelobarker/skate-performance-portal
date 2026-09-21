@@ -4,7 +4,7 @@ import streamlit as st
 from auth_utils import require_login, get_supabase
 from ui_theme import apply_ui_theme
 
-st.set_page_config(initial_sidebar_state="expanded", page_title='Times • Skate Performance',page_icon='🛹',layout='wide'); apply_ui_theme()
+st.set_page_config(initial_sidebar_state="collapsed", page_title='Times • Skate Performance',page_icon='🛹',layout='wide'); apply_ui_theme()
 user,profile=require_login(); sb=get_supabase(); is_admin=profile.get('role')=='admin'
 ROLE={'admin':'Admin','skatista':'Atleta','tecnico':'Técnico','presidente':'Presidente','vice_presidente':'Vice-presidente','chefe_equipe':'Chefe de Equipe','comissao_tecnica':'Comissão Técnica','familiar':'Familiar'}
 STAFF={'admin','tecnico','presidente','vice_presidente','chefe_equipe','comissao_tecnica'}

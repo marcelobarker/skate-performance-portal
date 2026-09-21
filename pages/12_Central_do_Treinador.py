@@ -1,7 +1,7 @@
 import streamlit as st
 from auth_utils import require_login, get_supabase
 from ui_theme import apply_ui_theme
-st.set_page_config(initial_sidebar_state="expanded", page_title="Central do Treinador • Skate Performance",page_icon="⌁",layout="wide")
+st.set_page_config(initial_sidebar_state="collapsed", page_title="Central do Treinador • Skate Performance",page_icon="⌁",layout="wide")
 apply_ui_theme(); user,me=require_login(); sb=get_supabase()
 if me.get('role') in ('skatista','familiar'):
     st.error('Área da comissão técnica.'); st.stop()

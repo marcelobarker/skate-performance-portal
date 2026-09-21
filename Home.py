@@ -7,7 +7,7 @@ from auth_utils import (sign_in, sign_up, sign_out, current_user, current_profil
 
 from ui_theme import apply_ui_theme
 
-st.set_page_config(initial_sidebar_state="expanded", page_title="Skate Performance • Portal", page_icon="🛹", layout="wide")
+st.set_page_config(initial_sidebar_state="collapsed", page_title="Skate Performance • Portal", page_icon="🛹", layout="wide")
 apply_ui_theme()
 
 st.markdown("""<style>
