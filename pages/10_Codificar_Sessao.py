@@ -29,9 +29,9 @@ except Exception as e:
     st.error(f"Não foi possível abrir a sessão: {e}"); st.stop()
 
 st.markdown("""<style>
-.code-title{font-size:30px;font-weight:900;color:#f5f8fc}.code-sub{color:#8499ad;margin-bottom:12px}
+.code-title{font-size:30px;font-weight:900;color:#10263b}.code-sub{color:#71879b;margin-bottom:12px}
 .video-wrap{max-width:520px;margin:0 auto}.video-wrap [data-testid='stVideo']{max-width:520px!important;width:100%!important}
-.event-card{background:#071a2b;border:1px solid #163b59;border-radius:10px;padding:8px 11px;margin:5px 0}
+.event-card{background:#ffffff;border:1px solid #d9e7f2;border-radius:10px;padding:8px 11px;margin:5px 0}
 .event-time{color:#20e6ff;font-weight:900}.event-hit{color:#00e4a4;font-weight:800}.event-err{color:#ff5c68;font-weight:800}
 @media(max-width:700px){.video-wrap,.video-wrap [data-testid='stVideo']{max-width:100%!important}}
 </style>""", unsafe_allow_html=True)
@@ -67,18 +67,18 @@ try:
         </div>
         """,
         css="""
-        .coder-shell{font-family:var(--st-font);color:#f5f8fc;background:#061727;border:1px solid #163b59;border-radius:14px;padding:14px;box-sizing:border-box}
+        .coder-shell{font-family:var(--st-font);color:#10263b;background:#ffffff;border:1px solid #d9e7f2;border-radius:14px;padding:14px;box-sizing:border-box}
         .player-box{max-width:560px;margin:0 auto 8px;background:#020b14;border-radius:12px;overflow:hidden;border:1px solid #163b59}
         video{display:block;width:100%;max-height:350px;background:#000;object-fit:contain}
         .time-row{max-width:560px;margin:0 auto 14px;display:flex;align-items:center;justify-content:space-between;gap:12px}
-        #clock{font-size:20px;font-weight:900;color:#20e6ff;font-variant-numeric:tabular-nums}.hint{font-size:12px;color:#8499ad;text-align:right}
+        #clock{font-size:20px;font-weight:900;color:#20e6ff;font-variant-numeric:tabular-nums}.hint{font-size:12px;color:#71879b;text-align:right}
         .grid{display:grid;gap:10px;margin:9px 0}.two{grid-template-columns:1fr 2fr}.four{grid-template-columns:repeat(4,1fr)}
         label{display:flex;flex-direction:column;gap:5px;font-size:12px;font-weight:800;color:#c4d1df}
-        select,input{width:100%;box-sizing:border-box;background:#10263b;color:#f5f8fc;border:1px solid #245274;border-radius:9px;padding:10px;font:inherit;outline:none}
+        select,input{width:100%;box-sizing:border-box;background:#10263b;color:#10263b;border:1px solid #245274;border-radius:9px;padding:10px;font:inherit;outline:none}
         select:focus,input:focus{border-color:#20e6ff;box-shadow:0 0 0 2px rgba(32,230,255,.12)}
         .actions{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:13px}.actions button{border:0;border-radius:11px;padding:15px 10px;font-weight:950;font-size:16px;color:white;cursor:pointer}
         .hit{background:linear-gradient(135deg,#00a967,#00e4a4);box-shadow:0 0 18px rgba(0,228,164,.18)}.err{background:linear-gradient(135deg,#d62f48,#ff5c68);box-shadow:0 0 18px rgba(255,92,104,.16)}
-        .actions button:active{transform:scale(.99)}.shortcuts{text-align:center;color:#8499ad;font-size:11px;margin-top:9px}
+        .actions button:active{transform:scale(.99)}.shortcuts{text-align:center;color:#71879b;font-size:11px;margin-top:9px}
         @media(max-width:700px){.four,.two{grid-template-columns:1fr 1fr}.player-box{max-width:100%}video{max-height:250px}.time-row{max-width:100%;align-items:flex-start;flex-direction:column}.hint{text-align:left}.actions{position:sticky;bottom:4px}.actions button{padding:14px 8px}}
         """,
         js="""
@@ -88,7 +88,7 @@ try:
           const cat=parentElement.querySelector('#category');
           const trick=parentElement.querySelector('#trick');
           if(v.dataset.src !== data.video_url){v.src=data.video_url;v.dataset.src=data.video_url;v.load();}
-          v.playsInline=true;
+          v.playsInline=true; v.setAttribute('playsinline',''); v.setAttribute('webkit-playsinline',''); v.onerror=()=>{clock.textContent='Vídeo não carregou';clock.style.color='#ef4055';};
           if(!v.dataset.initialized){
             v.dataset.initialized='1';
             v.addEventListener('loadedmetadata',()=>{ if(data.resume_time>0){v.currentTime=data.resume_time;} });
@@ -192,7 +192,7 @@ if events:
         mm,ss = divmod(int(ev.get("timestamp_seconds") or 0),60)
         c1,c2 = st.columns([8,1])
         cls = "event-hit" if ev.get("result") == "Acerto" else "event-err"
-        c1.markdown(f"<div class='event-card'><span class='event-time'>{mm:02d}:{ss:02d}</span> &nbsp; <b>{html.escape(tname)}</b> &nbsp; <span class='{cls}'>{ev.get('result')}</span> &nbsp; <span style='color:#8499ad'>{ev.get('difficulty') or ''} • {ev.get('risk') or ''} • {ev.get('speed') or ''}</span></div>", unsafe_allow_html=True)
+        c1.markdown(f"<div class='event-card'><span class='event-time'>{mm:02d}:{ss:02d}</span> &nbsp; <b>{html.escape(tname)}</b> &nbsp; <span class='{cls}'>{ev.get('result')}</span> &nbsp; <span style='color:#71879b'>{ev.get('difficulty') or ''} • {ev.get('risk') or ''} • {ev.get('speed') or ''}</span></div>", unsafe_allow_html=True)
         if c2.button("Excluir", key="del_evt_"+ev["id"]):
             try: sb.rpc("delete_trick_video_event", {"p_event_id":ev["id"]}).execute(); st.rerun()
             except Exception as ex: st.error(str(ex))
