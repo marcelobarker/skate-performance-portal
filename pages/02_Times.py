@@ -28,50 +28,39 @@ def card(p):
     st.markdown(f"""<style>.pc{{position:relative;overflow:hidden;background:radial-gradient(circle at 85% 10%,{accent}22,transparent 32%),linear-gradient(145deg,#081d31,#020b14);border:1px solid #168edb;border-radius:16px;padding:22px;box-shadow:0 20px 60px #000b,0 0 32px #087cff18}}.pc:after{{content:'SKATE';position:absolute;right:-8px;bottom:-24px;font-size:92px;font-weight:950;color:#ffffff05;transform:rotate(-8deg)}}.pc-grid{{display:grid;grid-template-columns:190px 1fr;gap:24px;align-items:center;position:relative;z-index:1}}.profile-card-photo,.profile-card-ph{{width:190px;height:230px;object-fit:cover;border-radius:13px;border:1px solid #3299df;box-shadow:0 0 25px #087cff26}}.profile-card-ph{{display:grid;place-items:center;background:#0a2945;font-size:54px}}.pc h2{{font-size:27px;margin:0 0 7px!important}}.pc-role{{display:inline-block;background:linear-gradient(90deg,{accent},#006aff);color:white!important;padding:5px 14px;border-radius:999px;font-size:11px;font-weight:800;box-shadow:0 0 14px {accent}55}}.pc-info{{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:18px}}.pc-i{{background:#081b2d;border:1px solid #163b59;border-radius:9px;padding:10px 12px}}.pc-i span{{display:block;color:#8499ad!important;font-size:10px;text-transform:uppercase;letter-spacing:.7px}}.pc-i b{{display:block;color:#f5f8fc!important;margin-top:3px;font-size:13px}}@media(max-width:600px){{.pc-grid{{grid-template-columns:1fr}}.profile-card-photo,.profile-card-ph{{width:100%;height:330px}}}}</style><div class='pc'><div class='pc-grid'>{pic}<div><h2>{safe(p.get('full_name'))}</h2><span class='pc-role'>{safe(role)}</span><div class='pc-info'><div class='pc-i'><span>Idade</span><b>{str(ag)+' anos' if ag is not None else '—'}</b></div><div class='pc-i'><span>Modalidade</span><b>{safe(p.get('modality'))}</b></div><div class='pc-i'><span>Base</span><b>{safe(p.get('stance'))}</b></div><div class='pc-i'><span>Cidade</span><b>{safe(loc)}</b></div></div></div></div></div>""",unsafe_allow_html=True)
 
 def fetch():
-    if is_admin:
-        teams=sb.table('teams').select('*').order('name').execute().data or []; mem=sb.table('team_members').select('team_id,profile_id').execute().data or []
-    else:
-        mine=sb.table('team_members').select('team_id,profile_id').eq('profile_id',user.id).execute().data or []; tids=[x['team_id'] for x in mine]; teams=[];mem=[]
-        for tid in tids:
-            r=sb.table('teams').select('*').eq('id',tid).maybe_single().execute();
-            if r and r.data: teams.append(r.data)
-            mem += sb.table('team_members').select('team_id,profile_id').eq('team_id',tid).execute().data or []
+    # A vitrine de Times é visível para todos os usuários ativos.
+    # A Comissão Técnica vem diretamente dos cargos ativos e não depende de vínculo em Street/Park.
+    teams=sb.table('teams').select('*').order('name').execute().data or []
+    mem=sb.table('team_members').select('team_id,profile_id').execute().data or []
     prof=sb.table('profiles').select('id,full_name,email,role,status,modality,stance,photo_url,birth_date,city,state').eq('status','ativo').order('full_name').execute().data or []
     return teams,prof,mem
 
-st.title('Times')
-try: teams,profiles,memberships=fetch()
-except Exception as e: st.error(f'Não foi possível carregar os times: {e}'); st.stop()
-if is_admin:
-    with st.expander('＋ Criar novo time'):
-        with st.form('newteam'): name=st.text_input('Nome do time'); mod=st.selectbox('Modalidade',['Street','Park','Vert','Misto']); ok=st.form_submit_button('Criar time')
-        if ok and name.strip(): sb.table('teams').insert({'name':name.strip(),'modality':mod}).execute();st.rerun()
-byid={p['id']:p for p in profiles}
-if not teams: st.info('Nenhum time cadastrado ainda.');st.stop()
-for team in teams:
-    tid=team['id']; ids=[m['profile_id'] for m in memberships if m['team_id']==tid]; people=[byid[x] for x in ids if x in byid]; athletes=[p for p in people if p.get('role')=='skatista']; staff=[p for p in people if p.get('role') in STAFF]
-    st.markdown(f"<div class='team-head'><div class='team-logo'>🛹</div><div><div class='team-name'>{safe(team.get('name'))}</div><div class='team-meta'>{safe(team.get('modality'))} &nbsp; • &nbsp; {len(people)} membros</div></div></div><div class='tabs-fake'><span class='on'>Membros ({len(people)})</span><span>Informações</span><span>Treinos</span><span>Histórico</span></div>",unsafe_allow_html=True)
-    for title,group in [('Atletas',athletes),('Técnicos e Equipe',staff)]:
-        st.markdown(f"<div class='team-section'>{title} ({len(group)})</div>",unsafe_allow_html=True)
-        if not group: st.caption('Nenhum membro nesta seção.'); continue
-        rows=[group[i:i+3] for i in range(0,len(group),3)]
-        for ri,row in enumerate(rows):
-            cols=st.columns(3,gap='small')
-            for j,p in enumerate(row):
-                with cols[j]:
-                    ag=age(p.get('birth_date'));loc='/'.join(x for x in [p.get('city'),p.get('state')] if x) or '—'; ph=p.get('photo_url'); rolelbl=ROLE.get(p.get('role'),'Membro'); orange=' orange' if p.get('role')=='chefe_equipe' else ''
-                    pic=f"<img class='member-photo' src='{safe(ph)}'>" if ph else "<div class='member-placeholder'>🛹</div>"
-                    meta=(f"Idade: {str(ag)+' anos' if ag is not None else '—'}<br>Modalidade: {safe(p.get('modality'))}<br>Local: {safe(loc)}") if p.get('role')=='skatista' else f"Modalidade: {safe(p.get('modality'))}<br>Local: {safe(loc)}"
-                    st.markdown(f"<div class='member-card'>{pic}<div class='member-info'><div class='member-name'>{safe(p.get('full_name'))}</div><div class='badge{orange}'>{safe(rolelbl)}</div><div class='member-meta'>{meta}</div></div></div>",unsafe_allow_html=True)
-                    st.markdown("<div class='eye-row'>",unsafe_allow_html=True)
-                    if p.get('role')=='skatista':
-                        b1,b2=st.columns(2,gap='small')
-                        if b1.button('Cartão',key=f"eye_{tid}_{p['id']}",use_container_width=True): card(p)
-                        if b2.button('Perfil / Feed',key=f"feed_{tid}_{p['id']}",use_container_width=True):
-                            st.session_state['selected_athlete_id']=p['id']; st.switch_page('pages/07_Perfil_do_Atleta.py')
-                    else:
-                        if st.button('Ver cartão',key=f"eye_{tid}_{p['id']}",use_container_width=True): card(p)
-                    st.markdown('</div>',unsafe_allow_html=True)
+def render_people(group, scope):
+    if not group:
+        st.caption('Nenhum membro nesta seção.'); return
+    rows=[group[i:i+3] for i in range(0,len(group),3)]
+    for ri,row in enumerate(rows):
+        cols=st.columns(3,gap='small')
+        for j,p in enumerate(row):
+            with cols[j]:
+                ag=age(p.get('birth_date')); loc='/'.join(x for x in [p.get('city'),p.get('state')] if x) or '—'; ph=p.get('photo_url'); rolelbl=ROLE.get(p.get('role'),'Membro'); orange=' orange' if p.get('role')=='chefe_equipe' else ''
+                pic=f"<img class='member-photo' src='{safe(ph)}'>" if ph else "<div class='member-placeholder'>🛹</div>"
+                meta=(f"Idade: {str(ag)+' anos' if ag is not None else '—'}<br>Modalidade: {safe(p.get('modality'))}<br>Local: {safe(loc)}") if p.get('role')=='skatista' else f"Modalidade: {safe(p.get('modality'))}<br>Local: {safe(loc)}"
+                st.markdown(f"<div class='member-card'>{pic}<div class='member-info'><div class='member-name'>{safe(p.get('full_name'))}</div><div class='badge{orange}'>{safe(rolelbl)}</div><div class='member-meta'>{meta}</div></div></div>",unsafe_allow_html=True)
+                if p.get('role')=='skatista':
+                    b1,b2=st.columns(2,gap='small')
+                    if b1.button('Cartão',key=f"eye_{scope}_{p['id']}",use_container_width=True): card(p)
+                    if b2.button('Perfil / Feed',key=f"feed_{scope}_{p['id']}",use_container_width=True):
+                        st.session_state['selected_athlete_id']=p['id']; st.switch_page('pages/07_Perfil_do_Atleta.py')
+                else:
+                    if st.button('Ver cartão',key=f"eye_{scope}_{p['id']}",use_container_width=True): card(p)
+
+def render_team(team, profiles, memberships, scope):
+    tid=team['id']; byid={p['id']:p for p in profiles}; ids=[m['profile_id'] for m in memberships if m['team_id']==tid]
+    people=[byid[x] for x in ids if x in byid]; athletes=[p for p in people if p.get('role')=='skatista']
+    st.markdown(f"<div class='team-head'><div class='team-logo'>🛹</div><div><div class='team-name'>{safe(team.get('name'))}</div><div class='team-meta'>{safe(team.get('modality'))} &nbsp; • &nbsp; {len(athletes)} atletas</div></div></div>",unsafe_allow_html=True)
+    st.markdown(f"<div class='team-section'>Atletas ({len(athletes)})</div>",unsafe_allow_html=True)
+    render_people(athletes,scope)
     if is_admin:
         with st.expander('⚙️ Gerenciar time'):
             opts={f"{p.get('full_name') or p.get('email')} • {ROLE.get(p.get('role'),'Membro')}":p['id'] for p in profiles}; defaults=[k for k,v in opts.items() if v in ids]
@@ -82,3 +71,29 @@ for team in teams:
                 rows=[{'team_id':tid,'profile_id':pid} for pid in new-old]
                 if rows: sb.table('team_members').insert(rows).execute()
                 st.rerun()
+
+st.title('Times')
+st.caption('Seleção Brasileira • Street, Park e Comissão Técnica')
+try: teams,profiles,memberships=fetch()
+except Exception as e: st.error(f'Não foi possível carregar os times: {e}'); st.stop()
+
+if is_admin:
+    with st.expander('＋ Criar novo time'):
+        with st.form('newteam'): name=st.text_input('Nome do time'); mod=st.selectbox('Modalidade',['Street','Park','Vert','Misto']); ok=st.form_submit_button('Criar time')
+        if ok and name.strip(): sb.table('teams').insert({'name':name.strip(),'modality':mod}).execute();st.rerun()
+
+street=[t for t in teams if str(t.get('modality') or '').lower()=='street']
+park=[t for t in teams if str(t.get('modality') or '').lower()=='park']
+commission=[p for p in profiles if p.get('role') in STAFF]
+
+t1,t2,t3=st.tabs([f'🛹 STREET ({len(street)})',f'◉ PARK ({len(park)})',f'★ COMISSÃO TÉCNICA ({len(commission)})'])
+with t1:
+    if not street: st.info('Nenhum time Street cadastrado.')
+    for i,t in enumerate(street): render_team(t,profiles,memberships,f'street_{i}')
+with t2:
+    if not park: st.info('Nenhum time Park cadastrado.')
+    for i,t in enumerate(park): render_team(t,profiles,memberships,f'park_{i}')
+with t3:
+    st.markdown("<div class='team-head'><div class='team-logo'>★</div><div><div class='team-name'>Comissão Técnica</div><div class='team-meta'>Presidência, chefia de equipe, técnicos e staff ativo</div></div></div>",unsafe_allow_html=True)
+    st.markdown(f"<div class='team-section'>Equipe ({len(commission)})</div>",unsafe_allow_html=True)
+    render_people(commission,'commission')

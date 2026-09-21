@@ -3,7 +3,8 @@ from datetime import datetime,date
 import streamlit as st
 from auth_utils import require_login,get_supabase
 from ui_theme import apply_ui_theme
-from drive_utils import is_drive_path, drive_stream_url
+from drive_utils import is_drive_path, drive_stream_url, drive_preview_url, drive_player_geometry
+from video_utils import can_delete_post, delete_video_post
 st.set_page_config(page_title='Perfil do Atleta • Skate Performance',page_icon='🛹',layout='wide'); apply_ui_theme(); user,me=require_login(); sb=get_supabase()
 STAFF_ROLES=('admin','tecnico','presidente','vice_presidente','chefe_equipe','comissao_tecnica')
 is_staff=me.get('role') in STAFF_ROLES
@@ -16,7 +17,13 @@ photo=athlete.get('photo_url'); loc=' / '.join(x for x in [athlete.get('city'),a
 st.markdown('''<style>.ath-hero{background:radial-gradient(circle at 80% 10%,#087cff35,transparent 30%),linear-gradient(145deg,#0a2137,#03101c);border:1px solid #174b70;border-radius:16px;padding:20px;display:flex;gap:20px;align-items:center;margin-bottom:16px}.ath-photo{width:118px;height:118px;border-radius:14px;object-fit:cover;border:1px solid #29a8ff}.ath-ph{width:118px;height:118px;border-radius:14px;display:grid;place-items:center;background:#0a2945;font-size:42px}.ath-name{font-size:28px;font-weight:900;color:#fff}.ath-meta{color:#9bb2c7;margin-top:6px}.status{display:inline-block;padding:4px 9px;border-radius:99px;background:#087cff22;border:1px solid #087cff66;color:#29a8ff;font-size:10px;font-weight:800}.post-head{display:flex;gap:10px;align-items:center}.mini{width:38px;height:38px;border-radius:50%;object-fit:cover}.feed-video{max-width:460px;margin:10px auto 8px}.feed-video [data-testid='stVideo']{max-width:460px!important;width:100%!important}.feed-video video{max-height:520px!important;object-fit:contain!important}.analysis-box{background:#061727;border:1px solid #163b59;border-radius:12px;padding:12px;margin-top:10px}.comment{background:#071827;border:1px solid #153b58;border-radius:9px;padding:8px 10px;margin:5px 0;color:#c4d1df;font-size:12px}@media(max-width:600px){.feed-video,.feed-video [data-testid='stVideo']{max-width:100%!important}.ath-hero{align-items:flex-start}.ath-photo,.ath-ph{width:84px;height:84px}.ath-name{font-size:22px}}</style>''',unsafe_allow_html=True)
 pic=f"<img class='ath-photo' src='{html.escape(photo)}'>" if photo else "<div class='ath-ph'>🛹</div>"
 st.markdown(f"<div class='ath-hero'>{pic}<div><div class='ath-name'>{html.escape(athlete.get('full_name') or 'Atleta')}</div><div class='ath-meta'>{html.escape(athlete.get('modality') or '—')} • {html.escape(athlete.get('stance') or '—')} • {html.escape(loc)}</div><div style='margin-top:10px'><span class='status'>FEED DO ATLETA</span></div></div></div>",unsafe_allow_html=True)
-if athlete_id==user.id: st.page_link('pages/09_Enviar_Manobra.py',label='🎥 Enviar nova manobra',use_container_width=True)
+act1,act2=st.columns(2)
+if act1.button('📚 Histórico de treinos', key='ath_history', use_container_width=True):
+    st.session_state['history_athlete_id']=athlete_id
+    st.switch_page('pages/04_Historico_de_Treinos.py')
+if athlete_id==user.id and act2.button('🎥 Enviar novo vídeo', key='ath_upload', use_container_width=True):
+    st.switch_page('pages/09_Enviar_Manobra.py')
+
 try:
     posts=sb.table('athlete_posts').select('*').eq('athlete_id',athlete_id).order('created_at',desc=True).execute().data or []; tricks=sb.table('tricks').select('id,name').execute().data or []; tnames={x['id']:x['name'] for x in tricks}
 except Exception as e: st.error(f'Feed ainda não disponível. Execute a migration V3.2. Detalhes: {e}'); st.stop()
@@ -27,13 +34,23 @@ for post in posts:
         if post.get('caption'): st.write(post['caption'])
         try:
             if is_drive_path(post.get('video_path')):
-                st.markdown("<div class='feed-video'>",unsafe_allow_html=True)
-                st.video(drive_stream_url(post['video_path']))
-                st.markdown("</div>",unsafe_allow_html=True)
+                preview=drive_preview_url(post['video_path'])
+                geo=drive_player_geometry(post['video_path'])
+                st.markdown(f"""<div style='width:min(100%,{geo["max_width"]}px);margin:12px auto;border-radius:14px;overflow:hidden;background:#020b14;aspect-ratio:{geo["aspect"]};border:1px solid #163b59'>
+                <iframe src='{preview}' style='width:100%;height:100%;border:0;display:block' allow='autoplay; fullscreen' allowfullscreen></iframe></div>""",unsafe_allow_html=True)
             else:
                 signed=sb.storage.from_('trick-videos').create_signed_url(post['video_path'],3600); url=signed.get('signedURL') or signed.get('signedUrl') or signed.get('signed_url')
                 st.markdown("<div class='feed-video'>",unsafe_allow_html=True); st.video(url); st.markdown("</div>",unsafe_allow_html=True)
         except Exception: st.caption('Vídeo privado indisponível temporariamente.')
+        if can_delete_post(me, user.id, post):
+            with st.expander('⋯ Opções do vídeo', expanded=False):
+                st.caption('A exclusão remove este post e o arquivo de vídeo do armazenamento.')
+                confirm=st.checkbox('Confirmo que quero excluir este vídeo',key='profile_del_confirm_'+post['id'])
+                if st.button('🗑 Excluir vídeo',key='profile_del_'+post['id'],use_container_width=True,disabled=not confirm):
+                    try:
+                        delete_video_post(sb,post); st.success('Vídeo excluído.'); st.rerun()
+                    except Exception as e:
+                        st.error(f'Não foi possível excluir. Execute a migration V3.18. Detalhes: {e}')
         if me.get('role') == 'admin':
             if st.button('🎬 Codificar sessão / várias tentativas', key='code_session_'+post['id'], use_container_width=True):
                 st.session_state['selected_video_post_id']=post['id']

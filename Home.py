@@ -227,7 +227,7 @@ if role == 'admin':
                 st.success('Imagem de boas-vindas atualizada.'); st.rerun()
             except Exception as e: st.error(f'Não foi possível salvar a imagem: {e}')
 st.markdown(f"<div class='sp-home'><div class='sp-hero2'><div class='sp-hero-copy'><h1>Bem-vindo, {first}!</h1><p>Acompanhe o desempenho da sua equipe, veja seus treinos, analise suas manobras e evolua junto com seus atletas.</p></div></div>",unsafe_allow_html=True)
-kpis=[('users',len(athletes),'Atletas','kblue','Ver equipe →','pages/02_Times.py','home_kpi_athletes'),('coach',len(staff),'Técnicos','kgreen','Ver equipe →','pages/02_Times.py','home_kpi_staff'),('team',len(visible_teams),'Times','kpurple','Ver times →','pages/02_Times.py','home_kpi_teams'),('chart',len(visible_trainings),'Treinos','korange','Ver histórico →','pages/04_Historico_de_Treinos.py','home_kpi_trainings')]
+kpis=[('users',len(athletes),'Atletas','kblue','Ver equipe →','pages/02_Times.py','home_kpi_athletes'),('coach',len(staff),'Técnicos','kgreen','Ver equipe →','pages/02_Times.py','home_kpi_staff'),('team',len(visible_teams),'Times','kpurple','Ver times →','pages/02_Times.py','home_kpi_teams'),('chart',len(visible_trainings),'Treinos','korange','Ver atletas →','pages/02_Times.py','home_kpi_trainings')]
 # Mantém exatamente os cards HTML aprovados; um botão transparente por cima cuida só da navegação.
 st.markdown("""<style>
 /* V3.7 — os botões Streamlit continuam fazendo a navegação, mas ficam realmente
@@ -249,7 +249,7 @@ for col,(ic,num,lab,cl,lk,page,key) in zip(kcols,kpis):
         st.markdown("</div>",unsafe_allow_html=True)
 st.markdown("<div class='sp-title'>Acesso rápido</div>",unsafe_allow_html=True)
 quick=[('team','Times','Veja sua equipe e os membros','pages/02_Times.py'),('calendar','Calendário','Próximos eventos','pages/06_Calendario.py'),('chart','Nova Análise','Analisar um CSV','pages/03_Analise_de_Treino.py'),('profile','Meu Perfil','Editar meus dados','pages/05_Meu_Perfil.py')]
-if role in ('skatista','familiar'): quick[2]=('chart','Meus Treinos','Histórico e relatórios','pages/04_Historico_de_Treinos.py')
+if role in ('skatista','familiar'): quick[2]=('chart','Meu Feed','Vídeos e histórico do atleta','pages/07_Perfil_do_Atleta.py')
 qcols=st.columns(4,gap='small')
 for i,(ic,t,sub,page) in enumerate(quick):
     with qcols[i]:

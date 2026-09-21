@@ -1,6 +1,15 @@
 import streamlit as st
 
 def apply_ui_theme():
+    # Ferramentas operacionais ficam dentro da Central de Performance;
+    # Perfil/Histórico são acessados a partir do cartão do atleta.
+    st.markdown(r'''<style>
+    [data-testid="stSidebarNav"] a[href*="03_Analise_de_Treino"],
+    [data-testid="stSidebarNav"] a[href*="04_Historico_de_Treinos"],
+    [data-testid="stSidebarNav"] a[href*="07_Perfil_do_Atleta"],
+    [data-testid="stSidebarNav"] a[href*="08_Livro_de_Manobras"],
+    [data-testid="stSidebarNav"] a[href*="10_Codificar_Sessao"]{display:none!important}
+    </style>''', unsafe_allow_html=True)
     st.markdown(r'''<style>
     :root{
       --bg-deep:#020B14;--bg-main:#03111E;--bg-panel:#061727;--bg-card:#081B2D;--bg-elev:#0B2136;--bg-input:#10263B;--bg-hover:#102C46;
@@ -10,9 +19,10 @@ def apply_ui_theme():
     }
     html,body,#root,[data-testid="stApp"],[class*="css"]{font-family:Inter,Roboto,Arial,sans-serif!important;background:#03111E!important;background-color:#03111E!important} html{background:#03111E!important} body{background:#03111E!important}
     .stApp,[data-testid="stAppViewContainer"]{background:radial-gradient(circle at 20% 0%,rgba(0,110,255,.08),transparent 35%),linear-gradient(180deg,var(--bg-main),var(--bg-deep))!important;color:var(--text)!important}
-    [data-testid="stHeader"]{background:transparent!important;box-shadow:none!important}
+    [data-testid="stHeader"]{background:transparent!important;box-shadow:none!important;display:block!important;visibility:visible!important;z-index:999999!important}
     [data-testid="stToolbar"],[data-testid="stDecoration"],header [data-testid="stStatusWidget"]{display:none!important}
-    [data-testid="stSidebarCollapsedControl"],button[data-testid="stSidebarCollapsedControl"],[data-testid="stSidebarCollapseButton"]{display:flex!important;position:relative!important;z-index:999999!important;background:#08233A!important;color:#fff!important;border:1px solid #159BFF!important;border-radius:8px!important;box-shadow:0 0 14px rgba(0,124,255,.18)!important}
+    [data-testid="stSidebarCollapsedControl"],button[data-testid="stSidebarCollapsedControl"]{display:flex!important;visibility:visible!important;opacity:1!important;position:fixed!important;top:10px!important;left:10px!important;z-index:2147483647!important;background:#08233A!important;color:#fff!important;border:1px solid #159BFF!important;border-radius:9px!important;box-shadow:0 0 14px rgba(0,124,255,.25)!important}
+    [data-testid="stSidebarCollapseButton"]{display:flex!important;visibility:visible!important;opacity:1!important;z-index:2147483647!important;background:#08233A!important;color:#fff!important;border:1px solid #159BFF!important;border-radius:8px!important}
     [data-testid="stSidebarCollapsedControl"] *{color:#fff!important}
     .block-container{max-width:1480px!important;padding-top:1.05rem!important;padding-left:1.45rem!important;padding-right:1.45rem!important;padding-bottom:2rem!important}
     [data-testid="stSidebar"]{background:rgba(2,12,23,.98)!important;border-right:1px solid rgba(30,130,200,.28)!important}

@@ -155,3 +155,10 @@ V3.5: corrige RLS do Livro de Manobras e impede erros de banco de derrubarem a p
 - Feed e tela de codificação reconhecem vídeos antigos do Supabase e novos do Google Drive.
 - Não há migration SQL nova nesta versão.
 - Secrets necessários: `GOOGLE_DRIVE_FOLDER_ID` e `[gcp_service_account]`.
+
+
+## V3.18
+- Excluir vídeo: atleta proprietário ou Admin; remove também o arquivo do Drive.
+- Confirmação antes da exclusão.
+- Botão para reabrir sidebar permanece visível após recolher.
+- Execute supabase_v3_18_migration.sql uma vez.

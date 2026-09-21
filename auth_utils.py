@@ -90,7 +90,7 @@ def sign_up(full_name, email, password, role, modality, linked_athlete_id=None):
     sb = get_supabase()
     data={"full_name":full_name.strip(),"role":role,"modality":modality}
     if linked_athlete_id: data["linked_athlete_id"]=linked_athlete_id
-    return sb.auth.sign_up({"email":email.strip(),"password":password,"options":{"data":data}})
+    return sb.auth.sign_up({"email":email.strip(),"password":password,"options":{"data":data,"email_redirect_to":"https://skateperformance.streamlit.app/"}})
 
 def sign_out():
     sb = st.session_state.get("sp_supabase")
@@ -129,11 +129,10 @@ def _navigation(role):
                 st.page_link("Home.py", label="Início", use_container_width=True)
                 st.page_link("pages/02_Times.py", label="Times", use_container_width=True)
                 st.page_link("pages/06_Calendario.py", label="Calendário", use_container_width=True)
-                st.page_link("pages/08_Livro_de_Manobras.py", label="Livro de Manobras", use_container_width=True)
+                st.page_link("pages/11_Feed.py", label="Feed", use_container_width=True)
                 if role in ("skatista","admin","tecnico"): st.page_link("pages/09_Enviar_Manobra.py", label="Enviar Vídeo", use_container_width=True)
                 if role not in ("skatista","familiar"):
-                    st.page_link("pages/03_Analise_de_Treino.py", label="Análise", use_container_width=True)
-                st.page_link("pages/04_Historico_de_Treinos.py", label="Meus Treinos", use_container_width=True)
+                    st.page_link("pages/12_Central_do_Treinador.py", label="Central de Performance", use_container_width=True)
                 st.page_link("pages/05_Meu_Perfil.py", label="Meu Perfil", use_container_width=True)
                 if role == "admin":
                     st.page_link("pages/01_Cadastros.py", label="Cadastros / Cargos", use_container_width=True)
@@ -142,11 +141,12 @@ def _navigation(role):
             st.caption("ADMINISTRAÇÃO")
             st.page_link("pages/01_Cadastros.py", label="👥 Cargos e cadastros", use_container_width=True)
             st.page_link("pages/02_Times.py", label="🛹 Gerenciar times", use_container_width=True)
-            st.page_link("pages/08_Livro_de_Manobras.py", label="📚 Livro de Manobras", use_container_width=True)
             st.page_link("pages/09_Enviar_Manobra.py", label="🎥 Enviar Vídeo", use_container_width=True)
 
     # Páginas internas: acessadas por cards/botões, não poluem a navegação principal.
     st.markdown("""<style>
+    [data-testid="stSidebarNav"] a[href*="03_Analise_de_Treino"],
+    [data-testid="stSidebarNav"] a[href*="04_Historico_de_Treinos"],
     [data-testid="stSidebarNav"] a[href*="07_Perfil_do_Atleta"],
     [data-testid="stSidebarNav"] a[href*="08_Livro_de_Manobras"],
     [data-testid="stSidebarNav"] a[href*="10_Codificar_Sessao"]{display:none!important}

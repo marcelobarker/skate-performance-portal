@@ -74,7 +74,12 @@ try:
             msg = "Ainda não há skatistas cadastrados para consultar." if is_admin else ("Nenhum atleta está vinculado a este familiar." if is_family else "Nenhum skatista do seu time está disponível para consulta.")
             st.info(msg); st.stop()
         amap = {f"{a.get('full_name') or 'Sem nome'}" + (f" • {a.get('modality')}" if a.get('modality') else ""): a for a in athletes}
-        label = st.selectbox("Skatista", list(amap.keys()))
+        requested_id = st.session_state.pop("history_athlete_id", None)
+        labels=list(amap.keys()); default_index=0
+        if requested_id:
+            for i,k in enumerate(labels):
+                if amap[k].get("id")==requested_id: default_index=i; break
+        label = st.selectbox("Skatista", labels, index=default_index)
         athlete = amap[label]; athlete_id = athlete["id"]
     else:
         athlete_id = user.id; athlete = profile
