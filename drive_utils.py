@@ -29,4 +29,4 @@ def drive_preview_url(path_or_id):
 def drive_stream_url(path_or_id):
     """URL de mídia para arquivos do Drive publicados como 'qualquer pessoa com o link'."""
     fid = drive_file_id(path_or_id) or path_or_id
-    return f"https://drive.usercontent.google.com/download?id={fid}&export=download&confirm=t"
+    return f"https://drive.google.com/uc?export=download&id={fid}"
