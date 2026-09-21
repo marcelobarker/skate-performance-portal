@@ -203,3 +203,11 @@ V3.5: corrige RLS do Livro de Manobras e impede erros de banco de derrubarem a p
 - `initial_sidebar_state="expanded"` aplicado às páginas que configuram a página.
 - Mantém V3.22: Skate Performance Brasil e player do Drive na Codificação.
 - Sem migration nova.
+
+## V3.24
+- Sidebar: removidos Codificar Sessão, Análise de Treino, Cadastros e Perfil do Atleta.
+- Essas páginas continuam disponíveis pelos fluxos internos/administrativos apropriados.
+- Codificação: player responsivo para vertical/horizontal.
+- Adicionado relógio visual automático de sessão; por limitação cross-origin do Google Drive, o iframe oficial não fornece currentTime ao Streamlit.
+- Mantido ajuste manual de timestamp recolhido como fallback para gravação confiável.
+- Sem migration nova.

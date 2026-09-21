@@ -122,7 +122,6 @@ def _navigation(role):
         if role == "admin":
             st.divider()
             st.caption("ADMINISTRAÇÃO")
-            st.page_link("pages/01_Cadastros.py", label="Cargos e cadastros", use_container_width=True)
             st.page_link("pages/02_Times.py", label="Gerenciar times", use_container_width=True)
 
 

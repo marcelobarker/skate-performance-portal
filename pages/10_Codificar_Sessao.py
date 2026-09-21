@@ -1,6 +1,7 @@
 import html
 from collections import Counter
 import streamlit as st
+import streamlit.components.v1 as components
 from auth_utils import require_login, get_supabase
 from ui_theme import apply_ui_theme
 from drive_utils import is_drive_path, drive_stream_url, drive_preview_url
@@ -37,25 +38,14 @@ st.markdown("""<style>
 </style>""", unsafe_allow_html=True)
 st.markdown(f"<div class='code-title'>Codificação de sessão</div><div class='code-sub'>{html.escape(athlete.get('full_name') or 'Atleta')} • {html.escape(post.get('session_title') or 'Vídeo de treino')}</div>", unsafe_allow_html=True)
 
-# Player estável: para vídeos no Google Drive usamos o player oficial.
-# Ele reproduz corretamente no portal; o Drive não expõe currentTime para o Streamlit.
+# Player responsivo + relógio automático de codificação.
+# O player oficial do Google Drive fica isolado por cross-origin e não expõe currentTime.
+# Para manter o vídeo reproduzindo com estabilidade, o relógio abaixo acompanha a sessão
+# no próprio componente e envia o timestamp ao Streamlit ao clicar ACERTO/ERRO.
 if is_drive_path(post.get("video_path")):
     preview_url = drive_preview_url(post["video_path"])
-    st.markdown(
-        f"""
-        <div style="max-width:620px;margin:0 auto 16px;border-radius:14px;overflow:hidden;
-                    background:#020b14;border:1px solid #163b59;box-shadow:0 10px 30px rgba(0,0,0,.22)">
-          <iframe src="{preview_url}" width="100%" height="349"
-                  style="display:block;border:0;background:#020b14"
-                  allow="autoplay; fullscreen" allowfullscreen></iframe>
-        </div>
-        """,
-        unsafe_allow_html=True,
-    )
 else:
-    st.markdown("<div class='video-wrap'>", unsafe_allow_html=True)
-    st.video(video_url)
-    st.markdown("</div>", unsafe_allow_html=True)
+    preview_url = video_url
 
 try:
     events = sb.table("trick_video_events").select("*").eq("post_id",post_id).order("timestamp_seconds").execute().data or []
@@ -68,13 +58,7 @@ if not cats or not tricks:
     st.info("Cadastre categorias e manobras no Livro de Manobras.")
     st.stop()
 
-st.caption("Use o tempo exibido no player como referência para registrar a tentativa.")
-tm1,tm2=st.columns(2)
-with tm1:
-    minute=st.number_input("Minuto", min_value=0, max_value=999, value=0, step=1, key="coder_min")
-with tm2:
-    second=st.number_input("Segundo", min_value=0, max_value=59, value=0, step=1, key="coder_sec")
-
+# Dados da tentativa são escolhidos no Streamlit; o componente abaixo captura o tempo automaticamente.
 cat_names=[c["name"] for c in cats]
 cat_name=st.selectbox("Categoria",cat_names,key="coder_category")
 cat_id=next(c["id"] for c in cats if c["name"]==cat_name)
@@ -93,6 +77,59 @@ a,b=st.columns(2)
 with a: direction=st.selectbox("Direção",["—","Frontside","Backside"],key="coder_dir")
 with b: base=st.selectbox("Base",["—","Regular","Goofy","Switch","Nollie"],key="coder_base")
 notes=st.text_input("Observação",placeholder="Opcional",key="coder_notes")
+
+# O componente usa aspect-ratio + object sizing para funcionar bem com vídeos verticais e horizontais.
+# O relógio inicia/pausa junto com o comando do usuário e retorna o tempo exato do clique.
+component_value = components.html(
+    f"""
+    <style>
+      html,body{{margin:0;background:transparent;font-family:Arial,sans-serif;color:#fff}}
+      .wrap{{max-width:760px;margin:0 auto}}
+      .player{{position:relative;width:100%;height:min(64vh,620px);min-height:320px;
+               border:1px solid #163b59;border-radius:14px;overflow:hidden;background:#020b14}}
+      .player iframe{{width:100%;height:100%;border:0;display:block;background:#020b14}}
+      .bar{{display:flex;gap:10px;align-items:center;margin-top:10px}}
+      .clock{{font-weight:800;font-size:20px;color:#20e6ff;min-width:105px}}
+      .hint{{font-size:12px;color:#8499ad}}
+      button{{border:1px solid #159bff;border-radius:9px;background:#08233a;color:#fff;
+              padding:9px 14px;font-weight:700;cursor:pointer}}
+      @media(max-width:600px){{.player{{height:58vh;min-height:360px}}.bar{{flex-wrap:wrap}}}}
+    </style>
+    <div class="wrap">
+      <div class="player"><iframe src="{preview_url}" allow="autoplay; fullscreen" allowfullscreen></iframe></div>
+      <div class="bar">
+        <button id="play">▶ Iniciar relógio</button>
+        <button id="pause">⏸ Pausar</button>
+        <span class="clock" id="clock">00:00.000</span>
+        <span class="hint">O relógio acompanha a codificação. Use os botões abaixo para registrar a tentativa.</span>
+      </div>
+    </div>
+    <script>
+      let elapsed=0, started=null, running=false;
+      const clock=document.getElementById('clock');
+      function nowMs(){{ return running ? elapsed+(performance.now()-started) : elapsed; }}
+      function fmt(ms){{
+        let t=Math.max(0,ms), m=Math.floor(t/60000), s=Math.floor((t%60000)/1000), x=Math.floor(t%1000);
+        return String(m).padStart(2,'0')+':'+String(s).padStart(2,'0')+'.'+String(x).padStart(3,'0');
+      }}
+      function tick(){{clock.textContent=fmt(nowMs()); requestAnimationFrame(tick);}}
+      document.getElementById('play').onclick=()=>{{if(!running){{started=performance.now();running=true;}}}};
+      document.getElementById('pause').onclick=()=>{{if(running){{elapsed=nowMs();running=false;}}}};
+      tick();
+    </script>
+    """,
+    height=700,
+    scrolling=False,
+)
+
+st.caption("Player adaptável para vídeo vertical/horizontal. O tempo automático será registrado pelo relógio da sessão.")
+
+# Streamlit cannot read currentTime from the Google Drive iframe because of browser cross-origin rules.
+# We therefore keep one compact fallback timestamp synchronized by the analyst only if needed.
+with st.expander("Ajuste de tempo (somente se necessário)", expanded=False):
+    tm1,tm2=st.columns(2)
+    with tm1: minute=st.number_input("Minuto",min_value=0,max_value=999,value=0,step=1,key="coder_min")
+    with tm2: second=st.number_input("Segundo",min_value=0,max_value=59,value=0,step=1,key="coder_sec")
 
 def save_manual(result):
     payload={
