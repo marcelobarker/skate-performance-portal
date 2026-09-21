@@ -10,11 +10,32 @@ def apply_ui_theme():
     }
     html,body,#root,[data-testid="stApp"],[class*="css"]{font-family:Inter,Roboto,Arial,sans-serif!important;background:#03111E!important;background-color:#03111E!important} html{background:#03111E!important} body{background:#03111E!important}
     .stApp,[data-testid="stAppViewContainer"]{background:radial-gradient(circle at 20% 0%,rgba(0,110,255,.08),transparent 35%),linear-gradient(180deg,var(--bg-main),var(--bg-deep))!important;color:var(--text)!important}
-    [data-testid="stHeader"]{background:transparent!important;box-shadow:none!important;display:block!important;visibility:visible!important;z-index:999999!important}
+    [data-testid="stHeader"]{background:transparent!important;box-shadow:none!important;display:block!important;visibility:visible!important;pointer-events:auto!important;z-index:2147483000!important}
     [data-testid="stToolbar"],[data-testid="stDecoration"],header [data-testid="stStatusWidget"]{display:none!important}
-    [data-testid="stSidebarCollapsedControl"],button[data-testid="stSidebarCollapsedControl"]{display:flex!important;visibility:visible!important;opacity:1!important;position:fixed!important;top:10px!important;left:10px!important;z-index:2147483647!important;background:#08233A!important;color:#fff!important;border:1px solid #159BFF!important;border-radius:9px!important;box-shadow:0 0 14px rgba(0,124,255,.25)!important}
-    [data-testid="stSidebarCollapseButton"]{display:flex!important;visibility:visible!important;opacity:1!important;z-index:2147483647!important;background:#08233A!important;color:#fff!important;border:1px solid #159BFF!important;border-radius:8px!important}
-    [data-testid="stSidebarCollapsedControl"] *{color:#fff!important}
+    /* Sidebar toggle: support current + legacy Streamlit selectors.
+       The expand control must stay reachable even after the sidebar is collapsed. */
+    [data-testid="collapsedControl"],
+    [data-testid="stSidebarCollapsedControl"],
+    button[data-testid="stSidebarCollapsedControl"],
+    button[aria-label="Open sidebar"]{
+      display:flex!important;visibility:visible!important;opacity:1!important;
+      pointer-events:auto!important;position:fixed!important;
+      top:10px!important;left:10px!important;width:42px!important;height:42px!important;
+      align-items:center!important;justify-content:center!important;
+      z-index:2147483647!important;background:#08233A!important;color:#fff!important;
+      border:1px solid #159BFF!important;border-radius:9px!important;
+      box-shadow:0 0 14px rgba(0,124,255,.25)!important
+    }
+    [data-testid="stSidebarCollapseButton"],
+    button[aria-label="Close sidebar"]{
+      display:flex!important;visibility:visible!important;opacity:1!important;
+      pointer-events:auto!important;z-index:2147483647!important;
+      background:#08233A!important;color:#fff!important;
+      border:1px solid #159BFF!important;border-radius:8px!important
+    }
+    [data-testid="collapsedControl"] *,
+    [data-testid="stSidebarCollapsedControl"] *,
+    button[aria-label="Open sidebar"] *{color:#fff!important;fill:currentColor!important}
     .block-container{max-width:1480px!important;padding-top:1.05rem!important;padding-left:1.45rem!important;padding-right:1.45rem!important;padding-bottom:2rem!important}
     [data-testid="stSidebar"]{background:rgba(2,12,23,.98)!important;border-right:1px solid rgba(30,130,200,.28)!important}
     [data-testid="stSidebar"] *{color:var(--text2)!important}
@@ -60,7 +81,7 @@ def apply_ui_theme():
     [role="tooltip"] *{color:var(--text)!important}
     [data-testid="stDialog"]>div{background:linear-gradient(145deg,rgba(6,25,43,.99),rgba(3,15,27,.99))!important;border:1px solid rgba(0,140,230,.55)!important;border-radius:12px!important;box-shadow:0 16px 50px rgba(0,0,0,.50),0 0 30px rgba(0,120,220,.08)!important}
     [data-testid="stDialog"] button{background:#08233A!important;color:#fff!important;border-color:#135C91!important}
-    button:not([data-testid="stSidebarCollapseButton"]){--button-background-color:#08233A!important}
+    button:not([data-testid="stSidebarCollapseButton"]):not([aria-label="Open sidebar"]):not([aria-label="Close sidebar"]){--button-background-color:#08233A!important}
     [data-testid="stPopover"] button,[data-testid="stPageLink"] a{background:#08233A!important;color:#dff6ff!important;border-color:#135C91!important}
     /* V3.2: hard dark rule — no native white controls */
     button,[role="button"],[data-testid="stBaseButton-secondary"],[data-testid="stBaseButton-tertiary"],summary,[data-baseweb="select"]>div{background-color:#08233A!important;color:#F5F8FC!important;border-color:#135C91!important}

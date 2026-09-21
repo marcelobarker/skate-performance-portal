@@ -37,103 +37,25 @@ st.markdown("""<style>
 </style>""", unsafe_allow_html=True)
 st.markdown(f"<div class='code-title'>Codificação de sessão</div><div class='code-sub'>{html.escape(athlete.get('full_name') or 'Atleta')} • {html.escape(post.get('session_title') or 'Vídeo de treino')}</div>", unsafe_allow_html=True)
 
-# Player profissional: captura o currentTime no próprio navegador.
-# O componente recebe a biblioteca de manobras e envia para Python um único evento
-# contendo timestamp + manobra + resultado + atributos técnicos.
-try:
-    video_coder = st.components.v2.component(
-        name="skate_video_coder_v314",
-        html="""
-        <div class="coder-shell">
-          <div class="player-box"><video id="coderVideo" controls playsinline preload="metadata"></video></div>
-          <div class="time-row"><span id="clock">00:00.000</span><span class="hint">Pause ou clique durante o vídeo. O tempo é capturado automaticamente.</span></div>
-          <div class="grid two">
-            <label>Categoria<select id="category"></select></label>
-            <label>Manobra<select id="trick"></select></label>
-          </div>
-          <div class="grid four">
-            <label>Avaliação<select id="evaluation"><option>Bom</option><option>Excelente</option><option>Ruim</option></select></label>
-            <label>Dificuldade<select id="difficulty"><option>Média</option><option>Baixa</option><option>Alta</option></select></label>
-            <label>Risco<select id="risk"><option>Médio</option><option>Baixo</option><option>Alto</option></select></label>
-            <label>Velocidade<select id="speed"><option>Médio</option><option>Lento</option><option>Rápido</option></select></label>
-          </div>
-          <div class="grid two">
-            <label>Direção<select id="direction"><option>—</option><option>Frontside</option><option>Backside</option></select></label>
-            <label>Base<select id="base"><option>—</option><option>Regular</option><option>Goofy</option><option>Switch</option><option>Nollie</option></select></label>
-          </div>
-          <label>Observação<input id="notes" placeholder="Opcional" /></label>
-          <div class="actions"><button id="hit" class="hit">✓ ACERTO</button><button id="err" class="err">✕ ERRO</button></div>
-          <div class="shortcuts">Atalhos: <b>A</b> = acerto &nbsp; <b>E</b> = erro &nbsp; <b>Espaço</b> = play/pause</div>
+# Player estável: para vídeos no Google Drive usamos o player oficial.
+# Ele reproduz corretamente no portal; o Drive não expõe currentTime para o Streamlit.
+if is_drive_path(post.get("video_path")):
+    preview_url = drive_preview_url(post["video_path"])
+    st.markdown(
+        f"""
+        <div style="max-width:620px;margin:0 auto 16px;border-radius:14px;overflow:hidden;
+                    background:#020b14;border:1px solid #163b59;box-shadow:0 10px 30px rgba(0,0,0,.22)">
+          <iframe src="{preview_url}" width="100%" height="349"
+                  style="display:block;border:0;background:#020b14"
+                  allow="autoplay; fullscreen" allowfullscreen></iframe>
         </div>
         """,
-        css="""
-        .coder-shell{font-family:var(--st-font);color:#f5f8fc;background:#061727;border:1px solid #163b59;border-radius:14px;padding:14px;box-sizing:border-box}
-        .player-box{max-width:460px;margin:0 auto 8px;background:#020b14;border-radius:12px;overflow:hidden;border:1px solid #163b59}
-        video{display:block;width:100%;max-height:290px;background:#000;object-fit:contain}
-        .time-row{max-width:460px;margin:0 auto 14px;display:flex;align-items:center;justify-content:space-between;gap:12px}
-        #clock{font-size:20px;font-weight:900;color:#20e6ff;font-variant-numeric:tabular-nums}.hint{font-size:12px;color:#8499ad;text-align:right}
-        .grid{display:grid;gap:10px;margin:9px 0}.two{grid-template-columns:1fr 2fr}.four{grid-template-columns:repeat(4,1fr)}
-        label{display:flex;flex-direction:column;gap:5px;font-size:12px;font-weight:800;color:#c4d1df}
-        select,input{width:100%;box-sizing:border-box;background:#10263b;color:#f5f8fc;border:1px solid #245274;border-radius:9px;padding:10px;font:inherit;outline:none}
-        select:focus,input:focus{border-color:#20e6ff;box-shadow:0 0 0 2px rgba(32,230,255,.12)}
-        .actions{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:13px}.actions button{border:0;border-radius:11px;padding:15px 10px;font-weight:950;font-size:16px;color:white;cursor:pointer}
-        .hit{background:linear-gradient(135deg,#00a967,#00e4a4);box-shadow:0 0 18px rgba(0,228,164,.18)}.err{background:linear-gradient(135deg,#d62f48,#ff5c68);box-shadow:0 0 18px rgba(255,92,104,.16)}
-        .actions button:active{transform:scale(.99)}.shortcuts{text-align:center;color:#8499ad;font-size:11px;margin-top:9px}
-        @media(max-width:700px){.four,.two{grid-template-columns:1fr 1fr}.player-box{max-width:100%}video{max-height:250px}.time-row{max-width:100%;align-items:flex-start;flex-direction:column}.hint{text-align:left}.actions{position:sticky;bottom:4px}.actions button{padding:14px 8px}}
-        """,
-        js="""
-        export default function({ parentElement, data, setTriggerValue }) {
-          const v=parentElement.querySelector('#coderVideo');
-          const clock=parentElement.querySelector('#clock');
-          const cat=parentElement.querySelector('#category');
-          const trick=parentElement.querySelector('#trick');
-          if(v.dataset.src !== data.video_url){v.src=data.video_url;v.dataset.src=data.video_url;v.load();}
-          v.playsInline=true;
-          if(!v.dataset.initialized){
-            v.dataset.initialized='1';
-            v.addEventListener('loadedmetadata',()=>{ if(data.resume_time>0){v.currentTime=data.resume_time;} });
-          }
-          function fmt(t){const m=Math.floor(t/60),s=Math.floor(t%60),ms=Math.floor((t-Math.floor(t))*1000);return String(m).padStart(2,'0')+':'+String(s).padStart(2,'0')+'.'+String(ms).padStart(3,'0');}
-          const updateClock=()=>clock.textContent=fmt(v.currentTime||0);v.ontimeupdate=updateClock;v.onseeked=updateClock;v.onpause=updateClock;
-          const cats=data.categories||[], tricks=data.tricks||[];
-          const previousCat=cat.value||data.defaults.category||'';
-          cat.innerHTML=cats.map(c=>`<option value="${c.id}">${c.name}</option>`).join('');
-          if([...cat.options].some(o=>o.value===previousCat))cat.value=previousCat;
-          function fillTricks(){const previous=trick.value||data.defaults.trick_id||'';const list=tricks.filter(t=>!cat.value||t.category_id===cat.value);trick.innerHTML=list.map(t=>`<option value="${t.id}">${t.name}</option>`).join('');if([...trick.options].some(o=>o.value===previous))trick.value=previous;}
-          cat.onchange=fillTricks;fillTricks();
-          const ids=['evaluation','difficulty','risk','speed','direction','base'];
-          ids.forEach(id=>{const el=parentElement.querySelector('#'+id);const val=data.defaults[id];if(val && [...el.options].some(o=>o.value===val))el.value=val;});
-          parentElement.querySelector('#notes').value=data.defaults.notes||'';
-          function mark(result){
-            if(!trick.value)return;
-            v.pause();
-            const selected=tricks.find(t=>t.id===trick.value)||{};
-            setTriggerValue('mark_event',{
-              nonce:Date.now(), timestamp_seconds:v.currentTime||0, result:result,
-              trick_id:trick.value, trick_name:selected.name||'', category:cat.value,
-              evaluation:parentElement.querySelector('#evaluation').value,
-              difficulty:parentElement.querySelector('#difficulty').value,
-              risk:parentElement.querySelector('#risk').value,
-              speed:parentElement.querySelector('#speed').value,
-              direction:parentElement.querySelector('#direction').value,
-              base:parentElement.querySelector('#base').value,
-              notes:parentElement.querySelector('#notes').value
-            });
-          }
-          parentElement.querySelector('#hit').onclick=()=>mark('Acerto');
-          parentElement.querySelector('#err').onclick=()=>mark('Erro');
-          parentElement.onkeydown=(e)=>{
-            if(e.target.tagName==='INPUT'||e.target.tagName==='SELECT')return;
-            if(e.code==='Space'){e.preventDefault();v.paused?v.play():v.pause();}
-            if(e.key.toLowerCase()==='a')mark('Acerto');
-            if(e.key.toLowerCase()==='e')mark('Erro');
-          };
-          parentElement.tabIndex=0;
-        }
-        """
+        unsafe_allow_html=True,
     )
-except Exception:
-    video_coder = None
+else:
+    st.markdown("<div class='video-wrap'>", unsafe_allow_html=True)
+    st.video(video_url)
+    st.markdown("</div>", unsafe_allow_html=True)
 
 try:
     events = sb.table("trick_video_events").select("*").eq("post_id",post_id).order("timestamp_seconds").execute().data or []
@@ -141,47 +63,57 @@ except Exception as e:
     st.error(f"Execute a migration V3.8. Detalhes: {e}"); st.stop()
 
 trick_by_id = {t["id"]: t for t in tricks}
-last_time = float(events[-1].get("timestamp_seconds") or 0) if events else 0.0
-defaults = st.session_state.get("coder_defaults", {})
-if not defaults:
-    defaults = {"category": cats[0]["id"] if cats else "", "trick_id":"", "evaluation":"Bom", "difficulty":"Média", "risk":"Médio", "speed":"Médio", "direction":"—", "base":"—", "notes":""}
+cat_by_id = {c["id"]: c for c in cats}
+if not cats or not tricks:
+    st.info("Cadastre categorias e manobras no Livro de Manobras.")
+    st.stop()
 
-if video_coder is None:
-    st.error("O player profissional requer uma versão atual do Streamlit. Atualize as dependências e reinicie o app.")
-    st.video(video_url)
-else:
-    result = video_coder(
-        data={"video_url":video_url,"resume_time":last_time,"tricks":tricks,"categories":cats,"defaults":defaults},
-        default={"mark_event":None}, key="sportscode_coder", on_mark_event_change=lambda: None, width="stretch"
-    )
-    event = getattr(result, "mark_event", None)
-    if event:
-        # Evita gravar duas vezes o mesmo clique em reruns inesperados.
-        nonce = event.get("nonce") if isinstance(event, dict) else None
-        if nonce and st.session_state.get("last_coder_nonce") != nonce:
-            st.session_state["last_coder_nonce"] = nonce
-            st.session_state["coder_defaults"] = {
-                "category":event.get("category") or "", "trick_id":event.get("trick_id") or "",
-                "evaluation":event.get("evaluation") or "Bom", "difficulty":event.get("difficulty") or "Média",
-                "risk":event.get("risk") or "Médio", "speed":event.get("speed") or "Médio",
-                "direction":event.get("direction") or "—", "base":event.get("base") or "—", "notes":event.get("notes") or ""
-            }
-            payload = {
-                "p_post_id":post_id,"p_athlete_id":post["athlete_id"],"p_trick_id":event.get("trick_id"),
-                "p_timestamp_seconds":int(round(float(event.get("timestamp_seconds") or 0))),"p_result":event.get("result"),
-                "p_evaluation":event.get("evaluation"),"p_difficulty":event.get("difficulty"),"p_risk":event.get("risk"),"p_speed":event.get("speed"),
-                "p_direction":None if event.get("direction") in (None,"—") else event.get("direction"),
-                "p_base":None if event.get("base") in (None,"—") else event.get("base"),"p_notes":event.get("notes") or None
-            }
-            try:
-                sb.rpc("save_trick_video_event",payload).execute()
-                sb.table("athlete_posts").update({"analysis_status":"em_analise"}).eq("id",post_id).execute()
-                st.toast(f"{event.get('trick_name','Manobra')} • {event.get('result')} • {float(event.get('timestamp_seconds') or 0):.2f}s")
-                st.rerun()
-            except Exception as ex:
-                st.error(f"Não foi possível registrar a tentativa: {ex}")
+st.caption("Use o tempo exibido no player como referência para registrar a tentativa.")
+tm1,tm2=st.columns(2)
+with tm1:
+    minute=st.number_input("Minuto", min_value=0, max_value=999, value=0, step=1, key="coder_min")
+with tm2:
+    second=st.number_input("Segundo", min_value=0, max_value=59, value=0, step=1, key="coder_sec")
 
-st.caption("O relógio agora é automático: pause ou clique ACERTO/ERRO enquanto o vídeo roda. O sistema registra o tempo atual do player e mantém a manobra selecionada para a próxima tentativa.")
+cat_names=[c["name"] for c in cats]
+cat_name=st.selectbox("Categoria",cat_names,key="coder_category")
+cat_id=next(c["id"] for c in cats if c["name"]==cat_name)
+available=[t for t in tricks if t.get("category_id")==cat_id]
+if not available:
+    st.warning("Nenhuma manobra ativa nesta categoria."); st.stop()
+trick_name=st.selectbox("Manobra",[t["name"] for t in available],key="coder_trick")
+trick_id=next(t["id"] for t in available if t["name"]==trick_name)
+
+a,b,c,d=st.columns(4)
+with a: evaluation=st.selectbox("Avaliação",["Bom","Excelente","Ruim"],key="coder_eval")
+with b: difficulty=st.selectbox("Dificuldade",["Média","Baixa","Alta"],key="coder_diff")
+with c: risk=st.selectbox("Risco",["Médio","Baixo","Alto"],key="coder_risk")
+with d: speed=st.selectbox("Velocidade",["Médio","Lento","Rápido"],key="coder_speed")
+a,b=st.columns(2)
+with a: direction=st.selectbox("Direção",["—","Frontside","Backside"],key="coder_dir")
+with b: base=st.selectbox("Base",["—","Regular","Goofy","Switch","Nollie"],key="coder_base")
+notes=st.text_input("Observação",placeholder="Opcional",key="coder_notes")
+
+def save_manual(result):
+    payload={
+        "p_post_id":post_id,"p_athlete_id":post["athlete_id"],"p_trick_id":trick_id,
+        "p_timestamp_seconds":int(minute)*60+int(second),"p_result":result,
+        "p_evaluation":evaluation,"p_difficulty":difficulty,"p_risk":risk,"p_speed":speed,
+        "p_direction":None if direction=="—" else direction,
+        "p_base":None if base=="—" else base,"p_notes":notes or None
+    }
+    sb.rpc("save_trick_video_event",payload).execute()
+    sb.table("athlete_posts").update({"analysis_status":"em_analise"}).eq("id",post_id).execute()
+
+hit,err=st.columns(2)
+with hit:
+    if st.button("✓ ACERTO",type="primary",use_container_width=True,key="manual_hit"):
+        try: save_manual("Acerto"); st.rerun()
+        except Exception as ex: st.error(f"Não foi possível registrar: {ex}")
+with err:
+    if st.button("✕ ERRO",use_container_width=True,key="manual_err"):
+        try: save_manual("Erro"); st.rerun()
+        except Exception as ex: st.error(f"Não foi possível registrar: {ex}")
 
 st.markdown("### Tentativas registradas")
 if events:

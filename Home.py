@@ -60,7 +60,7 @@ h1,h2,h3,p,label{color:#eef8ff}
 </style>
 """, unsafe_allow_html=True)
 
-st.markdown("""<div class="hero"><div class="brand">SKATE<span class="blue">PERFORMANCE</span><span class="time">TIME BRASIL</span></div>
+st.markdown("""<div class="hero"><div class="brand">SKATE<span class="blue">PERFORMANCE</span><span class="time">BRASIL</span></div>
 <div class="sub">ATHLETE MANAGEMENT • TRAINING INTELLIGENCE</div></div>""", unsafe_allow_html=True)
 
 user = current_user()

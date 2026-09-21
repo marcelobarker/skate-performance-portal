@@ -182,3 +182,17 @@ V3.5: corrige RLS do Livro de Manobras e impede erros de banco de derrubarem a p
 - Interface reduzida para um único botão `Excluir vídeo`.
 - Removidos expander, checkbox e textos extras de exclusão.
 - Execute `supabase_v3_21_migration.sql` para restringir também a permissão no banco.
+
+
+## V3.22
+- Codificação: remove definitivamente o player HTML5 antigo em 0:00 para vídeos do Drive e usa o player oficial do Google Drive.
+- Timestamp manual temporário (Minuto/Segundo), sem promessa de captura automática incorreta.
+- Home: marca atualizada para Skate Performance Brasil.
+- Sem migration nova.
+
+## V3.22 FIXED
+- Corrige o botão de reabrir a sidebar após recolher.
+- Compatível com seletores novos (`collapsedControl` / `Open sidebar`) e antigos do Streamlit.
+- Mantém o botão de expansão fixo e clicável no canto superior esquerdo.
+- Preserva as demais correções da V3.22 (player da codificação + Skate Performance Brasil).
+- Sem migration nova.
