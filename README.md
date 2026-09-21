@@ -227,3 +227,10 @@ V3.5: corrige RLS do Livro de Manobras e impede erros de banco de derrubarem a p
 - Enquanto o player for o iframe oficial do Google Drive, Minuto/Segundo ficam disponíveis para registrar a posição real pausada.
 - Player continua responsivo para vertical/horizontal.
 - Sem migration nova.
+
+## V3.27 HOTFIX
+- Corrige AttributeError em `_navigation`: páginas passam Supabase User, não dict.
+- `_navigation` agora aceita tanto profile dict quanto Supabase User e consulta o cargo pelo id.
+- Mantém `showSidebarNavigation=false`.
+- Mantém as alterações da V3.26.
+- Sem migration.

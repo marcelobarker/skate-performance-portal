@@ -105,8 +105,22 @@ def sign_out():
         st.session_state.pop(k, None)
 
 def _navigation(me=None):
-    """Menu lateral controlado pelo portal. O menu automático do Streamlit fica desativado."""
-    role = (me or {}).get("role")
+    """Menu lateral controlado pelo portal. Aceita profile dict ou Supabase User."""
+    role = None
+    if isinstance(me, dict):
+        role = me.get("role")
+    elif me is not None:
+        # As páginas existentes chamam _navigation(user). Buscamos o profile real
+        # sem assumir que o objeto Supabase User possui .get().
+        try:
+            sb = get_supabase()
+            uid = getattr(me, "id", None)
+            if uid:
+                rows = sb.table("profiles").select("role").eq("id", uid).limit(1).execute().data or []
+                if rows:
+                    role = rows[0].get("role")
+        except Exception:
+            role = None
     st.sidebar.page_link("Home.py", label="Home")
     st.sidebar.page_link("pages/02_Times.py", label="Times")
     st.sidebar.page_link("pages/11_Feed.py", label="Feed")
