@@ -145,3 +145,11 @@ V3.5: corrige RLS do Livro de Manobras e impede erros de banco de derrubarem a p
 - Limite do portal/bucket configurado para até 2 GB por vídeo (sujeito ao limite global do plano Supabase).
 - Codificação de várias tentativas dentro do mesmo vídeo com timestamp, manobra, Acerto/Erro, avaliação, dificuldade, risco, velocidade, direção e base.
 - Resultados das marcações alimentam a página de Análise do atleta.
+
+## V3.12 — vídeos no Google Drive CBSk
+- Upload de vídeos grandes diretamente do navegador para a pasta configurada em `GOOGLE_DRIVE_FOLDER_ID`.
+- Google Drive usa conta de serviço guardada apenas nos Secrets do Streamlit.
+- Supabase continua guardando metadados, feed e codificação; novos `video_path` usam `gdrive:<file_id>`.
+- Feed e tela de codificação reconhecem vídeos antigos do Supabase e novos do Google Drive.
+- Não há migration SQL nova nesta versão.
+- Secrets necessários: `GOOGLE_DRIVE_FOLDER_ID` e `[gcp_service_account]`.

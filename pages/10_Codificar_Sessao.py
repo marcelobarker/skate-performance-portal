@@ -3,6 +3,7 @@ from collections import Counter
 import streamlit as st
 from auth_utils import require_login, get_supabase
 from ui_theme import apply_ui_theme
+from drive_utils import is_drive_path, drive_preview_url
 
 st.set_page_config(page_title="Codificar Sessão • Skate Performance", page_icon="🎬", layout="wide")
 apply_ui_theme(); user, me = require_login(); sb = get_supabase()
@@ -18,8 +19,13 @@ try:
     athlete = sb.table("profiles").select("id,full_name").eq("id",post["athlete_id"]).single().execute().data
     tricks = sb.table("tricks").select("id,name,category_id").eq("active",True).order("name").execute().data or []
     cats = sb.table("trick_categories").select("id,name,sort_order").order("sort_order").execute().data or []
-    signed = sb.storage.from_("trick-videos").create_signed_url(post["video_path"], 7200)
-    video_url = signed.get("signedURL") or signed.get("signedUrl") or signed.get("signed_url")
+    if is_drive_path(post.get("video_path")):
+        video_url = drive_preview_url(post["video_path"])
+        video_is_drive = True
+    else:
+        signed = sb.storage.from_("trick-videos").create_signed_url(post["video_path"], 7200)
+        video_url = signed.get("signedURL") or signed.get("signedUrl") or signed.get("signed_url")
+        video_is_drive = False
 except Exception as e:
     st.error(f"Não foi possível abrir a sessão: {e}"); st.stop()
 
@@ -32,7 +38,12 @@ st.markdown("""<style>
 </style>""", unsafe_allow_html=True)
 st.markdown(f"<div class='code-title'>Codificação de sessão</div><div class='code-sub'>{html.escape(athlete.get('full_name') or 'Atleta')} • {html.escape(post.get('session_title') or 'Vídeo de treino')}</div>", unsafe_allow_html=True)
 
-st.markdown("<div class='video-wrap'>", unsafe_allow_html=True); st.video(video_url); st.markdown("</div>", unsafe_allow_html=True)
+st.markdown("<div class='video-wrap'>", unsafe_allow_html=True)
+if video_is_drive:
+    st.iframe(video_url, height=430, scrolling=False)
+else:
+    st.video(video_url)
+st.markdown("</div>", unsafe_allow_html=True)
 st.caption("Modo de codificação: assista ao treino, pause na tentativa, selecione a manobra e marque ACERTO ou ERRO. O registro entra imediatamente nas estatísticas. Nesta versão o tempo é informado em Min/Seg; a captura automática do relógio do player exige o player customizado que será a próxima etapa.")
 
 try:

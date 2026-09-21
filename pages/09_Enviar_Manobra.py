@@ -1,23 +1,24 @@
-import uuid, json, time
-from urllib.parse import urlparse
+import uuid, json
 import streamlit as st
 import streamlit.components.v1 as components
 from auth_utils import require_login, get_supabase
 from ui_theme import apply_ui_theme
+from drive_utils import get_drive_access_token, get_drive_folder_id
 
 st.set_page_config(page_title="Enviar Vídeo • Skate Performance", page_icon="🎥", layout="wide")
 apply_ui_theme(); user, profile = require_login(); sb = get_supabase()
 role = profile.get("role")
 STAFF = {"admin","tecnico","presidente","vice_presidente","chefe_equipe","comissao_tecnica"}
 ALLOWED = STAFF | {"skatista"}
-MAX_GB = 2
+MAX_GB = 10
 
 st.title("🎥 Enviar vídeo para análise")
-st.caption("Envie o vídeo do treino. Quando terminar, ele ficará disponível no feed e na análise do atleta.")
+st.caption("Escolha o vídeo do treino. O envio começa automaticamente e, ao terminar, ele fica disponível no feed e na análise.")
 if role not in ALLOWED:
     st.info("Envio disponível para atletas e equipe técnica."); st.stop()
 
 target_id = user.id
+target_name = profile.get('full_name') or 'Atleta'
 if role in STAFF:
     athletes = sb.table("profiles").select("id,full_name,status").eq("role","skatista").eq("status","ativo").order("full_name").execute().data or []
     amap = {a["full_name"]: a["id"] for a in athletes}
@@ -25,7 +26,7 @@ if role in STAFF:
     target_name = st.selectbox("Atleta do vídeo", list(amap)); target_id = amap[target_name]
 
 mode = st.radio("Tipo de vídeo", ["Sessão completa", "Tentativa isolada"], horizontal=True,
-                help="Use Sessão completa para um treino com várias tentativas/manobras.")
+                help="Sessão completa = um treino com várias tentativas e manobras.")
 try:
     cats = sb.table("trick_categories").select("*").order("sort_order").execute().data or []
     tricks = sb.table("tricks").select("*").eq("active",True).order("name").execute().data or []
@@ -42,63 +43,60 @@ if mode == "Tentativa isolada":
     trick_id = tmap.get(trick) if trick else None
     title = st.text_input("Título", placeholder="Ex.: Flip Crooked no corrimão")
 else:
-    title = st.text_input("Nome da sessão", placeholder="Ex.: Treino Street • tarde • 20/09")
+    title = st.text_input("Nome da sessão", placeholder="Ex.: Treino Street • tarde • 21/09")
 caption = st.text_area("Observação", placeholder="Contexto do treino, objetivo, observações para a comissão técnica…", height=80)
-
 if mode == "Tentativa isolada" and not trick_id:
     st.warning("Escolha uma manobra para liberar o envio."); st.stop()
 
-# O navegador precisa do JWT REAL da sessão autenticada. A publishable key sozinha
-# não representa o usuário e não deve ser usada como Bearer para o TUS.
+try:
+    drive_token = get_drive_access_token()
+    folder_id = get_drive_folder_id()
+except Exception as e:
+    st.error("Google Drive ainda não está configurado para o portal. Confira os Secrets do Streamlit.")
+    st.caption(str(e)); st.stop()
+
 try:
     auth_session = sb.auth.get_session()
-    if not auth_session or not getattr(auth_session, "access_token", None):
-        auth_session = st.session_state.get("sp_session")
     access_token = getattr(auth_session, "access_token", None)
-    if not access_token:
-        raise RuntimeError("sessão sem access token")
+    if not access_token: raise RuntimeError("sessão sem token")
 except Exception:
-    st.error("Sua sessão expirou. Saia e entre novamente para enviar o vídeo.")
-    st.stop()
+    st.error("Sua sessão expirou. Saia e entre novamente para enviar o vídeo."); st.stop()
 
-supabase_url = st.secrets.get("SUPABASE_URL", "")
+supabase_url = st.secrets.get("SUPABASE_URL", "").rstrip('/')
 publishable_key = st.secrets.get("SUPABASE_KEY", "")
-project_id = urlparse(supabase_url).hostname.split(".")[0]
-endpoint = f"https://{project_id}.storage.supabase.co/storage/v1/upload/resumable"
-path = f"{target_id}/{uuid.uuid4().hex}.mp4"
-
 payload = {
-    "athlete_id": target_id,
-    "trick_id": trick_id,
-    "video_path": path,
-    "caption": caption.strip() or None,
+    "athlete_id": target_id, "trick_id": trick_id, "caption": caption.strip() or None,
     "upload_kind": "session" if mode == "Sessão completa" else "single",
     "session_title": title.strip() or ("Sessão de treino" if mode == "Sessão completa" else None),
 }
+cfg = {"driveToken":drive_token,"folder":folder_id,"rest":supabase_url+"/rest/v1/athlete_posts",
+       "sbToken":access_token,"apikey":publishable_key,"payload":payload,"athlete":target_name,
+       "max":MAX_GB*1024*1024*1024}
 
-cfg = {
-    "endpoint": endpoint,
-    "rest": supabase_url.rstrip("/") + "/rest/v1/athlete_posts",
-    "access": access_token,
-    "apikey": publishable_key,
-    "path": path,
-    "payload": payload,
-    "max": MAX_GB * 1024 * 1024 * 1024,
+uploader = r'''<!doctype html><html><head><meta name="viewport" content="width=device-width,initial-scale=1"><style>
+*{box-sizing:border-box}body{margin:0;background:transparent;color:#f5f8fc;font-family:Inter,Arial,sans-serif}.box{border:1px solid #163b59;border-radius:14px;padding:18px;background:#081b2d}.pick{display:flex;align-items:center;justify-content:center;width:100%;min-height:56px;border:1px solid #159bff;border-radius:10px;background:linear-gradient(180deg,#087cff,#006fe8);color:#fff;font-weight:900;cursor:pointer;box-shadow:0 0 18px rgba(0,124,255,.18)}#file{display:none}.name{margin-top:10px;color:#9fb3c8;font-size:13px;text-align:center}.track{height:10px;background:#10263b;border-radius:99px;overflow:hidden;margin-top:14px;display:none}.bar{height:100%;width:0;background:linear-gradient(90deg,#087cff,#00d9ff);transition:width .15s}.status{margin-top:10px;color:#c4d1df;font-size:14px;text-align:center;min-height:22px}.ok{color:#00e4a4;font-weight:800}.err{color:#ff6b6b;font-weight:700}
+</style></head><body><div class="box"><label class="pick" for="file">＋ ANEXAR VÍDEO</label><input id="file" type="file" accept="video/*"><div class="name" id="name">Selecione o vídeo do treino</div><div class="track" id="track"><div class="bar" id="bar"></div></div><div class="status" id="status"></div></div><script>
+const C=__CFG__, f=document.getElementById('file'), nm=document.getElementById('name'), tr=document.getElementById('track'), bar=document.getElementById('bar'), stt=document.getElementById('status'), pick=document.querySelector('.pick');
+function fail(m){stt.className='status err';stt.textContent=m;pick.style.pointerEvents='auto';pick.style.opacity='1'}
+async function start(file){
+ if(file.size>C.max){fail('Este vídeo ultrapassa o limite configurado no portal.');return}
+ nm.textContent=file.name+' • '+(file.size/1024/1024).toFixed(1)+' MB'; tr.style.display='block'; pick.style.pointerEvents='none';pick.style.opacity='.55';stt.textContent='Preparando envio…';
+ const meta={name:file.name,parents:[C.folder],description:'Skate Performance • '+C.athlete};
+ let init=await fetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=resumable&supportsAllDrives=true',{method:'POST',headers:{Authorization:'Bearer '+C.driveToken,'Content-Type':'application/json; charset=UTF-8','X-Upload-Content-Type':file.type||'video/mp4','X-Upload-Content-Length':String(file.size)},body:JSON.stringify(meta)});
+ if(!init.ok)throw new Error('Drive '+init.status+': '+await init.text());
+ const loc=init.headers.get('Location'); if(!loc)throw new Error('O Google Drive não retornou a sessão de upload.');
+ const chunk=8*1024*1024; let pos=0, fileId=null;
+ while(pos<file.size){let end=Math.min(pos+chunk,file.size);let blob=file.slice(pos,end);let r=await fetch(loc,{method:'PUT',headers:{'Content-Length':String(end-pos),'Content-Range':'bytes '+pos+'-'+(end-1)+'/'+file.size},body:blob});
+   if(!(r.status===308||r.ok))throw new Error('Drive '+r.status+': '+await r.text()); pos=end;let p=(pos/file.size*100);bar.style.width=p.toFixed(1)+'%';stt.textContent='Enviando… '+p.toFixed(1)+'% • '+(pos/1024/1024).toFixed(0)+' / '+(file.size/1024/1024).toFixed(0)+' MB';
+   if(r.ok){let d=await r.json();fileId=d.id;}
+ }
+ if(!fileId)throw new Error('Upload terminou sem retornar o ID do vídeo.');
+ stt.textContent='Salvando vídeo no perfil…'; let pay=Object.assign({},C.payload,{video_path:'gdrive:'+fileId});
+ let sr=await fetch(C.rest,{method:'POST',headers:{apikey:C.apikey,authorization:'Bearer '+C.sbToken,'Content-Type':'application/json',Prefer:'return=minimal'},body:JSON.stringify(pay)});
+ if(!sr.ok)throw new Error('Vídeo enviado, mas não foi possível vinculá-lo ao perfil: '+sr.status+' '+await sr.text());
+ bar.style.width='100%';stt.className='status ok';stt.textContent='✓ Vídeo enviado com sucesso. Já está disponível no feed e na análise.';pick.textContent='✓ ENVIO CONCLUÍDO';
 }
-
-uploader = '''<!doctype html><html><head><meta name="viewport" content="width=device-width,initial-scale=1">
-<script src="https://cdn.jsdelivr.net/npm/tus-js-client@4.3.1/dist/tus.min.js"></script>
-<style>
-*{box-sizing:border-box}body{margin:0;background:transparent;color:#f5f8fc;font-family:Inter,Arial,sans-serif}.box{border:1px solid #163b59;border-radius:14px;padding:18px;background:#081b2d}.pick{display:flex;align-items:center;justify-content:center;width:100%;min-height:54px;border:1px solid #159bff;border-radius:10px;background:linear-gradient(180deg,#087cff,#006fe8);color:#fff;font-weight:800;cursor:pointer;box-shadow:0 0 18px rgba(0,124,255,.18)}.pick:hover{filter:brightness(1.08)}#file{display:none}.name{margin-top:10px;color:#9fb3c8;font-size:13px;text-align:center}.track{height:10px;background:#10263b;border-radius:99px;overflow:hidden;margin-top:14px;display:none}.bar{height:100%;width:0;background:linear-gradient(90deg,#087cff,#00d9ff);transition:width .2s}.status{margin-top:10px;color:#c4d1df;font-size:14px;text-align:center;min-height:22px}.ok{color:#00e4a4;font-weight:800}.err{color:#ff6b6b;font-weight:700}
-</style></head><body><div class="box">
-<label class="pick" for="file">＋ ANEXAR E ENVIAR VÍDEO</label><input id="file" type="file" accept="video/mp4,video/quicktime,video/webm,video/x-m4v"><div class="name" id="name">Selecione o vídeo do treino</div><div class="track" id="track"><div class="bar" id="bar"></div></div><div class="status" id="status"></div></div>
-<script>
-const C=__CFG__; const fileEl=document.getElementById('file'), nameEl=document.getElementById('name'), track=document.getElementById('track'), bar=document.getElementById('bar'), status=document.getElementById('status'), pick=document.querySelector('.pick');
-function fail(msg){status.className='status err';status.textContent=msg;pick.style.pointerEvents='auto';pick.style.opacity='1'}
-fileEl.addEventListener('change', async()=>{const file=fileEl.files[0]; if(!file)return; if(file.size>C.max){fail('Arquivo acima do limite configurado.');return;} nameEl.textContent=file.name+' • '+(file.size/1024/1024).toFixed(1)+' MB';track.style.display='block';pick.style.pointerEvents='none';pick.style.opacity='.55';status.className='status';status.textContent='Preparando envio…';
- const upload=new tus.Upload(file,{endpoint:C.endpoint,retryDelays:[0,3000,5000,10000,20000],headers:{authorization:'Bearer '+C.access,apikey:C.apikey},uploadDataDuringCreation:true,removeFingerprintOnSuccess:true,chunkSize:6*1024*1024,metadata:{bucketName:'trick-videos',objectName:C.path,contentType:file.type||'video/mp4',cacheControl:'3600'},onError:(e)=>fail('Não foi possível enviar o vídeo. '+(e && e.message ? e.message : e)),onProgress:(u,t)=>{const p=(u/t*100).toFixed(1);bar.style.width=p+'%';status.textContent='Enviando… '+p+'% • '+(u/1024/1024).toFixed(0)+' / '+(t/1024/1024).toFixed(0)+' MB'},onSuccess:async()=>{bar.style.width='100%';status.textContent='Salvando vídeo no perfil…';try{const r=await fetch(C.rest,{method:'POST',headers:{apikey:C.apikey,authorization:'Bearer '+C.access,'Content-Type':'application/json',Prefer:'return=minimal'},body:JSON.stringify(C.payload)});if(!r.ok){const tx=await r.text();throw new Error('Upload concluído, mas não foi possível vincular ao perfil: '+r.status+' '+tx)}status.className='status ok';status.textContent='✓ Vídeo enviado com sucesso. Já está disponível no feed e na análise.';nameEl.textContent=file.name;pick.textContent='✓ ENVIO CONCLUÍDO';}catch(e){fail(e.message||String(e))}}});
- try{const prev=await upload.findPreviousUploads();if(prev.length)upload.resumeFromPreviousUpload(prev[0]);upload.start()}catch(e){fail(e.message||String(e))}});
-</script></body></html>'''.replace('__CFG__', json.dumps(cfg))
-components.html(uploader, height=205)
-
-st.caption("Para vídeos de sessão completa, depois do envio abra Análise → Codificação de Vídeo para marcar as tentativas durante o treino.")
+f.addEventListener('change',()=>{let file=f.files[0];if(file)start(file).catch(e=>fail('Não foi possível enviar o vídeo. '+(e.message||e)))})
+</script></body></html>'''.replace('__CFG__',json.dumps(cfg))
+components.html(uploader,height=205)
+st.caption("Sessões completas podem ser codificadas em Análise → Codificação de Vídeo.")

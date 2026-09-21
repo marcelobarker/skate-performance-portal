@@ -3,6 +3,7 @@ from datetime import datetime,date
 import streamlit as st
 from auth_utils import require_login,get_supabase
 from ui_theme import apply_ui_theme
+from drive_utils import is_drive_path, drive_preview_url
 st.set_page_config(page_title='Perfil do Atleta • Skate Performance',page_icon='🛹',layout='wide'); apply_ui_theme(); user,me=require_login(); sb=get_supabase()
 STAFF_ROLES=('admin','tecnico','presidente','vice_presidente','chefe_equipe','comissao_tecnica')
 is_staff=me.get('role') in STAFF_ROLES
@@ -25,8 +26,13 @@ for post in posts:
         st.markdown(f"<div class='post-head'>{('<img class=mini src='+repr(photo)+'>') if photo else '🛹'}<div><b>{html.escape(athlete.get('full_name') or 'Atleta')}</b><br><span class='status'>{html.escape(post.get('session_title') or tnames.get(post.get('trick_id'),'SESSÃO DE TREINO'))}</span> <span class='status'>{html.escape((post.get('analysis_status') or 'aguardando').upper())}</span></div></div>",unsafe_allow_html=True)
         if post.get('caption'): st.write(post['caption'])
         try:
-            signed=sb.storage.from_('trick-videos').create_signed_url(post['video_path'],3600); url=signed.get('signedURL') or signed.get('signedUrl') or signed.get('signed_url')
-            st.markdown("<div class='feed-video'>",unsafe_allow_html=True); st.video(url); st.markdown("</div>",unsafe_allow_html=True)
+            if is_drive_path(post.get('video_path')):
+                st.markdown("<div class='feed-video'>",unsafe_allow_html=True)
+                st.iframe(drive_preview_url(post['video_path']), height=315, scrolling=False)
+                st.markdown("</div>",unsafe_allow_html=True)
+            else:
+                signed=sb.storage.from_('trick-videos').create_signed_url(post['video_path'],3600); url=signed.get('signedURL') or signed.get('signedUrl') or signed.get('signed_url')
+                st.markdown("<div class='feed-video'>",unsafe_allow_html=True); st.video(url); st.markdown("</div>",unsafe_allow_html=True)
         except Exception: st.caption('Vídeo privado indisponível temporariamente.')
         if is_staff:
             if st.button('🎬 Codificar sessão / várias tentativas', key='code_session_'+post['id'], use_container_width=True):
