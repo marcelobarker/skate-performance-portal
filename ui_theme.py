@@ -123,17 +123,25 @@ def apply_ui_theme():
     .mobile-nav,.mobile-nav-container,.mobile-quick-nav,.bottom-nav,
     [class*="mobile-nav"],[id*="mobile-nav"]{display:none!important}
 
-    /* V3.28: esconder definitivamente o menu multipage automático do Streamlit.
-       Mantém somente o menu controlado pelo portal via st.sidebar.page_link. */
-    [data-testid="stSidebarNav"],
-    [data-testid="stSidebarNavItems"],
-    nav[data-testid="stSidebarNav"]{
+    /* V3.29 — manter o menu principal original e retirar SOMENTE:
+       Cadastros, Análise de Treino, Perfil do Atleta e Codificar Sessão. */
+    [data-testid="stSidebarNav"] a[href*="Cadastros"],
+    [data-testid="stSidebarNav"] a[href*="cadastros"],
+    [data-testid="stSidebarNav"] a[href*="Analise_de_Treino"],
+    [data-testid="stSidebarNav"] a[href*="analise_de_treino"],
+    [data-testid="stSidebarNav"] a[href*="Perfil_do_Atleta"],
+    [data-testid="stSidebarNav"] a[href*="perfil_do_atleta"],
+    [data-testid="stSidebarNav"] a[href*="Codificar_Sessao"],
+    [data-testid="stSidebarNav"] a[href*="codificar_sessao"]{
       display:none!important;
-      visibility:hidden!important;
-      height:0!important;
-      min-height:0!important;
-      overflow:hidden!important;
-      margin:0!important;
-      padding:0!important;
+    }
+
+    /* O menu principal nativo volta a aparecer normalmente. */
+    [data-testid="stSidebarNav"]{
+      display:block!important;
+      visibility:visible!important;
+      height:auto!important;
+      min-height:initial!important;
+      overflow:visible!important;
     }
 </style>''', unsafe_allow_html=True)

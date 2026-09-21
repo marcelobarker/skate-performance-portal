@@ -242,3 +242,12 @@ V3.5: corrige RLS do Livro de Manobras e impede erros de banco de derrubarem a p
 - Admin: Cargos e cadastros permanece somente na seção Administração no final.
 - Corrige `_navigation()` para aceitar o cargo em string enviado pela Home.
 - Sem migration.
+
+## V3.29 — Sidebar correto
+- Restaura o menu principal/original do Streamlit (o menu com os ícones/pontos que já existia).
+- Remove SOMENTE do menu principal: Codificar Sessão, Análise de Treino, Cadastros e Perfil do Atleta.
+- Mantém no menu principal: Home, Times, Histórico de Treinos, Meu Perfil, Calendário, Livro de Manobras, Enviar Manobra, Feed e Central do Treinador.
+- Remove o segundo menu customizado que ficou com botões retangulares.
+- Para Admin, Cadastros continua somente no final em Administração como `Cargos e cadastros`.
+- Remove referência inválida a `04_Gerenciar_Times.py`, que estava causando StreamlitPageNotFoundError.
+- Sem migration.

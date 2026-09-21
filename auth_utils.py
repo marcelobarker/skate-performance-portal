@@ -105,7 +105,7 @@ def sign_out():
         st.session_state.pop(k, None)
 
 def _navigation(me=None):
-    """Menu lateral único do portal."""
+    """Mantém o menu principal nativo e acrescenta apenas a Administração."""
     role = None
     if isinstance(me, str):
         role = me
@@ -122,25 +122,11 @@ def _navigation(me=None):
         except Exception:
             role = None
 
-    # Menu principal — somente estes acessos.
-    st.sidebar.page_link("Home.py", label="Home")
-    st.sidebar.page_link("pages/02_Times.py", label="Times")
-    st.sidebar.page_link("pages/11_Feed.py", label="Feed")
-    st.sidebar.page_link("pages/06_Calendario.py", label="Calendário")
-    st.sidebar.page_link("pages/05_Meu_Perfil.py", label="Meu Perfil")
-
-    if role in ("skatista","admin","tecnico","presidente","vice_presidente","chefe_equipe","comissao_tecnica"):
-        st.sidebar.page_link("pages/09_Enviar_Manobra.py", label="Enviar Vídeo")
-
-    if role not in ("skatista","familiar",None):
-        st.sidebar.page_link("pages/12_Central_do_Treinador.py", label="Central de Performance")
-
-    # Administração fica isolada no final. Cadastros aparece somente aqui.
+    # Cadastros fica somente aqui embaixo para o Admin.
     if role == "admin":
         st.sidebar.markdown("---")
         st.sidebar.markdown("### Administração")
         st.sidebar.page_link("pages/01_Cadastros.py", label="Cargos e cadastros")
-        st.sidebar.page_link("pages/04_Gerenciar_Times.py", label="Gerenciar times")
 
 def require_login(require_active=True, admin=False):
     user = current_user(); profile = current_profile()
