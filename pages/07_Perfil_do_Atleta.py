@@ -10,7 +10,7 @@ except ImportError:
     def drive_player_geometry(path_or_id):
         return {'max_width':525,'aspect':'16/9','orientation':'unknown'}
 from video_utils import can_delete_post, delete_video_post
-st.set_page_config(page_title='Perfil do Atleta • Skate Performance',page_icon='🛹',layout='wide'); apply_ui_theme(); user,me=require_login(); sb=get_supabase()
+st.set_page_config(initial_sidebar_state="expanded", page_title='Perfil do Atleta • Skate Performance',page_icon='🛹',layout='wide'); apply_ui_theme(); user,me=require_login(); sb=get_supabase()
 STAFF_ROLES=('admin','tecnico','presidente','vice_presidente','chefe_equipe','comissao_tecnica')
 is_staff=me.get('role') in STAFF_ROLES
 athlete_id=st.session_state.get('selected_athlete_id') or (user.id if me.get('role')=='skatista' else None)

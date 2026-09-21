@@ -196,3 +196,10 @@ V3.5: corrige RLS do Livro de Manobras e impede erros de banco de derrubarem a p
 - Mantém o botão de expansão fixo e clicável no canto superior esquerdo.
 - Preserva as demais correções da V3.22 (player da codificação + Skate Performance Brasil).
 - Sem migration nova.
+
+## V3.23
+- Sidebar fixada aberta no desktop para eliminar definitivamente o estado em que o menu desaparecia.
+- Botão de recolher removido; o menu não pode mais ficar preso fechado.
+- `initial_sidebar_state="expanded"` aplicado às páginas que configuram a página.
+- Mantém V3.22: Skate Performance Brasil e player do Drive na Codificação.
+- Sem migration nova.

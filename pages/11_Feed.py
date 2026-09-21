@@ -10,7 +10,7 @@ except ImportError:
         return {'max_width':525,'aspect':'16/9','orientation':'unknown'}
 from video_utils import can_delete_post, delete_video_post
 
-st.set_page_config(page_title="Feed • Skate Performance", page_icon="▶", layout="wide")
+st.set_page_config(initial_sidebar_state="expanded", page_title="Feed • Skate Performance", page_icon="▶", layout="wide")
 apply_ui_theme(); user, me = require_login(); sb=get_supabase()
 st.markdown('''<style>
 .feed-head{font-size:32px;font-weight:950;color:#f5f8fc}.feed-sub{color:#8499ad;margin-bottom:18px}

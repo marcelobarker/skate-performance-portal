@@ -8,7 +8,7 @@ from report_engine import read_csv, is_aggregate, parse_raw, parse_aggregate, me
 
 from ui_theme import apply_ui_theme
 
-st.set_page_config(page_title="Histórico • Skate Performance", page_icon="📚", layout="wide")
+st.set_page_config(initial_sidebar_state="expanded", page_title="Histórico • Skate Performance", page_icon="📚", layout="wide")
 apply_ui_theme()
 
 st.markdown("""<style>

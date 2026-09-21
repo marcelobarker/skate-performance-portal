@@ -89,4 +89,33 @@ def apply_ui_theme():
     [data-baseweb="select"] svg,[data-testid="stSelectbox"] svg{color:#C4D1DF!important;fill:#C4D1DF!important}
     label,legend,[data-testid="stWidgetLabel"] p{color:#C4D1DF!important}
         @media(max-width:768px){html,body,#root,[data-testid="stApp"],[data-testid="stAppViewContainer"]{background:#03111E!important}.block-container{padding-left:.75rem!important;padding-right:.75rem!important}.stColumn{min-width:0!important}[data-testid="stSidebar"]{border-right:none!important}}
-    </style>''', unsafe_allow_html=True)
+    
+    /* V3.23 — sidebar permanente.
+       Não depende do estado salvo pelo navegador/Streamlit. */
+    section[data-testid="stSidebar"]{
+      display:block!important;
+      visibility:visible!important;
+      transform:translateX(0)!important;
+      margin-left:0!important;
+      left:0!important;
+      min-width:244px!important;
+      width:244px!important;
+      opacity:1!important;
+      z-index:999999!important;
+    }
+    section[data-testid="stSidebar"] > div{
+      display:block!important;
+      visibility:visible!important;
+    }
+    [data-testid="stSidebarCollapseButton"],
+    button[aria-label="Close sidebar"]{
+      display:none!important;
+    }
+    /* O botão de expandir não é mais necessário: o menu não pode ser recolhido. */
+    [data-testid="collapsedControl"],
+    [data-testid="stSidebarCollapsedControl"],
+    button[data-testid="stSidebarCollapsedControl"],
+    button[aria-label="Open sidebar"]{
+      display:none!important;
+    }
+</style>''', unsafe_allow_html=True)
