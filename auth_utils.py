@@ -104,25 +104,27 @@ def sign_out():
     for k in ("sp_user", "sp_session", "sp_profile", "sp_supabase", "sp_cookie_probe_count"):
         st.session_state.pop(k, None)
 
-def _navigation(role):
-    """Menu lateral limpo. Ferramentas internas são abertas pelos cards/páginas corretas."""
-    with st.sidebar:
-        st.page_link("Home.py", label="Home", use_container_width=True)
-        st.page_link("pages/02_Times.py", label="Times", use_container_width=True)
-        st.page_link("pages/11_Feed.py", label="Feed", use_container_width=True)
-        st.page_link("pages/06_Calendario.py", label="Calendário", use_container_width=True)
-        st.page_link("pages/05_Meu_Perfil.py", label="Meu Perfil", use_container_width=True)
+def _navigation(me=None):
+    """Menu lateral controlado pelo portal. O menu automático do Streamlit fica desativado."""
+    role = (me or {}).get("role")
+    st.sidebar.page_link("Home.py", label="Home")
+    st.sidebar.page_link("pages/02_Times.py", label="Times")
+    st.sidebar.page_link("pages/11_Feed.py", label="Feed")
+    st.sidebar.page_link("pages/06_Calendario.py", label="Calendário")
+    st.sidebar.page_link("pages/05_Meu_Perfil.py", label="Meu Perfil")
 
-        if role in ("skatista","admin","tecnico","presidente","vice_presidente","chefe_equipe","comissao_tecnica"):
-            st.page_link("pages/09_Enviar_Manobra.py", label="Enviar Vídeo", use_container_width=True)
+    if role in ("skatista","admin","tecnico","presidente","vice_presidente","chefe_equipe","comissao_tecnica"):
+        st.sidebar.page_link("pages/09_Enviar_Manobra.py", label="Enviar Vídeo")
 
-        if role not in ("skatista","familiar"):
-            st.page_link("pages/12_Central_do_Treinador.py", label="Central de Performance", use_container_width=True)
+    if role not in ("skatista","familiar"):
+        st.sidebar.page_link("pages/12_Central_do_Treinador.py", label="Central de Performance")
 
-        if role == "admin":
-            st.divider()
-            st.caption("ADMINISTRAÇÃO")
-            st.page_link("pages/02_Times.py", label="Gerenciar times", use_container_width=True)
+    # Cadastros permanece somente na Administração, no final da barra.
+    if role == "admin":
+        st.sidebar.markdown("---")
+        st.sidebar.markdown("### Administração")
+        st.sidebar.page_link("pages/01_Cadastros.py", label="Cargos e cadastros")
+        st.sidebar.page_link("pages/04_Gerenciar_Times.py", label="Gerenciar times")
 
 
 def require_login(require_active=True, admin=False):

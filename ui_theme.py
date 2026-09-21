@@ -118,4 +118,8 @@ def apply_ui_theme():
     button[aria-label="Open sidebar"]{
       display:none!important;
     }
+
+    /* V3.25: remover navegação mobile/legada duplicada no web. */
+    .mobile-nav,.mobile-nav-container,.mobile-quick-nav,.bottom-nav,
+    [class*="mobile-nav"],[id*="mobile-nav"]{display:none!important}
 </style>''', unsafe_allow_html=True)

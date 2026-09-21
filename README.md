@@ -211,3 +211,19 @@ V3.5: corrige RLS do Livro de Manobras e impede erros de banco de derrubarem a p
 - Adicionado relógio visual automático de sessão; por limitação cross-origin do Google Drive, o iframe oficial não fornece currentTime ao Streamlit.
 - Mantido ajuste manual de timestamp recolhido como fallback para gravação confiável.
 - Sem migration nova.
+
+## V3.25 — correção urgente de navegação
+- Desativa definitivamente a navegação automática multipage do Streamlit (`showSidebarNavigation=false`).
+- Remove do menu principal: Cadastros, Análise de Treino, Histórico de Treinos, Perfil do Atleta, Livro de Manobras e Codificar Sessão.
+- Menu principal fica: Home, Times, Feed, Calendário, Meu Perfil, Enviar Vídeo e Central de Performance (conforme cargo).
+- Admin mantém `Cargos e cadastros` somente em Administração, no final, junto de `Gerenciar times`.
+- Oculta restos de navegação mobile/legada duplicada no web.
+- Sem migration nova.
+
+## V3.26 — correção da Codificação
+- Remove o relógio paralelo de codificação, que não correspondia à timeline real do vídeo.
+- Restaura os botões grandes ACERTO e ERRO.
+- Timestamp volta a representar somente o tempo real da timeline do vídeo.
+- Enquanto o player for o iframe oficial do Google Drive, Minuto/Segundo ficam disponíveis para registrar a posição real pausada.
+- Player continua responsivo para vertical/horizontal.
+- Sem migration nova.
