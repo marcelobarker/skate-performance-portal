@@ -22,18 +22,22 @@ except Exception as e: st.error(f'Feed ainda não disponível. Execute a migrati
 if not posts: st.info('Nenhum vídeo publicado ainda. Quando o atleta enviar uma manobra, ela aparecerá aqui.')
 for post in posts:
     with st.container(border=True):
-        st.markdown(f"<div class='post-head'>{('<img class=mini src='+repr(photo)+'>') if photo else '🛹'}<div><b>{html.escape(athlete.get('full_name') or 'Atleta')}</b><br><span class='status'>{html.escape(tnames.get(post.get('trick_id'),'MANOBRA'))}</span> <span class='status'>{html.escape((post.get('analysis_status') or 'aguardando').upper())}</span></div></div>",unsafe_allow_html=True)
+        st.markdown(f"<div class='post-head'>{('<img class=mini src='+repr(photo)+'>') if photo else '🛹'}<div><b>{html.escape(athlete.get('full_name') or 'Atleta')}</b><br><span class='status'>{html.escape(post.get('session_title') or tnames.get(post.get('trick_id'),'SESSÃO DE TREINO'))}</span> <span class='status'>{html.escape((post.get('analysis_status') or 'aguardando').upper())}</span></div></div>",unsafe_allow_html=True)
         if post.get('caption'): st.write(post['caption'])
         try:
             signed=sb.storage.from_('trick-videos').create_signed_url(post['video_path'],3600); url=signed.get('signedURL') or signed.get('signedUrl') or signed.get('signed_url')
             st.markdown("<div class='feed-video'>",unsafe_allow_html=True); st.video(url); st.markdown("</div>",unsafe_allow_html=True)
         except Exception: st.caption('Vídeo privado indisponível temporariamente.')
-        # Avaliação técnica: cada vídeo enviado representa uma tentativa.
+        if is_staff:
+            if st.button('🎬 Codificar sessão / várias tentativas', key='code_session_'+post['id'], use_container_width=True):
+                st.session_state['selected_video_post_id']=post['id']
+                st.switch_page('pages/10_Codificar_Sessao.py')
+        # Avaliação técnica antiga: mantida para vídeos de tentativa isolada.
         try:
             ar=sb.table('trick_video_analyses').select('*').eq('post_id',post['id']).maybe_single().execute(); analysis=(ar.data or {}) if ar else {}
         except Exception:
             analysis={}
-        if is_staff:
+        if is_staff and post.get('upload_kind','single') == 'single':
             with st.expander('📊 Analisar esta tentativa', expanded=False):
                 c1,c2,c3=st.columns(3)
                 result=c1.selectbox('Resultado',['Acerto','Erro'],index=0 if analysis.get('result')!='Erro' else 1,key='res_'+post['id'])

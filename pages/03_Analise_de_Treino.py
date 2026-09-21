@@ -849,27 +849,64 @@ else:
     training_date = date.fromisoformat(history_view["training_date"]) if history_view.get("training_date") else date.today()
     training_title = history_view.get("title") or "Treino"
 
-# V3.6 — resultados das tentativas em vídeo analisadas pelo staff.
+# V3.9 — entrada direta para codificação de vídeo dentro da página Análise.
+if selected_athlete.get("id") and profile.get("role") in ("admin","tecnico","presidente","vice_presidente","chefe_equipe","comissao_tecnica"):
+    try:
+        video_posts = sb.table("athlete_posts").select("id,session_title,created_at,upload_kind,analysis_status").eq("athlete_id", selected_athlete["id"]).order("created_at", desc=True).execute().data or []
+    except Exception:
+        video_posts = []
+    if video_posts:
+        with st.container(border=True):
+            st.markdown("### 🎬 CODIFICAÇÃO DE VÍDEO")
+            st.caption("Abra uma sessão e marque cada tentativa enquanto assiste, no estilo de video coding esportivo.")
+            labels=[]
+            for vp in video_posts:
+                date=(vp.get("created_at") or "")[:10]
+                labels.append(f"{vp.get('session_title') or 'Vídeo de treino'} • {date}")
+            pick=st.selectbox("Sessão de vídeo", range(len(video_posts)), format_func=lambda i: labels[i], key="video_session_pick")
+            if st.button("▶ ABRIR CODIFICAÇÃO", type="primary", use_container_width=True, key="open_video_coding"):
+                st.session_state["selected_video_post_id"]=video_posts[pick]["id"]
+                st.switch_page("pages/10_Codificar_Sessao.py")
+
+# V3.8 — resultados de vídeos: uma sessão pode conter várias tentativas/manobras codificadas.
 if selected_athlete.get('id'):
     try:
-        va=sb.table('trick_video_analyses').select('*').eq('athlete_id',selected_athlete['id']).order('analyzed_at',desc=True).execute().data or []
+        ve=sb.table('trick_video_events').select('*').eq('athlete_id',selected_athlete['id']).order('created_at',desc=True).execute().data or []
     except Exception:
-        va=[]
-    if va:
-        st.markdown("### 🎥 Análise das manobras enviadas")
-        total=len(va); hits=sum(1 for x in va if x.get('result')=='Acerto'); errors=total-hits; rate=(hits/total*100) if total else 0
+        ve=[]
+    try:
+        legacy=sb.table('trick_video_analyses').select('*').eq('athlete_id',selected_athlete['id']).order('analyzed_at',desc=True).execute().data or []
+    except Exception:
+        legacy=[]
+    video_attempts = ve if ve else legacy
+    if video_attempts:
+        st.markdown("### 🎥 Análise de vídeo")
+        total=len(video_attempts); hits=sum(1 for x in video_attempts if x.get('result')=='Acerto'); errors=total-hits; rate=(hits/total*100) if total else 0
         m1,m2,m3,m4=st.columns(4); m1.metric('Tentativas',total); m2.metric('Acertos',hits); m3.metric('Erros',errors); m4.metric('Taxa de acerto',f'{rate:.1f}%')
-        def dist(field):
+        def dist_video(field):
             out={}
-            for x in va:
+            for x in video_attempts:
                 v=x.get(field)
                 if v: out[v]=out.get(v,0)+1
             return out
         d1,d2,d3,d4=st.columns(4)
         for col,title,field in [(d1,'Avaliação','evaluation'),(d2,'Dificuldade','difficulty'),(d3,'Risco','risk'),(d4,'Velocidade','speed')]:
-            vals=dist(field); col.markdown(f'**{title}**')
+            vals=dist_video(field); col.markdown(f'**{title}**')
             if vals: col.caption(' • '.join(f'{k}: {v}' for k,v in vals.items()))
-        st.caption('Cada vídeo analisado conta como uma tentativa. Estes resultados são independentes dos CSVs do Sportscode e ficam vinculados ao atleta.')
+        if ve:
+            try:
+                tr=sb.table('tricks').select('id,name').execute().data or []; tn={x['id']:x['name'] for x in tr}
+                counts={}
+                for x in ve:
+                    tid=x.get('trick_id'); name=tn.get(tid,'Manobra')
+                    if name not in counts: counts[name]={'Acerto':0,'Erro':0}
+                    counts[name][x.get('result','Erro')]+=1
+                rows=[]
+                for name,c in counts.items():
+                    tt=c['Acerto']+c['Erro']; rows.append({'Manobra':name,'Acertos':c['Acerto'],'Erros':c['Erro'],'Tentativas':tt,'Taxa de acerto':f"{(c['Acerto']/tt*100 if tt else 0):.1f}%"})
+                if rows: st.dataframe(rows,use_container_width=True,hide_index=True)
+            except Exception: pass
+        st.caption('As marcações feitas durante os vídeos são somadas como tentativas reais e ficam vinculadas ao atleta e à manobra.')
         st.divider()
 
 if not files:

@@ -1,4 +1,4 @@
-# Skate Performance Portal V3.7
+# Skate Performance Portal V3.9
 
 V1.4 adiciona gestão completa de perfis sem alterar a página de Análise de Treino.
 
@@ -139,3 +139,9 @@ Correções verificáveis: cards Home navegáveis, menu mobile global, data fina
 
 
 V3.5: corrige RLS do Livro de Manobras e impede erros de banco de derrubarem a página. Execute supabase_v3_5_migration.sql uma vez.
+
+## V3.8 — sessões longas de vídeo
+- Upload de sessão completa ou tentativa isolada.
+- Limite do portal/bucket configurado para até 2 GB por vídeo (sujeito ao limite global do plano Supabase).
+- Codificação de várias tentativas dentro do mesmo vídeo com timestamp, manobra, Acerto/Erro, avaliação, dificuldade, risco, velocidade, direção e base.
+- Resultados das marcações alimentam a página de Análise do atleta.

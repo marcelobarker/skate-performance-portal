@@ -20,8 +20,8 @@ if can_edit:
                 cmap={c["name"]:c["id"] for c in cats}; cn=st.selectbox("Categoria",list(cmap)); name=st.text_input("Nome da manobra"); desc=st.text_input("Descrição / observação"); ok=st.form_submit_button("Adicionar manobra",type="primary",width="stretch")
             if ok and name.strip():
                 try:
-                    sb.rpc('manage_trick',{'p_action':'insert','p_category_id':cmap[cn],'p_name':name.strip(),'p_description':desc.strip() or None}).execute()
-                    st.success("Manobra adicionada ao livro.")
+                    res=sb.rpc('manage_trick',{'p_action':'insert','p_category_id':cmap[cn],'p_name':name.strip(),'p_description':desc.strip() or None}).execute()
+                    st.success("Manobra adicionada ou reativada no livro.")
                     st.rerun()
                 except Exception as e:
                     st.error(f"Não foi possível adicionar a manobra. Detalhes: {e}")
