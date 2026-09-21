@@ -2,6 +2,7 @@ import re
 import io, zipfile
 from datetime import date, timedelta
 import streamlit as st
+import plotly.graph_objects as go
 from auth_utils import require_login, get_supabase
 from report_engine import read_csv, is_aggregate, parse_raw, parse_aggregate, merge_sessions, make_pdf, make_visual_pdf
 
@@ -97,9 +98,55 @@ except Exception as exc:
     st.error(f"Não foi possível carregar o histórico: {exc}"); st.stop()
 
 st.markdown(f"### {athlete.get('full_name') or 'Skatista'}")
-if not rows:
+# Sessões codificadas em vídeo também fazem parte do histórico do atleta.
+try:
+    video_posts=(sb.table("athlete_posts").select("id,session_title,created_at,analysis_status,upload_kind")
+                 .eq("athlete_id",athlete_id).eq("upload_kind","session").order("created_at",desc=True).execute().data or [])
+    all_events=sb.table("trick_video_events").select("*").eq("athlete_id",athlete_id).execute().data or []
+    tricks=sb.table("tricks").select("id,name").execute().data or []; trick_names={x["id"]:x["name"] for x in tricks}
+except Exception:
+    video_posts=[]; all_events=[]; trick_names={}
+if not rows and not video_posts:
     st.info("Nenhum treino salvo para este skatista neste período."); st.stop()
 
+if video_posts:
+    st.markdown("## ▶ Treinos codificados em vídeo")
+    st.caption("Sessões analisadas por tentativa, com a mesma leitura de performance do dashboard.")
+    for vp in video_posts:
+        ev=[x for x in all_events if x.get("post_id")==vp["id"]]
+        with st.container(border=True):
+            st.markdown(f"#### {vp.get('session_title') or 'Sessão de vídeo'}")
+            st.caption((vp.get('created_at') or '')[:10] + " • " + (vp.get('analysis_status') or 'aguardando').upper())
+            if not ev:
+                st.caption("Ainda sem tentativas codificadas.")
+                continue
+            total=len(ev); hits=sum(1 for x in ev if x.get('result')=='Acerto'); errors=total-hits; rate=hits/total*100 if total else 0
+            a,b,c,d=st.columns(4); a.metric('Tentativas',total); b.metric('Acertos',hits); c.metric('Erros',errors); d.metric('Taxa de acerto',f'{rate:.1f}%')
+            def dist(field):
+                out={}
+                for x in ev:
+                    v=x.get(field)
+                    if v: out[v]=out.get(v,0)+1
+                return out
+            def donut(title,data):
+                colors={'Excelente':'#16d98b','Bom':'#1398ff','Ruim':'#ff4050','Baixa':'#1398ff','Média':'#16d98b','Alta':'#ff4050','Baixo':'#1398ff','Médio':'#16d98b','Alto':'#ff4050','Lento':'#ff4050','Rápido':'#16d98b'}
+                fig=go.Figure(go.Pie(labels=list(data),values=list(data.values()),hole=.66,marker=dict(colors=[colors.get(k,'#29a8ff') for k in data],line=dict(color='#071522',width=1)),textinfo='percent',textfont=dict(size=13,color='#f5f8fc')))
+                fig.update_layout(title=dict(text=title,x=.04,font=dict(size=14,color='#f5f8fc')),height=280,margin=dict(l=8,r=8,t=42,b=60),paper_bgcolor='rgba(0,0,0,0)',font=dict(color='#9db3c8'),legend=dict(orientation='h',y=-.15,x=0,font=dict(size=9)))
+                return fig
+            cols=st.columns(4)
+            for col,title,field in zip(cols,['AVALIAÇÃO','DIFICULDADE','RISCO','VELOCIDADE'],['evaluation','difficulty','risk','speed']):
+                dd=dist(field)
+                if dd:
+                    with col: st.plotly_chart(donut(title,dd),use_container_width=True,config={'displayModeBar':False})
+            counts={}
+            for x in ev:
+                n=trick_names.get(x.get('trick_id'),'Manobra'); counts.setdefault(n,{'Acertos':0,'Erros':0}); counts[n]['Acertos' if x.get('result')=='Acerto' else 'Erros']+=1
+            table=[]
+            for n,cnt in counts.items():
+                tt=cnt['Acertos']+cnt['Erros']; table.append({'Manobra':n,'Acertos':cnt['Acertos'],'Erros':cnt['Erros'],'Tentativas':tt,'Taxa de acerto':f"{cnt['Acertos']/tt*100:.1f}%"})
+            st.dataframe(table,use_container_width=True,hide_index=True)
+
+if rows: st.markdown("## ▦ Treinos com Sportscode / CSV")
 st.metric("Treinos salvos", len(rows))
 for row in rows:
     with st.container(border=True):

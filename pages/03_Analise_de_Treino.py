@@ -850,7 +850,7 @@ else:
     training_title = history_view.get("title") or "Treino"
 
 # V3.9 — entrada direta para codificação de vídeo dentro da página Análise.
-if selected_athlete.get("id") and profile.get("role") in ("admin","tecnico","presidente","vice_presidente","chefe_equipe","comissao_tecnica"):
+if selected_athlete.get("id") and profile.get("role") == "admin":
     try:
         video_posts = sb.table("athlete_posts").select("id,session_title,created_at,upload_kind,analysis_status").eq("athlete_id", selected_athlete["id"]).order("created_at", desc=True).execute().data or []
     except Exception:
@@ -890,9 +890,10 @@ if selected_athlete.get('id'):
                 if v: out[v]=out.get(v,0)+1
             return out
         d1,d2,d3,d4=st.columns(4)
-        for col,title,field in [(d1,'Avaliação','evaluation'),(d2,'Dificuldade','difficulty'),(d3,'Risco','risk'),(d4,'Velocidade','speed')]:
-            vals=dist_video(field); col.markdown(f'**{title}**')
-            if vals: col.caption(' • '.join(f'{k}: {v}' for k,v in vals.items()))
+        for col,title,field in [(d1,'AVALIAÇÃO','evaluation'),(d2,'DIFICULDADE','difficulty'),(d3,'RISCO','risk'),(d4,'VELOCIDADE','speed')]:
+            vals=dist_video(field)
+            with col:
+                if vals: st.plotly_chart(donut(title,vals),use_container_width=True,config={"displayModeBar":False})
         if ve:
             try:
                 tr=sb.table('tricks').select('id,name').execute().data or []; tn={x['id']:x['name'] for x in tr}

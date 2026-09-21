@@ -91,6 +91,10 @@ async function start(file){
    if(r.ok){let d=await r.json();fileId=d.id;}
  }
  if(!fileId)throw new Error('Upload terminou sem retornar o ID do vídeo.');
+ // O feed usa player HTML5. Publicamos somente este arquivo como "qualquer pessoa com o link";
+ // o Drive inteiro continua privado e o ID não é listado publicamente.
+ let perm=await fetch('https://www.googleapis.com/drive/v3/files/'+fileId+'/permissions?supportsAllDrives=true',{method:'POST',headers:{Authorization:'Bearer '+C.driveToken,'Content-Type':'application/json'},body:JSON.stringify({role:'reader',type:'anyone',allowFileDiscovery:false})});
+ if(!perm.ok)throw new Error('Vídeo enviado, mas o Drive não permitiu liberar a reprodução no feed: '+perm.status+' '+await perm.text());
  stt.textContent='Salvando vídeo no perfil…'; let pay=Object.assign({},C.payload,{video_path:'gdrive:'+fileId});
  let sr=await fetch(C.rest,{method:'POST',headers:{apikey:C.apikey,authorization:'Bearer '+C.sbToken,'Content-Type':'application/json',Prefer:'return=minimal'},body:JSON.stringify(pay)});
  if(!sr.ok)throw new Error('Vídeo enviado, mas não foi possível vinculá-lo ao perfil: '+sr.status+' '+await sr.text());

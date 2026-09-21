@@ -138,14 +138,19 @@ def _navigation(role):
                 if role == "admin":
                     st.page_link("pages/01_Cadastros.py", label="Cadastros / Cargos", use_container_width=True)
     with st.sidebar:
-        if st.button("⌂ INÍCIO", use_container_width=True, key="sp_global_home"):
-            st.switch_page("Home.py")
         if role == "admin":
             st.caption("ADMINISTRAÇÃO")
             st.page_link("pages/01_Cadastros.py", label="👥 Cargos e cadastros", use_container_width=True)
             st.page_link("pages/02_Times.py", label="🛹 Gerenciar times", use_container_width=True)
             st.page_link("pages/08_Livro_de_Manobras.py", label="📚 Livro de Manobras", use_container_width=True)
             st.page_link("pages/09_Enviar_Manobra.py", label="🎥 Enviar Vídeo", use_container_width=True)
+
+    # Páginas internas: acessadas por cards/botões, não poluem a navegação principal.
+    st.markdown("""<style>
+    [data-testid="stSidebarNav"] a[href*="07_Perfil_do_Atleta"],
+    [data-testid="stSidebarNav"] a[href*="08_Livro_de_Manobras"],
+    [data-testid="stSidebarNav"] a[href*="10_Codificar_Sessao"]{display:none!important}
+    </style>""", unsafe_allow_html=True)
     if role != "admin":
         st.markdown("""<style>[data-testid="stSidebarNav"] a[href*="01_Cadastros"],[data-testid="stSidebarNav"] a[href*="Cadastros"]{display:none!important}</style>""", unsafe_allow_html=True)
     if role in ("skatista", "familiar"):

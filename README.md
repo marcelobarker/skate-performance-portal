@@ -1,3 +1,5 @@
+Skate Performance Portal V3.14
+
 # Skate Performance Portal V3.11
 
 V1.4 adiciona gestão completa de perfis sem alterar a página de Análise de Treino.
