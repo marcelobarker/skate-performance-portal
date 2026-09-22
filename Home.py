@@ -60,8 +60,11 @@ h1,h2,h3,p,label{color:#eef8ff}
 </style>
 """, unsafe_allow_html=True)
 
-st.markdown("""<div class="hero"><div class="brand">SKATE<span class="blue">PERFORMANCE</span><span class="time">BRASIL</span></div>
-<div class="sub">ATHLETE MANAGEMENT • TRAINING INTELLIGENCE</div></div>""", unsafe_allow_html=True)
+# V4.01: a Home e o login não usam a sidebar antiga.
+st.markdown("""<style>
+section[data-testid="stSidebar"],[data-testid="stSidebar"],[data-testid="stSidebarNav"],[data-testid="collapsedControl"],[data-testid="stSidebarCollapsedControl"],button[aria-label="Open sidebar"],button[aria-label="Close sidebar"]{display:none!important;visibility:hidden!important}
+[data-testid="stAppViewContainer"]>.main{margin-left:0!important;width:100%!important}
+</style>""", unsafe_allow_html=True)
 
 user = current_user()
 profile = current_profile()
@@ -153,15 +156,6 @@ if role != "admin":
 if role in ("skatista","familiar"):
     st.markdown("""<style>[data-testid="stSidebarNav"] a[href*="Analise_de_Treino"],[data-testid="stSidebarNav"] a[href*="03_Analise"]{display:none!important}</style>""", unsafe_allow_html=True)
 
-top1, top2 = st.columns([5,1])
-with top1:
-    st.title(f"Olá, {name}")
-    display_role = "ADMINISTRADOR • MEMBRO DO STAFF" if role == "admin" else role.upper()
-    st.caption(f"Perfil: {display_role} • Status: {status.upper()}")
-with top2:
-    if st.button("Sair", use_container_width=True):
-        sign_out(); st.rerun()
-
 if status == "bloqueado":
     st.error("⛔ Seu acesso está bloqueado. Procure o administrador.")
     st.stop()
@@ -169,8 +163,6 @@ if status != "ativo":
     st.info("⏳ Seu cadastro foi recebido e está aguardando aprovação do administrador.")
     st.write("Assim que for aprovado, as áreas de equipe e análise serão liberadas.")
     st.stop()
-
-_navigation(role)
 
 import base64
 from pathlib import Path
@@ -201,84 +193,63 @@ first = (name.split()[0] if name else 'Atleta')
 photo = (profile or {}).get('photo_url') or ''
 initials = ''.join([p[0].upper() for p in (name or 'SP').split()[:2]]) or 'SP'
 
-# CSS principal inspirado diretamente no mockup aprovado.
+# V4.01 PREMIUM — reconstrução da Home em tela cheia, sem a Home antiga/Sidebar.
+def svg_icon(kind, color="#25c7ff"):
+    icons = {
+        "home": '<path d="M3 11.5 12 4l9 7.5v8a1.5 1.5 0 0 1-1.5 1.5H15v-6H9v6H4.5A1.5 1.5 0 0 1 3 19.5z"/>',
+        "chart": '<path d="M4 20V10m6 10V4m6 16v-7m5 7V7"/>',
+        "users": '<path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8zm13 10v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/>',
+        "team": '<path d="M8 21v-2a4 4 0 0 1 4-4h4a4 4 0 0 1 4 4v2M14 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8M2 21v-2a4 4 0 0 1 3-3.87M6 3.13a4 4 0 0 0 0 7.75"/>',
+        "history": '<path d="M3 12a9 9 0 1 0 3-6.7L3 8m0-5v5h5M12 7v5l3 2"/>',
+        "target": '<circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="3"/><path d="M12 2v3m10 7h-3M12 22v-3M2 12h3"/>',
+        "board": '<path d="M5 15c3 1 11 1 14 0M7 12h10M8 18a1.5 1.5 0 1 0 0 3 1.5 1.5 0 0 0 0-3zm8 0a1.5 1.5 0 1 0 0 3 1.5 1.5 0 0 0 0-3z"/>',
+        "play": '<path d="m9 7 8 5-8 5z"/>',
+        "arrow": '<path d="M5 12h14m-5-5 5 5-5 5"/>',
+    }
+    return f'<svg viewBox="0 0 24 24" aria-hidden="true" style="width:1em;height:1em;fill:none;stroke:{color};stroke-width:2;stroke-linecap:round;stroke-linejoin:round">{icons.get(kind, icons["chart"])}</svg>'
+
+hero_data = f"data:image/jpeg;base64,{hero_b64}"
+hero_image = hero_url or hero_data
+avatar_html = f"<img class='v401-avatar' src='{photo}'>" if photo else f"<div class='v401-avatar fallback'>{initials}</div>"
+role_label = 'Administrador' if role=='admin' else role.replace('_',' ').title()
+
 st.markdown(f"""
 <style>
-.block-container{{max-width:1480px!important;padding-top:.55rem!important;padding-left:1.2rem!important;padding-right:1.2rem!important}}
-.spv4{{font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;color:#fff}}
-.spv4-shell{{background:#020c16;border:1px solid #0b4c78;border-radius:24px;overflow:hidden;box-shadow:0 24px 70px #0009}}
-.spv4-top{{height:76px;background:linear-gradient(90deg,#020b13 0%,#06192b 55%,#071827 100%);display:flex;align-items:center;padding:0 28px;border-bottom:1px solid #12324a;gap:34px}}
-.spv4-logo{{min-width:195px;line-height:.9}} .spv4-logo strong{{font-size:18px;font-weight:950;letter-spacing:-.8px}} .spv4-logo strong span{{color:#12a9ff}} .spv4-logo small{{display:block;color:#11b7ff;font-size:7px;letter-spacing:3px;margin-top:6px;font-weight:900}}
-.spv4-nav{{display:flex;align-items:center;gap:28px;flex:1;height:100%}} .spv4-nav span{{height:100%;display:flex;align-items:center;color:#9fb1c2;font-size:13px;font-weight:650;position:relative}} .spv4-nav .active{{color:#16b7ff}} .spv4-nav .active:after{{content:'';height:3px;background:#0aaeff;border-radius:3px;position:absolute;left:0;right:0;bottom:0;box-shadow:0 0 12px #0aaeff}}
-.spv4-user{{display:flex;align-items:center;gap:10px;min-width:170px;justify-content:flex-end}} .spv4-avatar{{width:38px;height:38px;border-radius:50%;border:2px solid #1aaeff;object-fit:cover;background:#0b2940;display:grid;place-items:center;font-size:12px;font-weight:900}} .spv4-user b{{font-size:12px}} .spv4-user small{{display:block;color:#8297aa;font-size:9px}}
-.spv4-hero{{height:435px;position:relative;background:linear-gradient(90deg,rgba(1,10,18,.92) 0%,rgba(1,10,18,.72) 31%,rgba(1,10,18,.10) 66%,rgba(1,10,18,.12) 100%),linear-gradient(0deg,#020c16 0%,transparent 38%),{hero_bg} center 52%/cover no-repeat}}
-.spv4-copy{{position:absolute;left:46px;top:82px;width:560px}} .spv4-eyebrow{{font-size:14px;font-weight:900;letter-spacing:.5px}} .spv4-time{{color:#0fbaff;letter-spacing:4px;font-size:12px;font-weight:900;margin:5px 0 12px}} .spv4-copy h1{{font-size:47px!important;line-height:.98!important;margin:0 0 12px!important;color:white!important;font-weight:950!important;letter-spacing:-2px;text-shadow:0 3px 22px #000}} .spv4-copy p{{font-size:11px;color:#e4edf4!important;font-weight:800;letter-spacing:.3px;margin:0}}
-.spv4-actions{{position:absolute;left:46px;top:282px;display:flex;gap:14px}} .spv4-action{{height:52px;min-width:180px;border-radius:9px;display:flex;align-items:center;justify-content:center;gap:10px;font-size:13px;font-weight:850;border:1px solid #078fff;background:#087cff;color:#fff;box-shadow:0 8px 22px #087cff3d}} .spv4-action.secondary{{background:#061321cc;border-color:#078fff;color:#eaf6ff;box-shadow:none}}
-.spv4-kpis{{position:absolute;left:28px;right:28px;bottom:18px;display:grid;grid-template-columns:repeat(5,1fr);gap:10px}} .spv4-kpi{{height:92px;border-radius:13px;background:linear-gradient(145deg,rgba(15,34,49,.94),rgba(7,22,34,.94));border:1px solid #17394f;display:flex;align-items:center;padding:14px;gap:12px;box-shadow:0 12px 24px #0006,inset 0 1px 0 #ffffff0c}} .spv4-ico{{width:46px;height:46px;border-radius:50%;display:grid;place-items:center;font-size:24px;font-weight:900}} .spv4-kpi b{{font-size:24px;line-height:1}} .spv4-kpi small{{display:block;color:#b7c5d1;margin-top:5px;font-size:10px}} .spv4-kpi em{{display:block;color:#19e99d;font-size:10px;font-style:normal;font-weight:900;margin-top:4px}}
-.i-purple{{background:#17204b;color:#8074ff}} .i-green{{background:#063b36;color:#16e7ba}} .i-yellow{{background:#47390a;color:#ffc719}} .i-blue{{background:#073557;color:#20b8ff}} .i-cyan{{background:#07364c;color:#21d7ff}}
-.spv4-content{{padding:18px 28px 26px;background:linear-gradient(#020c16,#03111d)}} .spv4-section-title{{font-size:17px;font-weight:900;margin:0 0 12px}} .spv4-quick{{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}} .spv4-tile{{height:150px;border:1px solid #087bc1;border-radius:12px;overflow:hidden;position:relative;background:#0b1c2a;box-shadow:0 10px 22px #0006}} .spv4-tile:before{{content:'';position:absolute;inset:0;background:linear-gradient(0deg,rgba(1,8,14,.92),rgba(1,8,14,.06) 70%)}} .spv4-tile .fakephoto{{position:absolute;inset:0;background:radial-gradient(circle at 70% 25%,#1a6b8c 0,#0c3248 25%,#071824 65%,#030c13 100%);opacity:.72}} .spv4-tile:nth-child(2) .fakephoto{{background:radial-gradient(circle at 35% 25%,#64543e 0,#173448 32%,#071824 70%)}} .spv4-tile:nth-child(3) .fakephoto{{background:radial-gradient(circle at 65% 35%,#2b7897 0,#1b4051 32%,#071824 70%)}} .spv4-tile:nth-child(4) .fakephoto{{background:radial-gradient(circle at 55% 30%,#616b75 0,#26323c 32%,#071824 70%)}} .spv4-tile b{{position:absolute;left:15px;bottom:14px;font-size:17px;z-index:2}} .spv4-arrow{{position:absolute;right:12px;bottom:11px;width:30px;height:30px;border-radius:50%;background:#ffffff16;display:grid;place-items:center;z-index:2;font-size:18px}}
-/* Streamlit overlay buttons: navegação real sem alterar o desenho. */
-[class*='st-key-v4_']{{position:relative!important;z-index:50!important}} [class*='st-key-v4_'] button{{opacity:0!important;width:100%!important;border:0!important;background:transparent!important;box-shadow:none!important;color:transparent!important;font-size:0!important;padding:0!important}} [class*='st-key-v4_action_']{{margin-top:-52px!important;height:52px!important}} [class*='st-key-v4_action_'] button{{height:52px!important}} [class*='st-key-v4_tile_']{{margin-top:-150px!important;height:150px!important}} [class*='st-key-v4_tile_'] button{{height:150px!important}}
-.spv4-mobilebar{{display:none}}
-@media(max-width:800px){{
- .block-container{{padding-left:.5rem!important;padding-right:.5rem!important;padding-top:.35rem!important}} .spv4-shell{{border-radius:17px}} .spv4-top{{height:62px;padding:0 16px}} .spv4-logo{{min-width:auto}} .spv4-logo strong{{font-size:15px}} .spv4-nav,.spv4-user{{display:none}} .spv4-hero{{height:510px;background-position:62% center}} .spv4-copy{{left:18px;right:18px;top:260px;width:auto}} .spv4-eyebrow,.spv4-time,.spv4-copy p{{display:none}} .spv4-copy h1{{font-size:31px!important;max-width:330px}} .spv4-actions{{left:18px;right:18px;top:350px}} .spv4-action{{width:100%;min-width:0}} .spv4-action.secondary{{display:none}} .spv4-kpis{{left:18px;right:18px;bottom:18px;grid-template-columns:1fr;gap:7px}} .spv4-kpi{{height:56px;padding:7px 12px}} .spv4-kpi:nth-child(n+4){{display:none}} .spv4-ico{{width:38px;height:38px;font-size:20px}} .spv4-kpi b{{font-size:20px}} .spv4-kpi small{{display:inline;margin-left:7px}} .spv4-kpi em{{display:none}} .spv4-content{{padding:16px 14px 80px}} .spv4-quick{{grid-template-columns:1fr 1fr}} .spv4-tile{{height:120px}} [class*='st-key-v4_tile_']{{margin-top:-120px!important;height:120px!important}} [class*='st-key-v4_tile_'] button{{height:120px!important}}
-}}
+html,body,[data-testid="stApp"],[data-testid="stAppViewContainer"],.stApp{{background:#020b14!important}}
+header[data-testid="stHeader"],[data-testid="stToolbar"],[data-testid="stDecoration"]{{display:none!important}}
+section[data-testid="stSidebar"],[data-testid="stSidebar"],[data-testid="stSidebarNav"]{{display:none!important;visibility:hidden!important;width:0!important;min-width:0!important;transform:translateX(-100%)!important}}
+[data-testid="stAppViewContainer"]>.main{{margin-left:0!important;width:100%!important}}
+.block-container{{max-width:1660px!important;width:100%!important;padding:18px 28px 38px!important;margin:0 auto!important}}
+.v401{{font-family:Inter,ui-sans-serif,system-ui,-apple-system,'Segoe UI',sans-serif;color:#f7fbff}} .v401 *{{box-sizing:border-box}}
+.v401-shell{{overflow:hidden;border:1px solid #0d4267;border-radius:18px;background:#020c16;box-shadow:0 26px 80px rgba(0,0,0,.55)}}
+.v401-top{{height:74px;display:flex;align-items:center;padding:0 26px;background:rgba(3,16,28,.97);border-bottom:1px solid #12324a;gap:34px}}
+.v401-brand{{display:flex;align-items:center;gap:10px;min-width:235px;text-decoration:none}} .v401-mark{{width:39px;height:39px;display:grid;place-items:center;filter:drop-shadow(0 0 12px #0caeff88)}} .v401-mark svg{{width:39px;height:39px}}
+.v401-brandtext{{line-height:.88}} .v401-brandtext b{{font-size:18px;font-weight:950;letter-spacing:-.8px;color:#fff}} .v401-brandtext b i{{color:#15b6ff;font-style:normal}} .v401-brandtext small{{display:block;color:#b6c8d6;font-size:6px;letter-spacing:1.6px;margin-top:7px;font-weight:800}}
+.v401-nav{{height:100%;display:flex;align-items:center;gap:32px;flex:1}} .v401-nav a{{height:100%;display:flex;align-items:center;gap:7px;color:#93a8ba!important;text-decoration:none!important;font-size:12px;font-weight:750;position:relative}} .v401-nav a svg{{font-size:15px}} .v401-nav a:hover{{color:#fff!important}} .v401-nav a.active{{color:#16bdff!important}} .v401-nav a.active:after{{content:'';height:3px;border-radius:3px;background:#12baff;box-shadow:0 0 15px #0baeff;position:absolute;left:0;right:0;bottom:0}}
+.v401-tools{{display:flex;align-items:center;gap:14px;color:#b8c8d5}} .v401-tool{{width:30px;height:30px;display:grid;place-items:center;border-radius:50%;font-size:17px}} .v401-user{{display:flex;align-items:center;gap:10px;margin-left:2px}} .v401-avatar{{width:38px;height:38px;border-radius:50%;object-fit:cover;border:2px solid #13baff;box-shadow:0 0 15px #0aaeff55}} .v401-avatar.fallback{{display:grid;place-items:center;background:#0b314b;font-size:11px;font-weight:900}} .v401-user b{{font-size:11px;color:#fff}} .v401-user small{{display:block;font-size:8px;color:#7f98ab;margin-top:2px}}
+.v401-hero{{height:490px;position:relative;background-image:linear-gradient(90deg,rgba(1,9,16,.90) 0%,rgba(1,9,16,.70) 30%,rgba(1,9,16,.10) 63%,rgba(1,9,16,.18) 100%),linear-gradient(0deg,#020c16 0%,rgba(2,12,22,.12) 45%),url('{hero_image}');background-size:cover;background-position:center 48%}}
+.v401-copy{{position:absolute;left:44px;top:82px;width:520px;text-shadow:0 4px 25px #000}} .v401-kicker{{font-size:13px;font-weight:950;letter-spacing:.7px;color:#fff}} .v401-country{{font-size:11px;color:#15c2ff;font-weight:950;letter-spacing:4px;margin-top:5px}} .v401-copy h1{{font-size:48px!important;line-height:.95!important;letter-spacing:-2.1px!important;color:#fff!important;margin:14px 0 12px!important;font-weight:950!important}} .v401-copy p{{font-size:10px!important;color:#dbe7ef!important;font-weight:800!important;letter-spacing:.3px}}
+.v401-actions{{position:absolute;left:44px;top:285px;display:flex;gap:13px}} .v401-btn{{height:50px;min-width:178px;padding:0 22px;border-radius:8px;border:1px solid #079cff;background:linear-gradient(180deg,#159cff,#0676f4);color:#fff!important;text-decoration:none!important;display:flex;align-items:center;justify-content:center;gap:9px;font-size:12px;font-weight:900;box-shadow:0 9px 24px #057cff55,inset 0 1px 0 #ffffff44;transition:.18s}} .v401-btn:hover{{transform:translateY(-2px);filter:brightness(1.08);box-shadow:0 11px 28px #057cff77}} .v401-btn.alt{{background:rgba(2,14,25,.72);border-color:#168bd0;box-shadow:inset 0 0 22px #0a82cf14}}
+.v401-kpis{{position:absolute;left:28px;right:28px;bottom:18px;display:grid;grid-template-columns:repeat(5,1fr);gap:10px}} .v401-kpi{{height:94px;border-radius:11px;border:1px solid #173b55;background:linear-gradient(145deg,rgba(13,35,51,.95),rgba(5,20,32,.96));display:flex;align-items:center;gap:13px;padding:14px 16px;box-shadow:0 12px 30px #0007,inset 0 1px #ffffff0d}} .v401-kicon{{width:45px;height:45px;flex:0 0 45px;border-radius:50%;display:grid;place-items:center;font-size:23px}} .v401-kicon svg{{font-size:23px}} .v401-kpi strong{{font-size:22px;color:#fff;line-height:1}} .v401-kpi label{{display:block!important;color:#a9bbc9!important;font-size:9px;margin-top:5px}} .v401-kpi em{{display:block;color:#14e8a0;font-size:9px;font-style:normal;font-weight:900;margin-top:3px}}
+.k-purple{{background:#171c4b;box-shadow:0 0 20px #685cff33}} .k-green{{background:#063d35;box-shadow:0 0 20px #00e4a433}} .k-gold{{background:#493b08;box-shadow:0 0 20px #ffc40033}} .k-blue{{background:#073857;box-shadow:0 0 20px #14b6ff33}} .k-cyan{{background:#07394c;box-shadow:0 0 20px #00dcff33}}
+.v401-body{{padding:19px 28px 28px;background:linear-gradient(180deg,#020c16,#03121f)}} .v401-title{{font-size:16px;font-weight:950;color:#fff;margin:0 0 13px}} .v401-quick{{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}} .v401-card{{height:155px;position:relative;overflow:hidden;border-radius:11px;border:1px solid #087ebf;text-decoration:none!important;background-size:cover;background-position:center;box-shadow:0 9px 25px #0007,0 0 18px #008cff12;transition:.2s}} .v401-card:before{{content:'';position:absolute;inset:0;background:linear-gradient(0deg,rgba(1,9,16,.96),rgba(1,9,16,.10) 72%),linear-gradient(90deg,rgba(3,20,32,.35),transparent)}} .v401-card:hover{{transform:translateY(-3px);border-color:#18baff;box-shadow:0 12px 30px #0008,0 0 22px #00aaff2e}} .v401-card span{{position:absolute;left:15px;bottom:13px;color:#fff;font-size:15px;font-weight:900;z-index:2}} .v401-card .arr{{position:absolute;right:12px;bottom:10px;width:31px;height:31px;border-radius:50%;display:grid;place-items:center;background:#ffffff12;border:1px solid #ffffff0c;z-index:2}} .v401-card .arr svg{{font-size:16px}}
+.v401-card.c1{{background-image:url('{hero_image}');background-position:20% 65%}} .v401-card.c2{{background-image:url('{hero_image}');background-position:48% 48%;filter:saturate(.75)}} .v401-card.c3{{background-image:url('{hero_image}');background-position:72% 60%}} .v401-card.c4{{background-image:linear-gradient(rgba(4,15,24,.30),rgba(4,15,24,.30)),url('{hero_image}');background-position:88% 45%;filter:grayscale(.75)}} .v401-mobilemenu{{display:none}}
+@media(max-width:800px){{.block-container{{padding:0!important;max-width:none!important}} .v401-shell{{border-radius:0;border-left:0;border-right:0;min-height:100vh}} .v401-top{{height:66px;padding:0 16px;gap:12px}} .v401-brand{{min-width:0;flex:1}} .v401-brandtext b{{font-size:15px}} .v401-brandtext small{{font-size:5px}} .v401-mark{{width:32px}} .v401-mark svg{{width:32px}} .v401-nav,.v401-tools,.v401-user{{display:none}} .v401-mobilemenu{{display:grid;width:38px;height:38px;place-items:center;font-size:24px;color:#dceaf5}} .v401-hero{{height:565px;background-position:61% center}} .v401-copy{{left:18px;right:18px;top:300px;width:auto}} .v401-kicker,.v401-country,.v401-copy p{{display:none}} .v401-copy h1{{font-size:31px!important;line-height:1!important;max-width:310px;margin:0!important}} .v401-actions{{left:18px;right:18px;top:378px}} .v401-btn{{width:100%;min-width:0;height:49px}} .v401-btn.alt{{display:none}} .v401-kpis{{left:18px;right:18px;bottom:16px;grid-template-columns:1fr;gap:7px}} .v401-kpi{{height:55px;padding:6px 12px}} .v401-kpi:nth-child(n+4){{display:none}} .v401-kicon{{width:37px;height:37px;flex-basis:37px}} .v401-kpi strong{{font-size:18px}} .v401-kpi label{{display:inline!important;margin-left:7px}} .v401-kpi em{{display:none}} .v401-body{{padding:17px 14px 82px}} .v401-quick{{grid-template-columns:1fr 1fr}} .v401-card{{height:120px}}}}
 </style>
 """, unsafe_allow_html=True)
 
-avatar_html = f"<img class='spv4-avatar' src='{photo}'>" if photo else f"<div class='spv4-avatar'>{initials}</div>"
-
+logo_svg = '<svg viewBox="0 0 48 48"><path fill="#11baff" d="M8 10l8 8 8-13 6 14 10-9-5 29H13z"/><path fill="#fff" d="M15 31h19l-1 5H16z"/></svg>'
 st.markdown(f"""
-<div class='spv4'><div class='spv4-shell'>
-  <div class='spv4-top'>
-    <div class='spv4-logo'><strong>♛ SKATE<span>PERFORMANCE</span></strong><small>TIME BRASIL</small></div>
-    <div class='spv4-nav'><span class='active'>Home</span><span>Análise</span><span>Atletas</span><span>Times</span><span>Histórico</span></div>
-    <div class='spv4-user'>{avatar_html}<div><b>{name}</b><small>{'Administrador' if role=='admin' else role.replace('_',' ').title()}</small></div></div>
-  </div>
-  <div class='spv4-hero'>
-    <div class='spv4-copy'><div class='spv4-eyebrow'>SKATE PERFORMANCE</div><div class='spv4-time'>TIME BRASIL</div><h1>PERFORMANCE<br>EM EVOLUÇÃO</h1><p>ANÁLISE DE TREINOS • DADOS REAIS • RESULTADOS</p></div>
-    <div class='spv4-actions'><div class='spv4-action'>↗ &nbsp; Nova Análise</div><div class='spv4-action secondary'>▷ &nbsp; Ver Histórico</div></div>
-    <div class='spv4-kpis'>
-      <div class='spv4-kpi'><div class='spv4-ico i-purple'>▥</div><div><b>{len(visible_trainings)}</b><small>Treinos</small><em>histórico</em></div></div>
-      <div class='spv4-kpi'><div class='spv4-ico i-green'>◉</div><div><b>{len(athletes)}</b><small>Atletas</small><em>ativos</em></div></div>
-      <div class='spv4-kpi'><div class='spv4-ico i-yellow'>◎</div><div><b>{len(visible_teams)}</b><small>Times</small><em>cadastrados</em></div></div>
-      <div class='spv4-kpi'><div class='spv4-ico i-blue'>◆</div><div><b>{len(staff)}</b><small>Staff</small><em>ativo</em></div></div>
-      <div class='spv4-kpi'><div class='spv4-ico i-cyan'>♙</div><div><b>{len(visible_profiles)}</b><small>Usuários</small><em>portal</em></div></div>
-    </div>
-  </div>
-  <div class='spv4-content'>
-    <div class='spv4-section-title'>Acesso rápido</div>
-    <div class='spv4-quick'>
-      <div class='spv4-tile'><div class='fakephoto'></div><b>Análise</b><div class='spv4-arrow'>→</div></div>
-      <div class='spv4-tile'><div class='fakephoto'></div><b>Atletas</b><div class='spv4-arrow'>→</div></div>
-      <div class='spv4-tile'><div class='fakephoto'></div><b>Times</b><div class='spv4-arrow'>→</div></div>
-      <div class='spv4-tile'><div class='fakephoto'></div><b>Histórico</b><div class='spv4-arrow'>→</div></div>
-    </div>
-  </div>
-</div></div>
+<div class="v401"><div class="v401-shell"><div class="v401-top">
+<a class="v401-brand" href="/" target="_self"><div class="v401-mark">{logo_svg}</div><div class="v401-brandtext"><b>SKATE<i>PERFORMANCE</i></b><small>ATHLETE MANAGEMENT • TRAINING INTELLIGENCE</small></div></a>
+<nav class="v401-nav"><a class="active" href="/" target="_self">{svg_icon('home')} Home</a><a href="/Analise_de_Treino" target="_self">{svg_icon('chart')} Análise</a><a href="/Times" target="_self">{svg_icon('users')} Atletas</a><a href="/Times" target="_self">{svg_icon('team')} Times</a><a href="/Historico_de_Treinos" target="_self">{svg_icon('history')} Histórico</a></nav>
+<div class="v401-tools"><div class="v401-tool">⌕</div><div class="v401-tool">♢</div></div><div class="v401-user">{avatar_html}<div><b>{name}</b><small>{role_label}</small></div></div><div class="v401-mobilemenu">☰</div></div>
+<section class="v401-hero"><div class="v401-copy"><div class="v401-kicker">SKATE PERFORMANCE</div><div class="v401-country">TIME BRASIL</div><h1>PERFORMANCE<br>EM EVOLUÇÃO</h1><p>ANÁLISE DE TREINOS • DADOS REAIS • RESULTADOS</p></div>
+<div class="v401-actions"><a class="v401-btn" href="/Analise_de_Treino" target="_self">{svg_icon('chart','#fff')} Nova Análise</a><a class="v401-btn alt" href="/Historico_de_Treinos" target="_self">{svg_icon('play','#fff')} Ver Histórico</a></div>
+<div class="v401-kpis"><div class="v401-kpi"><div class="v401-kicon k-purple">{svg_icon('chart','#8d7cff')}</div><div><strong>{len(visible_trainings)}</strong><label>Treinos</label><em>histórico</em></div></div><div class="v401-kpi"><div class="v401-kicon k-green">{svg_icon('target','#15e5b2')}</div><div><strong>{len(athletes)}</strong><label>Atletas</label><em>ativos</em></div></div><div class="v401-kpi"><div class="v401-kicon k-gold">{svg_icon('target','#ffc719')}</div><div><strong>{len(visible_teams)}</strong><label>Times</label><em>cadastrados</em></div></div><div class="v401-kpi"><div class="v401-kicon k-blue">{svg_icon('board','#20b8ff')}</div><div><strong>{len(staff)}</strong><label>Staff</label><em>ativo</em></div></div><div class="v401-kpi"><div class="v401-kicon k-cyan">{svg_icon('users','#21d7ff')}</div><div><strong>{len(visible_profiles)}</strong><label>Usuários</label><em>portal</em></div></div></div></section>
+<section class="v401-body"><div class="v401-title">Acesso rápido</div><div class="v401-quick"><a class="v401-card c1" href="/Analise_de_Treino" target="_self"><span>Análise</span><div class="arr">{svg_icon('arrow','#fff')}</div></a><a class="v401-card c2" href="/Times" target="_self"><span>Atletas</span><div class="arr">{svg_icon('arrow','#fff')}</div></a><a class="v401-card c3" href="/Times" target="_self"><span>Times</span><div class="arr">{svg_icon('arrow','#fff')}</div></a><a class="v401-card c4" href="/Historico_de_Treinos" target="_self"><span>Histórico</span><div class="arr">{svg_icon('arrow','#fff')}</div></a></div></section></div></div>
 """, unsafe_allow_html=True)
 
-# Botões reais invisíveis sobre os dois CTAs.
-a1,a2 = st.columns([1,1])
-with a1:
-    if st.button('Nova Análise', key='v4_action_analysis', use_container_width=True):
-        if role in ('skatista','familiar'): st.switch_page('pages/04_Historico_de_Treinos.py')
-        else: st.switch_page('pages/03_Analise_de_Treino.py')
-with a2:
-    if st.button('Ver Histórico', key='v4_action_history', use_container_width=True): st.switch_page('pages/04_Historico_de_Treinos.py')
-
-# Botões reais invisíveis sobre os cards de acesso rápido.
-q1,q2,q3,q4 = st.columns(4, gap='small')
-with q1:
-    if st.button('Análise', key='v4_tile_analysis', use_container_width=True):
-        if role in ('skatista','familiar'): st.switch_page('pages/04_Historico_de_Treinos.py')
-        else: st.switch_page('pages/03_Analise_de_Treino.py')
-with q2:
-    if st.button('Atletas', key='v4_tile_athletes', use_container_width=True): st.switch_page('pages/02_Times.py')
-with q3:
-    if st.button('Times', key='v4_tile_teams', use_container_width=True): st.switch_page('pages/02_Times.py')
-with q4:
-    if st.button('Histórico', key='v4_tile_history', use_container_width=True): st.switch_page('pages/04_Historico_de_Treinos.py')
 
 # Mantém a personalização de imagem que já existia para o administrador.
 if role == 'admin':
