@@ -119,56 +119,6 @@ def apply_ui_theme():
       display:none!important;
     }
 
-    /* V3.32 — comportamento responsivo da sidebar.
-       Desktop preserva o menu permanente da V3.23.
-       Em telas mobile, respeita o estado recolhido do Streamlit e mantém
-       os controles nativos de abrir/fechar acessíveis. */
-    @media (max-width:768px){
-      section[data-testid="stSidebar"]{
-        min-width:244px!important;
-        width:244px!important;
-        z-index:2147483001!important;
-      }
-
-      /* Estado recolhido: o Streamlit exibe o controle de abertura. */
-      body:has([data-testid="collapsedControl"]) section[data-testid="stSidebar"],
-      body:has([data-testid="stSidebarCollapsedControl"]) section[data-testid="stSidebar"],
-      body:has(button[aria-label="Open sidebar"]) section[data-testid="stSidebar"]{
-        transform:translateX(-110%)!important;
-        visibility:hidden!important;
-        opacity:0!important;
-        pointer-events:none!important;
-      }
-
-      /* Estado aberto: o Streamlit exibe o botão de fechar. */
-      body:has([data-testid="stSidebarCollapseButton"]) section[data-testid="stSidebar"],
-      body:has(button[aria-label="Close sidebar"]) section[data-testid="stSidebar"]{
-        display:block!important;
-        transform:translateX(0)!important;
-        visibility:visible!important;
-        opacity:1!important;
-        pointer-events:auto!important;
-      }
-
-      [data-testid="collapsedControl"],
-      [data-testid="stSidebarCollapsedControl"],
-      button[data-testid="stSidebarCollapsedControl"],
-      button[aria-label="Open sidebar"]{
-        display:flex!important;
-        visibility:visible!important;
-        opacity:1!important;
-        pointer-events:auto!important;
-      }
-
-      [data-testid="stSidebarCollapseButton"],
-      button[aria-label="Close sidebar"]{
-        display:flex!important;
-        visibility:visible!important;
-        opacity:1!important;
-        pointer-events:auto!important;
-      }
-    }
-
     /* V3.25: remover navegação mobile/legada duplicada no web. */
     .mobile-nav,.mobile-nav-container,.mobile-quick-nav,.bottom-nav,
     [class*="mobile-nav"],[id*="mobile-nav"]{display:none!important}

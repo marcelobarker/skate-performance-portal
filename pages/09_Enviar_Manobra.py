@@ -5,7 +5,7 @@ from auth_utils import require_login, get_supabase
 from ui_theme import apply_ui_theme
 from drive_utils import get_drive_access_token, get_drive_folder_id
 
-st.set_page_config(initial_sidebar_state="collapsed", page_title="Enviar Vídeo • Skate Performance", page_icon="🎥", layout="wide")
+st.set_page_config(initial_sidebar_state="expanded", page_title="Enviar Vídeo • Skate Performance", page_icon="🎥", layout="wide")
 apply_ui_theme(); user, profile = require_login(); sb = get_supabase()
 role = profile.get("role")
 STAFF = {"admin","tecnico","presidente","vice_presidente","chefe_equipe","comissao_tecnica"}

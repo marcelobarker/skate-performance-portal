@@ -6,7 +6,7 @@ from auth_utils import require_login, get_supabase
 
 from ui_theme import apply_ui_theme
 
-st.set_page_config(initial_sidebar_state="collapsed", page_title="Cadastros • Skate Performance", page_icon="👥", layout="wide")
+st.set_page_config(initial_sidebar_state="expanded", page_title="Cadastros • Skate Performance", page_icon="👥", layout="wide")
 apply_ui_theme()
 
 st.markdown("""<style>
