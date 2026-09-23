@@ -4,12 +4,13 @@ import streamlit as st
 import streamlit.components.v1 as components
 from auth_utils import require_login, get_supabase
 from ui_theme import apply_ui_theme
+from portal_layout import render_new_shell, page_head
 from drive_utils import is_drive_path, drive_stream_url, drive_preview_url
 
-st.set_page_config(initial_sidebar_state="expanded", page_title="Codificar Sessão • Skate Performance", page_icon="🎬", layout="wide")
+st.set_page_config(initial_sidebar_state="collapsed", page_title="Codificar Sessão • Skate Performance", page_icon="🎬", layout="wide")
 apply_ui_theme(); user, me = require_login(); sb = get_supabase()
-if me.get("role") != "admin":
-    st.error("Área de desenvolvimento restrita ao administrador."); st.stop()
+render_new_shell(me,user,active="Codificar")
+# Acesso à codificação da sessão.
 post_id = st.session_state.get("selected_video_post_id")
 if not post_id:
     st.info("Abra o feed de um atleta e escolha um vídeo para analisar."); st.stop()
@@ -31,12 +32,12 @@ except Exception as e:
 
 st.markdown("""<style>
 .code-title{font-size:30px;font-weight:900;color:#f5f8fc}.code-sub{color:#8499ad;margin-bottom:12px}
-.video-wrap{max-width:460px;margin:0 auto}.video-wrap [data-testid='stVideo']{max-width:460px!important;width:100%!important}
+.video-wrap{max-width:760px;margin:0 auto}.video-wrap [data-testid='stVideo']{max-width:460px!important;width:100%!important}
 .event-card{background:#071a2b;border:1px solid #163b59;border-radius:10px;padding:8px 11px;margin:5px 0}
 .event-time{color:#20e6ff;font-weight:900}.event-hit{color:#00e4a4;font-weight:800}.event-err{color:#ff5c68;font-weight:800}
 @media(max-width:700px){.video-wrap,.video-wrap [data-testid='stVideo']{max-width:100%!important}}
 </style>""", unsafe_allow_html=True)
-st.markdown(f"<div class='code-title'>Codificação de sessão</div><div class='code-sub'>{html.escape(athlete.get('full_name') or 'Atleta')} • {html.escape(post.get('session_title') or 'Vídeo de treino')}</div>", unsafe_allow_html=True)
+page_head('PERFORMANCE CENTER • VIDEO CODING','Codificação de sessão',f"{html.escape(athlete.get('full_name') or 'Atleta')} • {html.escape(post.get('session_title') or 'Vídeo de treino')}")
 
 # Player da sessão.
 # IMPORTANTE: o Google Drive reproduz o vídeo dentro de um iframe cross-origin.
@@ -132,7 +133,7 @@ with err:
 
 st.caption("O timestamp salvo corresponde ao tempo da timeline do vídeo informado acima. O relógio paralelo foi removido para evitar marcações incorretas.")
 
-st.markdown("### Tentativas registradas")
+st.markdown("<div class='np-section'>Tentativas registradas</div>",unsafe_allow_html=True)
 if events:
     hits = sum(1 for x in events if x.get("result") == "Acerto"); total = len(events); rate = hits/total*100
     m1,m2,m3,m4 = st.columns(4); m1.metric("Tentativas",total); m2.metric("Acertos",hits); m3.metric("Erros",total-hits); m4.metric("Taxa",f"{rate:.1f}%")

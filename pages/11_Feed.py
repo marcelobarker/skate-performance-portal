@@ -2,6 +2,7 @@ import html
 import streamlit as st
 from auth_utils import require_login, get_supabase
 from ui_theme import apply_ui_theme
+from portal_layout import render_new_shell, page_head
 from drive_utils import is_drive_path, drive_stream_url, drive_preview_url
 try:
     from drive_utils import drive_player_geometry
@@ -10,15 +11,17 @@ except ImportError:
         return {'max_width':525,'aspect':'16/9','orientation':'unknown'}
 from video_utils import can_delete_post, delete_video_post
 
-st.set_page_config(initial_sidebar_state="expanded", page_title="Feed • Skate Performance", page_icon="▶", layout="wide")
+st.set_page_config(initial_sidebar_state="collapsed", page_title="Feed • Skate Performance", page_icon="▶", layout="wide")
 apply_ui_theme(); user, me = require_login(); sb=get_supabase()
+render_new_shell(me,user,active="Feed")
 st.markdown('''<style>
 .feed-head{font-size:32px;font-weight:950;color:#f5f8fc}.feed-sub{color:#8499ad;margin-bottom:18px}
-.feed-card{max-width:680px;margin:0 auto}.feed-video{max-width:460px;margin:12px auto}.feed-video [data-testid="stVideo"]{max-width:460px!important;width:100%!important}.feed-video video{max-height:520px!important;object-fit:contain!important}
+.feed-card{max-width:920px;margin:0 auto}.feed-video{max-width:460px;margin:12px auto}.feed-video [data-testid="stVideo"]{max-width:460px!important;width:100%!important}.feed-video video{max-height:520px!important;object-fit:contain!important}
 .post-title{font-weight:900;font-size:17px}.pill{display:inline-block;padding:3px 8px;border:1px solid #087cff66;background:#087cff18;color:#29a8ff;border-radius:999px;font-size:10px;font-weight:800}
+[data-testid='stVerticalBlockBorderWrapper']{max-width:980px;margin-left:auto!important;margin-right:auto!important;border-radius:18px!important}
 @media(max-width:700px){.feed-video,.feed-video [data-testid="stVideo"]{max-width:100%!important}.feed-card{max-width:100%}}
 </style>''',unsafe_allow_html=True)
-st.markdown("<div class='feed-head'>Feed da equipe</div><div class='feed-sub'>Últimos vídeos enviados pelos atletas.</div>",unsafe_allow_html=True)
+page_head('TIME BRASIL • TEAM FEED','Feed da equipe','Últimos vídeos, sessões e atualizações dos atletas em uma timeline técnica única.')
 try:
     posts=sb.table('athlete_posts').select('*').order('created_at',desc=True).limit(60).execute().data or []
     ids=list({p.get('athlete_id') for p in posts if p.get('athlete_id')})

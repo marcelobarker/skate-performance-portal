@@ -107,28 +107,8 @@ def sign_out():
         st.session_state.pop(k, None)
 
 def _navigation(me=None):
-    """Mantém o menu principal nativo e acrescenta apenas a Administração."""
-    role = None
-    if isinstance(me, str):
-        role = me
-    elif isinstance(me, dict):
-        role = me.get("role")
-    elif me is not None:
-        try:
-            sb = get_supabase()
-            uid = getattr(me, "id", None)
-            if uid:
-                rows = sb.table("profiles").select("role").eq("id", uid).limit(1).execute().data or []
-                if rows:
-                    role = rows[0].get("role")
-        except Exception:
-            role = None
-
-    # Cadastros fica somente aqui embaixo para o Admin.
-    if role == "admin":
-        st.sidebar.markdown("---")
-        st.sidebar.markdown("### Administração")
-        st.sidebar.page_link("pages/01_Cadastros.py", label="Cargos e cadastros")
+    """V4.71: navegação antiga/sidebar desativada. A navbar superior é a navegação principal."""
+    return None
 
 def require_login(require_active=True, admin=False):
     user = current_user(); profile = current_profile()
@@ -136,8 +116,6 @@ def require_login(require_active=True, admin=False):
         st.warning("🔒 Faça login pela página Home para acessar esta área."); st.stop()
     if profile is None: profile = load_profile(user.id)
     if not profile: st.error("Seu perfil ainda não foi criado no banco."); st.stop()
-    if profile.get("status") == "bloqueado": st.error("⛔ Seu acesso está bloqueado."); st.stop()
-    if require_active and profile.get("status") != "ativo": st.info("⏳ Seu cadastro está aguardando aprovação do administrador."); st.stop()
-    if admin and profile.get("role") != "admin": st.error("🔐 Área exclusiva do administrador."); st.stop()
-    _navigation(profile.get("role"))
+    # V4.71: qualquer usuário autenticado pode acessar todas as páginas.
+    _navigation(profile)
     return user, profile

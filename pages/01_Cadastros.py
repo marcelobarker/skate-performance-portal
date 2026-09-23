@@ -6,7 +6,7 @@ from auth_utils import require_login, get_supabase
 
 from ui_theme import apply_ui_theme
 
-st.set_page_config(initial_sidebar_state="expanded", page_title="Cadastros • Skate Performance", page_icon="👥", layout="wide")
+st.set_page_config(initial_sidebar_state="collapsed", page_title="Cadastros • Skate Performance", page_icon="👥", layout="wide")
 apply_ui_theme()
 
 st.markdown("""<style>
@@ -45,10 +45,10 @@ div[data-testid="stButton"] button{border-radius:10px!important}
 
 user, me = require_login(admin=True)
 sb = get_supabase()
-
-st.title("👥 Cadastros e permissões")
-st.caption("Aqui você altera o cargo/função de cada pessoa. Para colocar ou remover pessoas de um time, use Gerenciar Times.")
-st.page_link("pages/02_Times.py", label="🛹 Abrir gerenciamento de times", use_container_width=True)
+from portal_layout import render_new_shell, page_head
+render_new_shell(me,user,active="Administração")
+page_head("GESTÃO • ACESSOS • PERFIS","Administração","Gerencie cadastros, permissões, funções e dados esportivos de atletas e membros da equipe.")
+st.page_link("pages/02_Times.py", label="Abrir gerenciamento de times", icon=":material/groups:", use_container_width=True)
 
 
 def fetch_profiles():
@@ -203,3 +203,13 @@ with t2:
     render_people(active, "active")
 with t3:
     render_people(blocked, "blocked")
+
+
+# V4.70 — acabamento visual da administração na nova estrutura
+st.markdown("""<style>
+section[data-testid="stSidebar"]{display:none!important}
+[data-testid="stVerticalBlockBorderWrapper"]{background:linear-gradient(145deg,#071b2d,#04111d)!important;border:1px solid #174b6d!important;border-radius:16px!important;box-shadow:0 12px 32px #0005!important}
+[data-baseweb="tab-list"]{background:#061827!important;border:1px solid #174b6d!important;border-radius:14px!important;padding:5px!important}
+[data-baseweb="tab"]{color:#9eb4c7!important;font-weight:850!important}
+[data-baseweb="tab"][aria-selected="true"]{background:#0a3150!important;color:#fff!important;border-radius:10px!important}
+</style>""",unsafe_allow_html=True)

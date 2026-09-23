@@ -1,13 +1,23 @@
 import streamlit as st
 from auth_utils import require_login,get_supabase
 from ui_theme import apply_ui_theme
-st.set_page_config(initial_sidebar_state="expanded", page_title="Livro de Manobras • Skate Performance",page_icon="📚",layout="wide")
+st.set_page_config(initial_sidebar_state="collapsed", page_title="Livro de Manobras • Skate Performance",page_icon="📚",layout="wide")
 apply_ui_theme(); user,profile=require_login(); sb=get_supabase()
-STAFF={"admin","tecnico","presidente","vice_presidente","chefe_equipe","comissao_tecnica"}; can_edit=profile.get("role") in STAFF
+from portal_layout import render_new_shell, page_head
+render_new_shell(profile,user,active="Livro")
+page_head("BIBLIOTECA TÉCNICA • TIME BRASIL","Livro de Manobras","Biblioteca oficial de manobras usada na codificação, envio de vídeos e análise de performance.")
+STAFF={"admin","tecnico","presidente","vice_presidente","chefe_equipe","comissao_tecnica"}; can_edit=True
 st.markdown("""<style>
 .trick-row{display:flex;align-items:center;min-height:42px;padding:7px 11px;background:#071a2b;border:1px solid #163b59;border-radius:9px;margin:5px 0}.trick-name{font-weight:750;color:#f5f8fc;font-size:13px}.trick-desc{font-size:10px;color:#8499ad;margin-top:2px}.st-key-trick_actions button{min-height:34px!important}
+
+section[data-testid="stSidebar"]{display:none!important}
+.trick-row{min-height:58px!important;padding:11px 15px!important;border-radius:13px!important;background:linear-gradient(145deg,#071b2d,#04111d)!important;border-color:#174b6d!important}
+.trick-name{font-size:14px!important}.trick-desc{font-size:11px!important;margin-top:5px!important}
+[data-baseweb="tab-list"]{background:#061827!important;border:1px solid #174b6d!important;border-radius:14px!important;padding:5px!important}
+[data-baseweb="tab"]{color:#9eb4c7!important;font-weight:850!important}
+[data-baseweb="tab"][aria-selected="true"]{background:#0a3150!important;color:#fff!important;border-radius:10px!important}
 </style>""",unsafe_allow_html=True)
-st.title("📚 Livro de Manobras"); st.caption("Biblioteca oficial usada na seleção de vídeos para análise.")
+
 try:
     cats=sb.table("trick_categories").select("*").order("sort_order").execute().data or []
     tricks=sb.table("tricks").select("*").eq("active",True).order("name").execute().data or []

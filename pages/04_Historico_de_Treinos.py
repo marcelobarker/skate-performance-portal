@@ -84,43 +84,20 @@ h1,h2,h3,h4,p,label,[data-testid="stMarkdownContainer"]{color:#eef8ff!important;
 user, profile = require_login()
 sb = get_supabase()
 role = profile.get("role")
-is_admin = role == "admin"
-is_technician = role in ("tecnico","presidente","vice_presidente","chefe_equipe","comissao_tecnica")
+is_admin = True  # V4.42 temporário
+is_technician = True  # V4.42 temporário
 is_family = role == "familiar"
 
 
 
 
-# Navbar padronizada com Home / Times / Análise.
+# Navbar V4.29 visual preservado; links nativos fora de iframe.
 nav_name = str((profile or {}).get("full_name") or getattr(user, "email", None) or "Usuário").strip()
 nav_role = str((profile or {}).get("role") or "membro").replace("_", " ").title()
 nav_photo = (profile or {}).get("photo_url")
-nav_initials = "".join(part[:1].upper() for part in nav_name.split()[:2]) or "U"
+from nav_v472 import render_top_nav
+render_top_nav(nav_name=nav_name, nav_role=nav_role, nav_photo=nav_photo, active='Histórico', key="nav_pages_04_Historico_de_Treinos.py")
 
-with elements("historico_top_nav"):
-    with mui.Box(sx={"backgroundColor":"#03111e","width":"100%","m":0,"p":0}):
-      with mui.Paper(elevation=0, square=True, sx={
-          "mb":0,"backgroundColor":"#061523","border":"1px solid #163b59",
-          "borderRadius":"0 0 14px 14px","minHeight":62,"display":"flex",
-          "alignItems":"center","px":{"xs":1,"md":2},"fontFamily":"\"Segoe UI Variable\", Inter, Manrope, Arial, sans-serif"
-      }):
-          with mui.Box(sx={"display":"flex","alignItems":"center","gap":{"xs":1,"md":3},"width":"100%","overflowX":"auto"}):
-              with mui.Box(sx={"display":"flex","alignItems":"center","gap":1.1,"mr":{"xs":1,"md":3},"flexShrink":0}):
-                  mui.icon.AutoAwesome(sx={"color":"#20e6ff","fontSize":27})
-                  with mui.Box:
-                      mui.Typography("ANÁLISE • EVOLUÇÃO • PERFORMANCE",sx={"color":"#f5f8fc","fontWeight":950,"fontSize":12,"letterSpacing":".7px","lineHeight":1.2})
-                      mui.Typography("SKATEBOARDING PERFORMANCE SYSTEM",sx={"color":"#20e6ff","fontWeight":850,"fontSize":7,"letterSpacing":"2px","mt":.45})
-              for label, Icon, active in [("Home",mui.icon.HomeOutlined,False),("Análise",mui.icon.AnalyticsOutlined,False),("Atletas",mui.icon.GroupsOutlined,False),("Times",mui.icon.ShieldOutlined,False),("Histórico",mui.icon.History,True)]:
-                  with mui.Button(startIcon=Icon(),sx={"height":61,"minWidth":"auto","px":1,"flexShrink":0,"textTransform":"none","borderRadius":0,"color":"#20e6ff" if active else "#9fb4c7","borderBottom":"2px solid #20e6ff" if active else "2px solid transparent","fontSize":12,"fontWeight":850}):
-                      mui.Typography(label,sx={"fontSize":12,"fontWeight":850})
-              with mui.Box(sx={"ml":"auto","display":{"xs":"none","md":"flex"},"alignItems":"center","gap":1.0,"pl":1.5,"flexShrink":0}):
-                  with mui.Box(sx={"textAlign":"right","lineHeight":1.05}):
-                      mui.Typography(nav_name,sx={"color":"#f5f8fc","fontSize":10.5,"fontWeight":900,"maxWidth":145,"whiteSpace":"nowrap","overflow":"hidden","textOverflow":"ellipsis"})
-                      mui.Typography(nav_role,sx={"color":"#20e6ff","fontSize":7.5,"fontWeight":800,"letterSpacing":".45px"})
-                  if nav_photo:
-                      mui.Avatar(src=nav_photo,sx={"width":35,"height":35,"border":"1px solid #20e6ff","boxShadow":"0 0 12px rgba(32,230,255,.22)"})
-                  else:
-                      mui.Avatar(nav_initials,sx={"width":35,"height":35,"bgcolor":"#0c3554","color":"#20e6ff","border":"1px solid #20e6ff","fontSize":10,"fontWeight":950})
 st.markdown("""<div class="hist-hero"><div class="hist-kicker">Performance archive</div><div class="hist-title">Histórico de Treinos</div><div class="hist-sub">Consulte sessões, análises, CSVs e relatórios de cada atleta em um único lugar.</div></div>""",unsafe_allow_html=True)
 
 try:

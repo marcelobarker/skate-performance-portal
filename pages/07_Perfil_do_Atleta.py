@@ -10,11 +10,73 @@ except ImportError:
     def drive_player_geometry(path_or_id):
         return {'max_width':525,'aspect':'16/9','orientation':'unknown'}
 from video_utils import can_delete_post, delete_video_post
-st.set_page_config(initial_sidebar_state="expanded", page_title='Perfil do Atleta • Skate Performance',page_icon='🛹',layout='wide'); apply_ui_theme(); user,me=require_login(); sb=get_supabase()
+st.set_page_config(initial_sidebar_state="collapsed", page_title='Perfil do Atleta • Skate Performance',page_icon='🛹',layout='wide'); apply_ui_theme(); user,me=require_login(); sb=get_supabase()
 STAFF_ROLES=('admin','tecnico','presidente','vice_presidente','chefe_equipe','comissao_tecnica')
-is_staff=me.get('role') in STAFF_ROLES
+is_staff=True
+from portal_layout import render_new_shell
+render_new_shell(me,user,active='Atletas')
 athlete_id=st.session_state.get('selected_athlete_id') or (user.id if me.get('role')=='skatista' else None)
-if not athlete_id: st.info('Selecione um atleta na página Times para abrir o feed.'); st.page_link('pages/02_Times.py',label='Abrir Times'); st.stop()
+
+# Central de atletas — nova estrutura visual do portal.
+if not athlete_id:
+    st.markdown('''
+    <style>
+    .ath-page-head{padding:26px 4px 18px;border-bottom:1px solid rgba(73,168,255,.16);margin-bottom:18px}
+    .ath-kicker{font-size:11px;letter-spacing:.18em;font-weight:900;color:#28d9ff;text-transform:uppercase;margin-bottom:7px}
+    .ath-title{font-size:34px;line-height:1.05;font-weight:950;color:#f4f9ff;margin:0}
+    .ath-sub{color:#86a2b9;font-size:14px;margin-top:8px;max-width:720px}
+    .ath-stat{background:linear-gradient(145deg,rgba(8,31,51,.96),rgba(4,18,31,.96));border:1px solid rgba(64,151,220,.22);border-radius:16px;padding:16px 18px;min-height:92px;box-shadow:0 14px 34px rgba(0,0,0,.15)}
+    .ath-stat-v{font-size:27px;font-weight:950;color:#f6fbff;line-height:1}.ath-stat-l{font-size:10px;letter-spacing:.13em;text-transform:uppercase;color:#7895ac;margin-top:9px;font-weight:800}
+    .ath-card{max-width:420px;background:linear-gradient(150deg,rgba(8,31,51,.98),rgba(3,16,28,.98));border:1px solid rgba(52,140,205,.24);border-radius:18px;padding:18px;min-height:350px;position:relative;overflow:hidden;box-shadow:0 16px 38px rgba(0,0,0,.18);transition:.2s ease}
+    .ath-card:before{content:'';position:absolute;inset:-80px -70px auto auto;width:180px;height:180px;background:radial-gradient(circle,rgba(0,207,255,.13),transparent 68%);pointer-events:none}
+    .ath-card:hover{border-color:rgba(40,217,255,.55);transform:translateY(-2px);box-shadow:0 18px 42px rgba(0,0,0,.26),0 0 28px rgba(0,194,255,.07)}
+    .ath-card-photo{width:100%;height:220px;object-fit:cover;border-radius:13px;border:1px solid rgba(79,166,228,.22);background:#071725}
+    .ath-card-ph{height:220px;border-radius:13px;border:1px solid rgba(79,166,228,.22);display:grid;place-items:center;background:radial-gradient(circle at 50% 30%,#123b5d,#071725 65%);font-size:46px}
+    .ath-card-name{font-size:20px;font-weight:900;color:#f4f9ff;margin-top:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    .ath-card-meta{font-size:13px;color:#7897af;margin-top:5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    .ath-chip{display:inline-block;margin-top:10px;margin-right:5px;padding:4px 8px;border-radius:999px;background:rgba(23,160,220,.10);border:1px solid rgba(40,217,255,.20);font-size:9px;letter-spacing:.07em;text-transform:uppercase;font-weight:850;color:#63dff5}
+    div[data-testid='stTextInput'] input,div[data-testid='stSelectbox']>div>div{background:#071a2b!important;border-color:#173e5d!important;color:#eaf6ff!important}
+    div.stButton>button[kind='secondary']{border-radius:11px!important;background:linear-gradient(180deg,#0a2941,#071d30)!important;border:1px solid #1d557b!important;color:#d9efff!important;font-weight:800!important;min-height:39px!important}
+    div.stButton>button[kind='secondary']:hover{border-color:#25c9ef!important;color:#fff!important;box-shadow:0 0 0 1px rgba(37,201,239,.12),0 0 20px rgba(0,193,255,.08)!important}
+    </style>
+    <div class='ath-page-head'><div class='ath-kicker'>Time Brasil • Performance Center</div><div class='ath-title'>Atletas</div><div class='ath-sub'>Perfis, modalidade, base e acesso rápido ao histórico e ao feed técnico de cada skatista.</div></div>
+    ''', unsafe_allow_html=True)
+    try:
+        athletes=sb.table('profiles').select('*').eq('role','skatista').execute().data or []
+    except Exception as e:
+        st.error(f'Não foi possível carregar os atletas: {e}'); st.stop()
+    active_ath=[a for a in athletes if str(a.get('status') or '').lower() in ('ativo','active','aprovado','approved','')]
+    street=sum(1 for a in athletes if 'street' in str(a.get('modality') or '').lower())
+    park=sum(1 for a in athletes if 'park' in str(a.get('modality') or '').lower())
+    s1,s2,s3,s4=st.columns(4)
+    for col,val,label in [(s1,len(athletes),'Atletas cadastrados'),(s2,len(active_ath),'Ativos'),(s3,street,'Street'),(s4,park,'Park')]:
+        col.markdown(f"<div class='ath-stat'><div class='ath-stat-v'>{val}</div><div class='ath-stat-l'>{label}</div></div>",unsafe_allow_html=True)
+    st.markdown('<div style="height:12px"></div>',unsafe_allow_html=True)
+    f1,f2=st.columns([2.2,1])
+    search=f1.text_input('Buscar atleta',placeholder='Buscar por nome, cidade ou estado…',label_visibility='collapsed')
+    mods=sorted({str(a.get('modality')).strip() for a in athletes if a.get('modality')})
+    mod=f2.selectbox('Modalidade',['Todas']+mods,label_visibility='collapsed')
+    q=search.strip().lower()
+    filtered=[]
+    for a in athletes:
+        hay=' '.join(str(a.get(k) or '') for k in ('full_name','city','state','modality','stance')).lower()
+        if q and q not in hay: continue
+        if mod!='Todas' and str(a.get('modality') or '')!=mod: continue
+        filtered.append(a)
+    if not filtered:
+        st.info('Nenhum atleta encontrado com esses filtros.')
+    else:
+        for start in range(0,len(filtered),4):
+            cols=st.columns(3)
+            for col,a in zip(cols,filtered[start:start+4]):
+                aid=a.get('id'); name=a.get('full_name') or 'Atleta'; photo=a.get('photo_url'); city=' / '.join(x for x in [a.get('city'),a.get('state')] if x) or 'Local não informado'; modality=a.get('modality') or 'Modalidade —'; stance=a.get('stance') or 'Base —'
+                pic=(f"<img class='ath-card-photo' src='{html.escape(str(photo), quote=True)}'>" if photo else "<div class='ath-card-ph'>🛹</div>")
+                with col:
+                    st.markdown(f"<div class='ath-card'>{pic}<div class='ath-card-name'>{html.escape(str(name))}</div><div class='ath-card-meta'>{html.escape(str(city))}</div><span class='ath-chip'>{html.escape(str(modality))}</span><span class='ath-chip'>{html.escape(str(stance))}</span></div>",unsafe_allow_html=True)
+                    if st.button('Abrir perfil  →',key=f'open_ath_{aid}',use_container_width=True):
+                        st.session_state['selected_athlete_id']=aid
+                        st.rerun()
+    st.stop()
 try: athlete=sb.table('profiles').select('*').eq('id',athlete_id).single().execute().data
 except Exception as e: st.error(f'Atleta não encontrado: {e}'); st.stop()
 if athlete.get('role')!='skatista': st.warning('Este perfil não é de atleta.'); st.stop()
@@ -53,7 +115,7 @@ for post in posts:
                     delete_video_post(sb,post); st.success('Vídeo excluído.'); st.rerun()
                 except Exception as e:
                     st.error(f'Não foi possível excluir o vídeo. Detalhes: {e}')
-        if me.get('role') == 'admin':
+        if True:
             if st.button('🎬 Codificar sessão / várias tentativas', key='code_session_'+post['id'], use_container_width=True):
                 st.session_state['selected_video_post_id']=post['id']
                 st.switch_page('pages/10_Codificar_Sessao.py')

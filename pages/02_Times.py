@@ -8,7 +8,7 @@ from auth_utils import require_login, get_supabase
 st.set_page_config(initial_sidebar_state="collapsed", page_title="Times • Seleção Brasileira de Skateboarding", page_icon="🛹", layout="wide")
 user, profile = require_login()
 sb = get_supabase()
-is_admin = profile.get("role") == "admin"
+is_admin = True  # V4.42 temporário
 
 ROLE = {
     "admin":"Administrador", "skatista":"Atleta", "tecnico":"Técnico",
@@ -208,45 +208,12 @@ html,body,.stApp,[data-testid="stAppViewContainer"],
 }
 </style>''', unsafe_allow_html=True)
 
-# Navbar idêntica à Home (somente visual nesta fase).
+# Navbar V4.29 visual preservado; links nativos fora de iframe.
 nav_name = str((profile or {}).get("full_name") or getattr(user, "email", None) or "Usuário").strip()
 nav_role = str((profile or {}).get("role") or "membro").replace("_", " ").title()
 nav_photo = (profile or {}).get("photo_url")
-nav_initials = "".join(part[:1].upper() for part in nav_name.split()[:2]) or "U"
-
-with elements("times_top_nav"):
-    with mui.Paper(elevation=0, square=True, sx={
-        "mb":2,"mx":0,"backgroundColor":"#061523","border":"1px solid #163b59",
-        "borderRadius":"0 0 14px 14px","minHeight":72,"display":"flex",
-        "alignItems":"center","px":{"xs":1.5,"md":2.5},"fontFamily":"\"Segoe UI Variable\", Inter, Manrope, Arial, sans-serif"
-    }):
-        with mui.Box(sx={"display":"flex","alignItems":"center","gap":{"xs":1,"md":3},"width":"100%","overflowX":"auto"}):
-            with mui.Box(sx={"display":"flex","alignItems":"center","gap":1.1,"mr":{"xs":1,"md":3},"flexShrink":0}):
-                mui.icon.AutoAwesome(sx={"color":"#20e6ff","fontSize":27})
-                with mui.Box:
-                    mui.Typography("ANÁLISE • EVOLUÇÃO • PERFORMANCE", sx={"color":"#f5f8fc","fontWeight":950,"fontSize":12,"letterSpacing":".7px","lineHeight":1.2})
-                    mui.Typography("SKATEBOARDING PERFORMANCE SYSTEM", sx={"color":"#20e6ff","fontWeight":850,"fontSize":7,"letterSpacing":"2px","mt":.45})
-            for label, Icon, active in [
-                ("Home",mui.icon.HomeOutlined,False),("Análise",mui.icon.AnalyticsOutlined,False),
-                ("Atletas",mui.icon.GroupsOutlined,False),("Times",mui.icon.ShieldOutlined,True),
-                ("Histórico",mui.icon.History,False)
-            ]:
-                with mui.Button(startIcon=Icon(), sx={
-                    "height":71,"minWidth":"auto","px":1,"flexShrink":0,"textTransform":"none",
-                    "borderRadius":0,"color":"#20e6ff" if active else "#9fb4c7",
-                    "borderBottom":"2px solid #20e6ff" if active else "2px solid transparent",
-                    "fontSize":12,"fontWeight":850
-                }):
-                    mui.Typography(label,sx={"fontSize":12,"fontWeight":850})
-
-            with mui.Box(sx={"ml":"auto","display":{"xs":"none","md":"flex"},"alignItems":"center","gap":1.0,"pl":1.5,"flexShrink":0}):
-                with mui.Box(sx={"textAlign":"right","lineHeight":1.05}):
-                    mui.Typography(nav_name,sx={"color":"#f5f8fc","fontSize":13,"fontWeight":900,"maxWidth":180,"whiteSpace":"nowrap","overflow":"hidden","textOverflow":"ellipsis"})
-                    mui.Typography(nav_role,sx={"color":"#20e6ff","fontSize":9,"fontWeight":800,"letterSpacing":".45px"})
-                if nav_photo:
-                    mui.Avatar(src=nav_photo,sx={"width":44,"height":44,"border":"1.5px solid #20e6ff","boxShadow":"0 0 12px rgba(32,230,255,.22)"})
-                else:
-                    mui.Avatar(nav_initials,sx={"width":44,"height":44,"bgcolor":"#0c3554","color":"#20e6ff","border":"1.5px solid #20e6ff","fontSize":12,"fontWeight":950})
+from nav_v472 import render_top_nav
+render_top_nav(nav_name=nav_name, nav_role=nav_role, nav_photo=nav_photo, active='Times', key="nav_pages_02_Times.py")
 
 @st.dialog("Perfil do atleta", width="large")
 def member_dialog(p):
@@ -268,6 +235,37 @@ def member_dialog(p):
     a,b=st.columns(2,gap="medium")
     a.button("▣  Ver cartão",key=f"dlg_card_{p.get('id')}",use_container_width=True)
     b.button("♙  Ver perfil completo",key=f"dlg_profile_{p.get('id')}",use_container_width=True)
+
+
+@st.dialog("Editar atleta", width="large")
+def edit_athlete_dialog(p):
+    if not is_admin:
+        st.warning("Apenas administradores podem editar dados do atleta."); return
+    st.caption("Atualize os dados esportivos e pessoais exibidos no portal.")
+    with st.form(f"edit_athlete_{p.get('id')}"):
+        c1,c2=st.columns(2)
+        full_name=c1.text_input("Nome completo",value=p.get("full_name") or "")
+        modality_opts=["Street","Park","Vert","Outro"]
+        mv=p.get("modality") or "Street"
+        modality=c2.selectbox("Modalidade",modality_opts,index=modality_opts.index(mv) if mv in modality_opts else 0)
+        c3,c4=st.columns(2)
+        stance_opts=["Regular","Goofy","Não informado"]
+        sv=p.get("stance") or "Não informado"
+        stance=c3.selectbox("Base",stance_opts,index=stance_opts.index(sv) if sv in stance_opts else 2)
+        city=c4.text_input("Cidade",value=p.get("city") or "")
+        c5,c6=st.columns(2)
+        states=["","AC","AL","AP","AM","BA","CE","DF","ES","GO","MA","MT","MS","MG","PA","PB","PR","PE","PI","RJ","RN","RS","RO","RR","SC","SP","SE","TO","EXTERIOR"]
+        statev=(p.get("state") or "").upper()
+        state=c5.selectbox("Estado/UF",states,index=states.index(statev) if statev in states else 0)
+        birth=c6.text_input("Nascimento",value=p.get("birth_date") or "",placeholder="AAAA-MM-DD")
+        save=st.form_submit_button("Salvar alterações",use_container_width=True)
+    if save:
+        try:
+            payload={"full_name":full_name.strip() or p.get("full_name") or "Sem nome","modality":modality,"stance":None if stance=="Não informado" else stance,"city":city.strip() or None,"state":state or None,"birth_date":birth.strip() or None}
+            sb.table("profiles").update(payload).eq("id",p["id"]).execute()
+            st.success("Atleta atualizado."); st.rerun()
+        except Exception as exc:
+            st.error(f"Não foi possível salvar: {exc}")
 
 def fetch():
     teams=sb.table("teams").select("*").order("name").execute().data or []
@@ -300,9 +298,8 @@ def render_people(group, scope, staff=False):
                 if p.get("role")=="skatista":
                     a,b=st.columns(2,gap="small")
                     if a.button("Cartão",key=f"card_{scope}_{p['id']}",use_container_width=True): member_dialog(p)
-                    if b.button("Perfil",key=f"profile_{scope}_{p['id']}",use_container_width=True):
-                        st.session_state["selected_athlete_id"]=p["id"]
-                        # navegação definitiva será ligada depois; preserva seleção por enquanto.
+                    if b.button("Editar",key=f"edit_{scope}_{p['id']}",use_container_width=True):
+                        edit_athlete_dialog(p)
                 else:
                     if st.button("Ver cartão",key=f"card_{scope}_{p['id']}",use_container_width=True): member_dialog(p)
         st.write("")

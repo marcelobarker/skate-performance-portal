@@ -1,3 +1,8 @@
+## V4.71 — acesso universal + navegação limpa
+- Todas as páginas liberadas para qualquer usuário autenticado.
+- Sidebar/navegação antiga desativada.
+- Navbar superior sem Atletas e sem Análise.
+
 Skate Performance Portal V3.14
 
 # Skate Performance Portal V3.11

@@ -6,7 +6,7 @@ from auth_utils import sign_in, sign_up, sign_out, current_user, current_profile
 
 from ui_theme import apply_ui_theme
 
-st.set_page_config(initial_sidebar_state="expanded", page_title="Seleção Brasileira de Skateboarding", page_icon="🛹", layout="wide")
+st.set_page_config(initial_sidebar_state="collapsed", page_title="Seleção Brasileira de Skateboarding", page_icon="🛹", layout="wide")
 apply_ui_theme()
 
 st.markdown("""<style>
@@ -49,7 +49,7 @@ st.markdown("""
 [data-testid="stSidebar"]{background:#081827!important}
 [data-testid="stSidebar"] *{color:#d9eafa!important}
 [data-testid="stToolbar"],[data-testid="stDecoration"]{display:none!important}
-.block-container{max-width:1400px;padding-top:1.2rem!important}
+.block-container{max-width:none!important;width:calc(100vw - 32px)!important;padding-left:16px!important;padding-right:16px!important;padding-top:1.2rem!important}
 .hero{background:#0b1d31;border:1px solid #173b5a;border-radius:18px;padding:24px 28px;margin-bottom:22px}
 .brand{font-size:31px;font-weight:900;font-style:italic;letter-spacing:-1px}
 .brand .blue{color:#1398ff}.brand .time{font-size:15px;font-style:normal;margin-left:8px}
@@ -187,18 +187,7 @@ try:
 except Exception:
     home_feed_videos = []
 
-if role != "admin":
-    st.markdown("""<style>[data-testid="stSidebarNav"] a[href*="01_Cadastros"],[data-testid="stSidebarNav"] a[href*="Cadastros"]{display:none!important}</style>""", unsafe_allow_html=True)
-if role in ("skatista","familiar"):
-    st.markdown("""<style>[data-testid="stSidebarNav"] a[href*="Analise_de_Treino"],[data-testid="stSidebarNav"] a[href*="03_Analise"]{display:none!important}</style>""", unsafe_allow_html=True)
-
-if status == "bloqueado":
-    st.error("⛔ Seu acesso está bloqueado. Procure o administrador.")
-    st.stop()
-if status != "ativo":
-    st.info("⏳ Seu cadastro foi recebido e está aguardando aprovação do administrador.")
-    st.write("Assim que for aprovado, as áreas de equipe e análise serão liberadas.")
-    st.stop()
+# V4.42 TEMPORÁRIO: acesso liberado a todo usuário autenticado.
 
 st.markdown("""
 <style>
@@ -234,6 +223,24 @@ iframe[title="streamlit_elements.core.frame"] {
 </style>
 """, unsafe_allow_html=True)
 
+# V4.63 — largura premium controlada: grande, centralizada e responsiva.
+st.markdown("""<style>
+html,body,[data-testid="stApp"],[data-testid="stAppViewContainer"],.stApp{width:100%!important;background:#06111f!important;}
+[data-testid="stMain"],section.main,.main{width:100%!important;}
+[data-testid="stMainBlockContainer"],.main .block-container,.block-container{
+  width:min(1560px, calc(100vw - 48px))!important;
+  max-width:1560px!important;
+  margin:0 auto!important;
+  padding:0 0 40px!important;
+}
+iframe[title="streamlit_elements.core.frame"]{width:100%!important;background:#06111f!important;border:0!important;border-radius:0!important;}
+[data-testid="stElementContainer"]{overflow:visible!important;}
+[data-testid="stElementContainer"]:has(iframe[title="streamlit_elements.core.frame"]){background:#06111f!important;}
+@media(max-width:900px){
+ [data-testid="stMainBlockContainer"],.main .block-container,.block-container{width:calc(100vw - 20px)!important;}
+}
+</style>""", unsafe_allow_html=True)
+
 # Cores/estilos reutilizados pelos componentes Material UI.
 card = {
     "background": "linear-gradient(145deg,#081b2d,#061523)",
@@ -247,121 +254,33 @@ cyan = "#20e6ff"
 blue = "#0787ff"
 
 
-# V4.39 — navegação nativa Streamlit (teste confiável)
-st.markdown("""
-<style>
-div[data-testid="stHorizontalBlock"]:has(a[data-testid="stPageLink-NavLink"]) {
-    background:#061523;
-    border:1px solid #163b59;
-    border-radius:12px;
-    padding:6px 10px;
-    gap:4px;
-    margin:0 0 8px 0;
-}
-a[data-testid="stPageLink-NavLink"] {
-    text-decoration:none!important;
-    border-radius:9px!important;
-    padding:7px 10px!important;
-}
-a[data-testid="stPageLink-NavLink"]:hover {
-    background:#0b2940!important;
-}
-a[data-testid="stPageLink-NavLink"] p {
-    color:#c4d1df!important;
-    font-weight:800!important;
-    font-size:13px!important;
-}
-@media (max-width:768px){
-  div[data-testid="stHorizontalBlock"]:has(a[data-testid="stPageLink-NavLink"]) {
-    overflow-x:auto!important;
-    flex-wrap:nowrap!important;
-  }
-}
-</style>
-""", unsafe_allow_html=True)
-
-_nav_cols = st.columns(4)
-with _nav_cols[0]:
-    st.page_link("Home.py", label="Home", icon=":material/home:")
-with _nav_cols[1]:
-    st.page_link("pages/03_Analise_de_Treino.py", label="Análise", icon=":material/analytics:")
-with _nav_cols[2]:
-    st.page_link("pages/02_Times.py", label="Times", icon=":material/groups:")
-with _nav_cols[3]:
-    st.page_link("pages/04_Historico_de_Treinos.py", label="Histórico", icon=":material/history:")
-
+# Navbar V4.29 visual preservado; links nativos fora de iframe.
 nav_name = str((profile or {}).get("full_name") or getattr(user, "email", None) or "Usuário").strip()
 nav_role = str((profile or {}).get("role") or "membro").replace("_", " ").title()
 nav_photo = (profile or {}).get("photo_url")
-nav_initials = "".join(part[:1].upper() for part in nav_name.split()[:2]) or "U"
+from nav_v472 import render_top_nav
+render_top_nav(nav_name=nav_name, nav_role=nav_role, nav_photo=nav_photo, active='Home', key="nav_Home.py")
 
 with elements("skate_performance_home"):
+    # O streamlit-elements roda dentro de um iframe. O fundo precisa ser definido
+    # aqui dentro também; caso contrário o navegador usa branco nas bordas.
+    mui.GlobalStyles(styles={
+        "html": {"backgroundColor":"#06111f"},
+        "body": {"margin":0,"backgroundColor":"#06111f","overflowX":"hidden"},
+        "#root": {"backgroundColor":"#06111f"},
+    })
     # Container geral: NÃO é um quadrado central; ocupa 100% da área disponível.
     with mui.Box(sx={
         "width": "100%",
-        "maxWidth": "1480px",
-        "margin": "0 auto",
-        "backgroundColor": "transparent",
+        "maxWidth": "none",
+        "margin": "0",
+        "backgroundColor": "#06111f",
         "fontFamily": "\"Segoe UI Variable\", Inter, Manrope, Arial, sans-serif",
         "pb": 3,
     }):
         # Navigation bar feita com Material UI (Streamlit Elements).
         # Evita incompatibilidade do streamlit-community-navigation-bar com
         # versões novas do Streamlit (PagesManager.set_pages).
-        with mui.Paper(elevation=0, square=True, sx={
-            "mx":{"xs":0,"md":1},"mb":1,
-            "backgroundColor":"#061523",
-            "border":"1px solid #163b59",
-            "borderRadius":"0 0 14px 14px",
-            "minHeight":62,
-            "display":"flex","alignItems":"center",
-            "px":{"xs":1,"md":2},
-        }):
-            with mui.Box(sx={
-                "display":"flex","alignItems":"center","gap":{"xs":1,"md":3},
-                "width":"100%","overflowX":"auto"
-            }):
-                with mui.Box(sx={"display":"flex","alignItems":"center","gap":1.1,"mr":{"xs":1,"md":3},"flexShrink":0}):
-                    mui.icon.AutoAwesome(sx={"color":cyan,"fontSize":27})
-                    with mui.Box:
-                        mui.Typography("ANÁLISE • EVOLUÇÃO • PERFORMANCE", sx={
-                            "color":white,"fontWeight":950,"fontSize":12,
-                            "letterSpacing":".7px","lineHeight":1.2
-                        })
-                        mui.Typography("SKATEBOARDING PERFORMANCE SYSTEM", sx={
-                            "color":cyan,"fontWeight":850,"fontSize":7,
-                            "letterSpacing":"2px","mt":.45
-                        })
-                for label, Icon, active, href in [
-                    ("Home", mui.icon.HomeOutlined, True, "/"),
-                    ("Análise", mui.icon.AnalyticsOutlined, False, "/Analise_de_Treino"),
-                    ("Atletas", mui.icon.GroupsOutlined, False, "/Times"),
-                    ("Times", mui.icon.ShieldOutlined, False, "/Times"),
-                    ("Histórico", mui.icon.History, False, "/Historico_de_Treinos"),
-                ]:
-                    with mui.Button(
-                        href=href,
-                        target="_top",
-                        startIcon=Icon(),
-                        sx={
-                            "height":61,"minWidth":"auto","px":1,"flexShrink":0,
-                            "textTransform":"none","borderRadius":0,
-                            "color": cyan if active else "#9fb4c7",
-                            "borderBottom": f"2px solid {cyan}" if active else "2px solid transparent",
-                            "fontSize":12,"fontWeight":850,
-                        }
-                    ):
-                        mui.Typography(label, sx={"fontSize":12,"fontWeight":850})
-
-                with mui.Box(sx={"ml":"auto","display":{"xs":"none","md":"flex"},"alignItems":"center","gap":1.0,"pl":1.5,"flexShrink":0}):
-                    with mui.Box(sx={"textAlign":"right","lineHeight":1.05}):
-                        mui.Typography(nav_name, sx={"color":"#f5f8fc","fontSize":10.5,"fontWeight":900,"maxWidth":145,"whiteSpace":"nowrap","overflow":"hidden","textOverflow":"ellipsis"})
-                        mui.Typography(nav_role, sx={"color":"#20e6ff","fontSize":7.5,"fontWeight":800,"letterSpacing":".45px"})
-                    if nav_photo:
-                        mui.Avatar(src=nav_photo, sx={"width":35,"height":35,"border":"1px solid #20e6ff","boxShadow":"0 0 12px rgba(32,230,255,.22)"})
-                    else:
-                        mui.Avatar(nav_initials, sx={"width":35,"height":35,"bgcolor":"#0c3554","color":"#20e6ff","border":"1px solid #20e6ff","fontSize":10,"fontWeight":950})
-
         # HERO
         with mui.Paper(elevation=0, sx={
             **card,

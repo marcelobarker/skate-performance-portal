@@ -1,7 +1,8 @@
 import streamlit as st
 
 def apply_ui_theme():
-    st.markdown(r'''<style>
+    st.markdown(r'''<style>[data-testid="stSidebar"], [data-testid="stSidebarNav"], [data-testid="collapsedControl"], [data-testid="stSidebarCollapsedControl"], button[aria-label="Open sidebar"], button[aria-label="Close sidebar"] {display:none!important;visibility:hidden!important;width:0!important;min-width:0!important;}
+
     :root{
       --bg-deep:#020B14;--bg-main:#03111E;--bg-panel:#061727;--bg-card:#081B2D;--bg-elev:#0B2136;--bg-input:#10263B;--bg-hover:#102C46;
       --primary:#087CFF;--primary-bright:#159BFF;--cyan:#00D9FF;--purple:#9B35F5;--green:#00C878;--orange:#F07B00;
