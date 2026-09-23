@@ -118,7 +118,67 @@ section[data-testid="stSidebar"],[data-testid="stSidebar"],[data-testid="stSideb
 [data-testid="stAppViewContainer"]>.main{margin-left:0!important;width:100%!important}
 </style>""", unsafe_allow_html=True)
 
-# V4.81 — recuperação de senha. O Supabase devolve os tokens no fragmento (#).\n# Como fragmentos não chegam ao Python, um pequeno bridge os move uma única vez\n# para query params; o servidor consome os tokens e limpa a URL imediatamente.\ncomponents.html("""<script>\n(function(){\n  try{\n    const w = window.parent;\n    const h = w.location.hash || '';\n    if(h && h.indexOf('type=recovery') !== -1){\n      const hp = new URLSearchParams(h.substring(1));\n      const at = hp.get('access_token');\n      const rt = hp.get('refresh_token');\n      if(at && rt){\n        const u = new URL(w.location.href);\n        u.hash = '';\n        u.searchParams.set('sp_recovery_access', at);\n        u.searchParams.set('sp_recovery_refresh', rt);\n        w.location.replace(u.toString());\n      }\n    }\n  }catch(e){}\n})();\n</script>""", height=0)\n\n_recovery_access = st.query_params.get("sp_recovery_access")\n_recovery_refresh = st.query_params.get("sp_recovery_refresh")\nif _recovery_access and _recovery_refresh:\n    try:\n        start_password_recovery(_recovery_access, _recovery_refresh)\n        st.query_params.clear()\n        st.rerun()\n    except Exception:\n        st.query_params.clear()\n        st.session_state["sp_recovery_error"] = "O link de recuperação expirou ou já foi utilizado. Solicite um novo e-mail."\n        st.rerun()\n\nif st.session_state.get("sp_password_recovery"):\n    st.title("Criar nova senha")\n    st.caption("Digite uma nova senha para sua conta.")\n    with st.form("password_recovery_form"):\n        new_password = st.text_input("Nova senha", type="password", help="Use pelo menos 6 caracteres.")\n        new_password_confirm = st.text_input("Confirmar nova senha", type="password")\n        change_password = st.form_submit_button("Salvar nova senha", use_container_width=False)\n    if change_password:\n        if len(new_password) < 6:\n            st.error("A nova senha precisa ter pelo menos 6 caracteres.")\n        elif new_password != new_password_confirm:\n            st.error("As duas senhas não são iguais.")\n        else:\n            try:\n                update_password(new_password)\n                sign_out()\n                st.session_state.pop("sp_password_recovery", None)\n                st.success("Senha alterada com sucesso. Agora entre com sua nova senha.")\n                st.rerun()\n            except Exception:\n                st.error("Não foi possível alterar a senha. Solicite um novo link de recuperação e tente novamente.")\n    st.stop()\n\nuser = current_user()\nprofile = current_profile()
+# V4.81 — recuperação de senha. O Supabase devolve os tokens no fragmento (#).
+# Como fragmentos não chegam ao Python, um pequeno bridge os move uma única vez
+# para query params; o servidor consome os tokens e limpa a URL imediatamente.
+components.html("""<script>
+(function(){
+  try{
+    const w = window.parent;
+    const h = w.location.hash || '';
+    if(h && h.indexOf('type=recovery') !== -1){
+      const hp = new URLSearchParams(h.substring(1));
+      const at = hp.get('access_token');
+      const rt = hp.get('refresh_token');
+      if(at && rt){
+        const u = new URL(w.location.href);
+        u.hash = '';
+        u.searchParams.set('sp_recovery_access', at);
+        u.searchParams.set('sp_recovery_refresh', rt);
+        w.location.replace(u.toString());
+      }
+    }
+  }catch(e){}
+})();
+</script>""", height=0)
+
+_recovery_access = st.query_params.get("sp_recovery_access")
+_recovery_refresh = st.query_params.get("sp_recovery_refresh")
+if _recovery_access and _recovery_refresh:
+    try:
+        start_password_recovery(_recovery_access, _recovery_refresh)
+        st.query_params.clear()
+        st.rerun()
+    except Exception:
+        st.query_params.clear()
+        st.session_state["sp_recovery_error"] = "O link de recuperação expirou ou já foi utilizado. Solicite um novo e-mail."
+        st.rerun()
+
+if st.session_state.get("sp_password_recovery"):
+    st.title("Criar nova senha")
+    st.caption("Digite uma nova senha para sua conta.")
+    with st.form("password_recovery_form"):
+        new_password = st.text_input("Nova senha", type="password", help="Use pelo menos 6 caracteres.")
+        new_password_confirm = st.text_input("Confirmar nova senha", type="password")
+        change_password = st.form_submit_button("Salvar nova senha", use_container_width=False)
+    if change_password:
+        if len(new_password) < 6:
+            st.error("A nova senha precisa ter pelo menos 6 caracteres.")
+        elif new_password != new_password_confirm:
+            st.error("As duas senhas não são iguais.")
+        else:
+            try:
+                update_password(new_password)
+                sign_out()
+                st.session_state.pop("sp_password_recovery", None)
+                st.success("Senha alterada com sucesso. Agora entre com sua nova senha.")
+                st.rerun()
+            except Exception:
+                st.error("Não foi possível alterar a senha. Solicite um novo link de recuperação e tente novamente.")
+    st.stop()
+
+user = current_user()
+profile = current_profile()
 if user and not profile:
     profile = load_profile(user.id)
 
