@@ -59,8 +59,17 @@ def render_top_nav(nav_name="Usuário", nav_role="Membro", nav_photo=None, activ
     force_mobile = " sp429-force-mobile" if mobile_ua else ""
 
     css = '''<style>
-/* ===== NAV GLOBAL V4.75 ===== */
-.sp429-shell{box-sizing:border-box;position:relative;width:100%;max-width:none;margin:0 0 18px 0;padding:0;background:linear-gradient(180deg,#071827 0%,#05131f 100%);border:1px solid #163b59;border-radius:0 0 14px 14px;min-height:78px;font-family:"Segoe UI Variable",Inter,Manrope,Arial,sans-serif;box-shadow:0 8px 28px rgba(0,0,0,.16);overflow:visible!important;z-index:50}
+/* ===== NAV GLOBAL V4.77 ===== */
+/* Streamlit wraps st.markdown in its own element container. On mobile that wrapper
+   was painting the next block above the dropdown/avatar. Lift the WHOLE navbar
+   wrapper, not only the HTML inside it, and allow content to escape its bounds. */
+div[data-testid="stElementContainer"]:has(.sp429-shell),
+div[data-testid="stMarkdown"]:has(.sp429-shell),
+div[data-testid="stMarkdownContainer"]:has(.sp429-shell){position:relative!important;z-index:2147483000!important;overflow:visible!important}
+div[data-testid="stElementContainer"]:has(.sp429-shell)>div,
+div[data-testid="stMarkdown"]:has(.sp429-shell)>div,
+div[data-testid="stMarkdownContainer"]:has(.sp429-shell)>div{overflow:visible!important}
+.sp429-shell{box-sizing:border-box;position:relative;width:100%;max-width:none;margin:0 0 18px 0;padding:0;background:linear-gradient(180deg,#071827 0%,#05131f 100%);border:1px solid #163b59;border-radius:0 0 14px 14px;min-height:78px;font-family:"Segoe UI Variable",Inter,Manrope,Arial,sans-serif;box-shadow:0 8px 28px rgba(0,0,0,.16);overflow:visible!important;z-index:2147483001!important}
 .sp429-row{min-height:78px;padding:0 18px;display:flex;align-items:center;gap:10px;box-sizing:border-box;width:100%;overflow:visible}
 .sp429-brand{display:flex;align-items:center;gap:10px;flex:0 0 auto;margin-right:4px;white-space:nowrap;min-width:0}
 .sp429-star{font-size:27px;color:#20e6ff;line-height:1;text-shadow:0 0 16px rgba(32,230,255,.52)}
@@ -99,11 +108,11 @@ def render_top_nav(nav_name="Usuário", nav_role="Membro", nav_photo=None, activ
   .sp429-menu-button{height:37px;min-width:104px;padding:0 13px;display:inline-flex;align-items:center;justify-content:center;gap:8px;cursor:pointer;border-radius:10px;border:1px solid rgba(32,230,255,.58);background:linear-gradient(135deg,rgba(0,157,255,.24),rgba(32,230,255,.10));color:#f6fbff;font-size:10px;font-weight:950;letter-spacing:.08em;box-shadow:0 0 18px rgba(0,169,255,.10)}
   .sp429-menu-button svg{color:#20e6ff;width:18px;height:18px}
   .sp429-details[open] .sp429-menu-button{border-color:#20e6ff;box-shadow:0 0 0 1px rgba(32,230,255,.10),0 0 22px rgba(32,230,255,.15)}
-  .sp429-dropdown{position:absolute;left:0;top:44px;width:min(300px,calc(100vw - 28px));padding:8px;display:grid;grid-template-columns:1fr 1fr;gap:6px;background:rgba(4,17,29,.985);border:1px solid rgba(32,230,255,.34);border-radius:13px;box-shadow:0 18px 45px rgba(0,0,0,.50),0 0 28px rgba(0,164,255,.08);z-index:99999}
+  .sp429-dropdown{position:absolute;left:0;top:44px;width:min(300px,calc(100vw - 28px));padding:8px;display:grid;grid-template-columns:1fr 1fr;gap:6px;background:rgba(4,17,29,.985);border:1px solid rgba(32,230,255,.34);border-radius:13px;box-shadow:0 18px 45px rgba(0,0,0,.50),0 0 28px rgba(0,164,255,.08);z-index:2147483003!important}
   .sp429-mitem{min-height:44px;padding:7px 9px;display:flex;align-items:center;gap:8px;color:#a9bfd1!important;text-decoration:none!important;font-size:10px;font-weight:850;border:1px solid rgba(105,153,187,.14);border-radius:9px;background:rgba(9,31,49,.62);box-sizing:border-box}
   .sp429-mitem svg{width:16px;height:16px;color:#65cfff}
   .sp429-mitem.sp429-active{color:#fff!important;border-color:rgba(32,230,255,.60);background:linear-gradient(135deg,rgba(0,157,255,.26),rgba(32,230,255,.09));box-shadow:inset 0 1px 0 rgba(255,255,255,.05)}
-  .sp429-mobile-profile{position:absolute!important;right:12px!important;bottom:-24px!important;width:56px!important;height:56px!important;border-radius:50%!important;z-index:100000!important;display:flex!important;align-items:center!important;justify-content:center!important;text-decoration:none!important;filter:none!important}
+  .sp429-mobile-profile{position:absolute!important;right:12px!important;bottom:-24px!important;width:56px!important;height:56px!important;border-radius:50%!important;z-index:2147483004!important;display:flex!important;align-items:center!important;justify-content:center!important;text-decoration:none!important;filter:none!important}
   .sp429-mobile-profile .sp429-avatar{width:56px!important;height:56px!important;border:2px solid #20e6ff!important;box-shadow:0 0 0 4px #05131f,0 0 20px rgba(32,230,255,.42)!important}
   .sp429-mobile-profile:after{content:"";position:absolute;right:-1px;bottom:1px;width:14px;height:14px;border-radius:50%;background:#20e6ff;border:3px solid #05131f;box-sizing:border-box}
 }
@@ -120,10 +129,10 @@ def render_top_nav(nav_name="Usuário", nav_role="Membro", nav_photo=None, activ
 .sp429-force-mobile .sp429-details>summary{list-style:none;-webkit-tap-highlight-color:transparent}.sp429-force-mobile .sp429-details>summary::-webkit-details-marker{display:none}
 .sp429-force-mobile .sp429-menu-button{height:37px;min-width:104px;padding:0 13px;display:inline-flex;align-items:center;justify-content:center;gap:8px;cursor:pointer;border-radius:10px;border:1px solid rgba(32,230,255,.58);background:linear-gradient(135deg,rgba(0,157,255,.24),rgba(32,230,255,.10));color:#f6fbff;font-size:10px;font-weight:950;letter-spacing:.08em;box-shadow:0 0 18px rgba(0,169,255,.10)}
 .sp429-force-mobile .sp429-menu-button svg{color:#20e6ff;width:18px;height:18px}
-.sp429-force-mobile .sp429-dropdown{position:absolute;left:0;top:44px;width:min(300px,calc(100vw - 28px));padding:8px;display:grid;grid-template-columns:1fr 1fr;gap:6px;background:rgba(4,17,29,.985);border:1px solid rgba(32,230,255,.34);border-radius:13px;box-shadow:0 18px 45px rgba(0,0,0,.50),0 0 28px rgba(0,164,255,.08);z-index:99999}
+.sp429-force-mobile .sp429-dropdown{position:absolute;left:0;top:44px;width:min(300px,calc(100vw - 28px));padding:8px;display:grid;grid-template-columns:1fr 1fr;gap:6px;background:rgba(4,17,29,.985);border:1px solid rgba(32,230,255,.34);border-radius:13px;box-shadow:0 18px 45px rgba(0,0,0,.50),0 0 28px rgba(0,164,255,.08);z-index:2147483003!important}
 .sp429-force-mobile .sp429-mitem{min-height:44px;padding:7px 9px;display:flex;align-items:center;gap:8px;color:#a9bfd1!important;text-decoration:none!important;font-size:10px;font-weight:850;border:1px solid rgba(105,153,187,.14);border-radius:9px;background:rgba(9,31,49,.62);box-sizing:border-box}
 .sp429-force-mobile .sp429-mitem svg{width:16px;height:16px;color:#65cfff}.sp429-force-mobile .sp429-mitem.sp429-active{color:#fff!important;border-color:rgba(32,230,255,.60);background:linear-gradient(135deg,rgba(0,157,255,.26),rgba(32,230,255,.09))}
-.sp429-force-mobile .sp429-mobile-profile{position:absolute!important;right:12px!important;bottom:-24px!important;width:56px!important;height:56px!important;border-radius:50%!important;z-index:100000!important;display:flex!important;align-items:center!important;justify-content:center!important;text-decoration:none!important}
+.sp429-force-mobile .sp429-mobile-profile{position:absolute!important;right:12px!important;bottom:-24px!important;width:56px!important;height:56px!important;border-radius:50%!important;z-index:2147483004!important;display:flex!important;align-items:center!important;justify-content:center!important;text-decoration:none!important}
 .sp429-force-mobile .sp429-mobile-profile .sp429-avatar{width:56px!important;height:56px!important;border:2px solid #20e6ff!important;box-shadow:0 0 0 4px #05131f,0 0 20px rgba(32,230,255,.42)!important}
 .sp429-force-mobile .sp429-mobile-profile:after{content:"";position:absolute;right:-1px;bottom:1px;width:14px;height:14px;border-radius:50%;background:#20e6ff;border:3px solid #05131f;box-sizing:border-box}
 </style>'''
