@@ -256,3 +256,6 @@ V3.5: corrige RLS do Livro de Manobras e impede erros de banco de derrubarem a p
 - Para Admin, Cadastros continua somente no final em Administração como `Cargos e cadastros`.
 - Remove referência inválida a `04_Gerenciar_Times.py`, que estava causando StreamlitPageNotFoundError.
 - Sem migration.
+
+
+V4.75 mobile navigation fix: responsive MENU dropdown + overlapping clickable profile avatar; desktop nav preserved.
