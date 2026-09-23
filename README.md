@@ -259,3 +259,11 @@ V3.5: corrige RLS do Livro de Manobras e impede erros de banco de derrubarem a p
 
 
 V4.75 mobile navigation fix: responsive MENU dropdown + overlapping clickable profile avatar; desktop nav preserved.
+
+## V4.80 — staff técnico com acesso a todas as modalidades
+- Corrige o Histórico vazio para Técnico, Chefe de Equipe, Presidente, Vice-presidente e Comissão Técnica.
+- O problema estava nas regras RLS do Supabase, que ainda limitavam esses cargos aos skatistas do mesmo time.
+- Staff técnico passa a consultar todos os skatistas ativos, todos os times e todos os históricos, independentemente de Street/Park ou vínculo em `team_members`.
+- Staff técnico também pode salvar análises/CSVs/PDFs para qualquer skatista.
+- Familiar continua limitado ao atleta vinculado e skatista mantém as restrições de dados pessoais aplicáveis.
+- Execute **uma vez** `supabase_v4_80_acesso_staff_todas_modalidades.sql` no SQL Editor do Supabase. Apenas atualizar os arquivos do Streamlit não altera as regras RLS do banco.
