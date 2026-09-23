@@ -9,6 +9,15 @@ from ui_theme import apply_ui_theme
 st.set_page_config(initial_sidebar_state="collapsed", page_title="Seleção Brasileira de Skateboarding", page_icon="🛹", layout="wide")
 apply_ui_theme()
 
+def _is_mobile_request():
+    try:
+        ua = str(st.context.headers.get("User-Agent", "")).lower()
+    except Exception:
+        ua = ""
+    return any(x in ua for x in ("iphone", "ipad", "ipod", "android", "mobile"))
+
+IS_MOBILE = _is_mobile_request()
+
 st.markdown("""<style>
 /* V2.0 — controles globais escuros */
 [data-testid="stButton"] button,
@@ -70,6 +79,29 @@ h1,h2,h3,p,label{color:#eef8ff}
 [data-testid="stForm"]{border-color:#173b5a!important;background:#081827!important}
 </style>
 """, unsafe_allow_html=True)
+
+# V4.74 — correção mobile real baseada no User-Agent.
+# Não depende apenas de @media, pois alguns WebViews do iPhone reportam um viewport CSS maior.
+if IS_MOBILE:
+    st.markdown("""<style>
+    html,body,#root,.stApp,[data-testid="stApp"],[data-testid="stAppViewContainer"]{
+      width:100%!important;max-width:100%!important;min-height:100vh!important;min-height:100dvh!important;
+      overflow-x:hidden!important;background:#03111E!important;
+    }
+    [data-testid="stMain"],section.main,.main,[data-testid="stAppViewContainer"]>.main{
+      width:100%!important;max-width:100%!important;margin:0!important;overflow-x:hidden!important;
+    }
+    [data-testid="stMainBlockContainer"],.main .block-container,.block-container{
+      box-sizing:border-box!important;width:100%!important;max-width:100%!important;min-width:0!important;
+      margin:0!important;padding:0 10px 28px!important;overflow-x:hidden!important;
+    }
+    [data-testid="stElementContainer"],[data-testid="stCustomComponentV1"]{width:100%!important;max-width:100%!important;min-width:0!important;overflow:hidden!important;}
+    iframe[title="streamlit_elements.core.frame"]{display:block!important;width:100%!important;max-width:100%!important;min-width:0!important;border:0!important;background:#03111E!important;}
+    h1{font-size:2.05rem!important;line-height:1.08!important;letter-spacing:-.03em!important;margin-top:1rem!important;}
+    [data-testid="stCaptionContainer"] p{font-size:.95rem!important;line-height:1.4!important;}
+    [data-testid="stTabs"] [role="tablist"]{overflow-x:auto!important;white-space:nowrap!important;}
+    [data-testid="stForm"]{padding:16px!important;}
+    </style>""", unsafe_allow_html=True)
 
 # V4.01: a Home e o login não usam a sidebar antiga.
 st.markdown("""<style>
@@ -223,23 +255,18 @@ iframe[title="streamlit_elements.core.frame"] {
 </style>
 """, unsafe_allow_html=True)
 
-# V4.63 — largura premium controlada: grande, centralizada e responsiva.
-st.markdown("""<style>
-html,body,[data-testid="stApp"],[data-testid="stAppViewContainer"],.stApp{width:100%!important;background:#06111f!important;}
-[data-testid="stMain"],section.main,.main{width:100%!important;}
-[data-testid="stMainBlockContainer"],.main .block-container,.block-container{
-  width:min(1560px, calc(100vw - 48px))!important;
-  max-width:1560px!important;
-  margin:0 auto!important;
-  padding:0 0 40px!important;
-}
-iframe[title="streamlit_elements.core.frame"]{width:100%!important;background:#06111f!important;border:0!important;border-radius:0!important;}
-[data-testid="stElementContainer"]{overflow:visible!important;}
-[data-testid="stElementContainer"]:has(iframe[title="streamlit_elements.core.frame"]){background:#06111f!important;}
-@media(max-width:900px){
- [data-testid="stMainBlockContainer"],.main .block-container,.block-container{width:calc(100vw - 20px)!important;}
-}
-</style>""", unsafe_allow_html=True)
+# V4.74 — largura premium no desktop; no mobile usa 100% do container sem 100vw.
+if not IS_MOBILE:
+    st.markdown("""<style>
+    html,body,[data-testid="stApp"],[data-testid="stAppViewContainer"],.stApp{width:100%!important;background:#06111f!important;}
+    [data-testid="stMain"],section.main,.main{width:100%!important;}
+    [data-testid="stMainBlockContainer"],.main .block-container,.block-container{
+      width:min(1560px, calc(100vw - 48px))!important;max-width:1560px!important;margin:0 auto!important;padding:0 0 40px!important;
+    }
+    iframe[title="streamlit_elements.core.frame"]{width:100%!important;background:#06111f!important;border:0!important;border-radius:0!important;}
+    [data-testid="stElementContainer"]{overflow:visible!important;}
+    [data-testid="stElementContainer"]:has(iframe[title="streamlit_elements.core.frame"]){background:#06111f!important;}
+    </style>""", unsafe_allow_html=True)
 
 # Cores/estilos reutilizados pelos componentes Material UI.
 card = {
@@ -260,6 +287,12 @@ nav_role = str((profile or {}).get("role") or "membro").replace("_", " ").title(
 nav_photo = (profile or {}).get("photo_url")
 from nav_v472 import render_top_nav
 render_top_nav(nav_name=nav_name, nav_role=nav_role, nav_photo=nav_photo, active='Home', key="nav_Home.py")
+
+hero_min_h = 420 if IS_MOBILE else {"xs":430,"sm":390,"md":465}
+hero_title_size = 38 if IS_MOBILE else {"xs":34,"sm":46,"md":72}
+hero_line_height = .98 if IS_MOBILE else {"xs":.98,"md":.92}
+hero_letter_spacing = "-1.4px" if IS_MOBILE else {"xs":"-1.5px","md":"-3px"}
+hero_side_shape = {"right":"-28%","top":"12%","width":"70%","height":"76%"} if IS_MOBILE else {}
 
 with elements("skate_performance_home"):
     # O streamlit-elements roda dentro de um iframe. O fundo precisa ser definido
@@ -285,13 +318,13 @@ with elements("skate_performance_home"):
         with mui.Paper(elevation=0, sx={
             **card,
             "position":"relative","overflow":"hidden",
-            "minHeight":{"xs":430,"sm":390,"md":465},
+            "minHeight":hero_min_h,
             "mx":{"xs":0,"md":1},
             "background":"radial-gradient(circle at 80% 25%, rgba(0,133,255,.26), transparent 28%), linear-gradient(115deg,#06111d 10%,#09223a 58%,#071827 100%)",
         }):
             # Elementos abstratos dão profundidade sem fingir uma foto.
             mui.Box(sx={
-                "position":"absolute","right":{"xs":"-18%","md":"6%"},"top":"8%","width":{"xs":"62%","md":"34%"},"height":"84%",
+                "position":"absolute","right":hero_side_shape.get("right", {"xs":"-18%","md":"6%"}),"top":hero_side_shape.get("top", "8%"),"width":hero_side_shape.get("width", {"xs":"62%","md":"34%"}),"height":hero_side_shape.get("height", "84%"),
                 "border":"1px solid rgba(32,230,255,.16)","borderRadius":"50%",
                 "boxShadow":"0 0 90px rgba(0,126,255,.16) inset",
                 "transform":"rotate(-12deg)"
@@ -307,12 +340,12 @@ with elements("skate_performance_home"):
                     "color":cyan,"fontSize":{"xs":9,"sm":11},"fontWeight":900,"letterSpacing":{"xs":"3px","sm":"5px"},"mt":.5
                 })
                 mui.Typography("PERFORMANCE", sx={
-                    "color":white,"fontWeight":950,"fontSize":{"xs":34,"sm":46,"md":72},
-                    "lineHeight":{"xs":.98,"md":.92},"letterSpacing":{"xs":"-1.5px","md":"-3px"},"mt":3
+                    "color":white,"fontWeight":950,"fontSize":hero_title_size,
+                    "lineHeight":hero_line_height,"letterSpacing":hero_letter_spacing,"mt":3
                 })
                 mui.Typography("EM EVOLUÇÃO", sx={
-                    "color":white,"fontWeight":950,"fontSize":{"xs":34,"sm":46,"md":72},
-                    "lineHeight":{"xs":.98,"md":.92},"letterSpacing":{"xs":"-1.5px","md":"-3px"}
+                    "color":white,"fontWeight":950,"fontSize":hero_title_size,
+                    "lineHeight":hero_line_height,"letterSpacing":hero_letter_spacing
                 })
                 mui.Typography("ANÁLISE  •  EVOLUÇÃO  •  PERFORMANCE", sx={
                     "color":"#a7bbcc","fontSize":11,"fontWeight":800,"letterSpacing":"1.6px","mt":2.5
@@ -334,7 +367,7 @@ with elements("skate_performance_home"):
         # KPIs principais — cards neon, tipografia maior e labels mais legíveis
         with mui.Box(sx={
             "display":"grid",
-            "gridTemplateColumns":{"xs":"1fr","sm":"repeat(2,1fr)","lg":"repeat(4,1fr)"},
+            "gridTemplateColumns":"1fr" if IS_MOBILE else {"xs":"1fr","sm":"repeat(2,1fr)","lg":"repeat(4,1fr)"},
             "gap":1.8,"mx":{"xs":0,"md":1},"mt":2.2
         }):
             kpis = [

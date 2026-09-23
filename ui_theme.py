@@ -91,58 +91,8 @@ def apply_ui_theme():
     label,legend,[data-testid="stWidgetLabel"] p{color:#C4D1DF!important}
         @media(max-width:768px){html,body,#root,[data-testid="stApp"],[data-testid="stAppViewContainer"]{background:#03111E!important}.block-container{padding-left:.75rem!important;padding-right:.75rem!important}.stColumn{min-width:0!important}[data-testid="stSidebar"]{border-right:none!important}}
     
-    /* V3.23 — sidebar permanente.
-       Não depende do estado salvo pelo navegador/Streamlit. */
-    section[data-testid="stSidebar"]{
-      display:block!important;
-      visibility:visible!important;
-      transform:translateX(0)!important;
-      margin-left:0!important;
-      left:0!important;
-      min-width:244px!important;
-      width:244px!important;
-      opacity:1!important;
-      z-index:999999!important;
-    }
-    section[data-testid="stSidebar"] > div{
-      display:block!important;
-      visibility:visible!important;
-    }
-    [data-testid="stSidebarCollapseButton"],
-    button[aria-label="Close sidebar"]{
-      display:none!important;
-    }
-    /* O botão de expandir não é mais necessário: o menu não pode ser recolhido. */
-    [data-testid="collapsedControl"],
-    [data-testid="stSidebarCollapsedControl"],
-    button[data-testid="stSidebarCollapsedControl"],
-    button[aria-label="Open sidebar"]{
-      display:none!important;
-    }
-
-    /* V3.25: remover navegação mobile/legada duplicada no web. */
-    .mobile-nav,.mobile-nav-container,.mobile-quick-nav,.bottom-nav,
-    [class*="mobile-nav"],[id*="mobile-nav"]{display:none!important}
-
-    /* V3.29 — manter o menu principal original e retirar SOMENTE:
-       Cadastros, Análise de Treino, Perfil do Atleta e Codificar Sessão. */
-    [data-testid="stSidebarNav"] a[href*="Cadastros"],
-    [data-testid="stSidebarNav"] a[href*="cadastros"],
-    [data-testid="stSidebarNav"] a[href*="Analise_de_Treino"],
-    [data-testid="stSidebarNav"] a[href*="analise_de_treino"],
-    [data-testid="stSidebarNav"] a[href*="Perfil_do_Atleta"],
-    [data-testid="stSidebarNav"] a[href*="perfil_do_atleta"],
-    [data-testid="stSidebarNav"] a[href*="Codificar_Sessao"],
-    [data-testid="stSidebarNav"] a[href*="codificar_sessao"]{
-      display:none!important;
-    }
-
-    /* O menu principal nativo volta a aparecer normalmente. */
-    [data-testid="stSidebarNav"]{
-      display:block!important;
-      visibility:visible!important;
-      height:auto!important;
-      min-height:initial!important;
-      overflow:visible!important;
-    }
+    /* V4.74 — navegação antiga definitivamente desativada. */
+    section[data-testid="stSidebar"],[data-testid="stSidebarNav"],[data-testid="stSidebarCollapsedControl"],[data-testid="collapsedControl"],button[aria-label="Open sidebar"],button[aria-label="Close sidebar"]{display:none!important;visibility:hidden!important;width:0!important;min-width:0!important;}
+    html,body,#root,.stApp,[data-testid="stApp"],[data-testid="stAppViewContainer"]{background:#03111E!important;min-height:100vh!important;min-height:100dvh!important;}
+    html,body,#root{max-width:100%!important;overflow-x:hidden!important;}
 </style>''', unsafe_allow_html=True)
