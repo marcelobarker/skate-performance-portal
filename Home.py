@@ -285,34 +285,34 @@ with elements("skate_performance_home"):
         with mui.Paper(elevation=0, sx={
             **card,
             "position":"relative","overflow":"hidden",
-            "minHeight":{"xs":390,"md":465},
+            "minHeight":{"xs":430,"sm":390,"md":465},
             "mx":{"xs":0,"md":1},
             "background":"radial-gradient(circle at 80% 25%, rgba(0,133,255,.26), transparent 28%), linear-gradient(115deg,#06111d 10%,#09223a 58%,#071827 100%)",
         }):
             # Elementos abstratos dão profundidade sem fingir uma foto.
             mui.Box(sx={
-                "position":"absolute","right":"6%","top":"8%","width":"34%","height":"84%",
+                "position":"absolute","right":{"xs":"-18%","md":"6%"},"top":"8%","width":{"xs":"62%","md":"34%"},"height":"84%",
                 "border":"1px solid rgba(32,230,255,.16)","borderRadius":"50%",
                 "boxShadow":"0 0 90px rgba(0,126,255,.16) inset",
                 "transform":"rotate(-12deg)"
             })
             with mui.Box(sx={
-                "position":"relative","zIndex":2,"px":{"xs":3,"md":7},"py":{"xs":5,"md":7},
+                "position":"relative","zIndex":2,"px":{"xs":2.2,"sm":3,"md":7},"py":{"xs":4,"sm":5,"md":7},
                 "maxWidth":820
             }):
                 mui.Typography("SELEÇÃO BRASILEIRA", sx={
-                    "color":white,"fontSize":14,"fontWeight":900,"letterSpacing":"1.5px"
+                    "color":white,"fontSize":{"xs":12,"sm":14},"fontWeight":900,"letterSpacing":{"xs":"1px","sm":"1.5px"}
                 })
                 mui.Typography("DE SKATEBOARDING", sx={
-                    "color":cyan,"fontSize":11,"fontWeight":900,"letterSpacing":"5px","mt":.5
+                    "color":cyan,"fontSize":{"xs":9,"sm":11},"fontWeight":900,"letterSpacing":{"xs":"3px","sm":"5px"},"mt":.5
                 })
                 mui.Typography("PERFORMANCE", sx={
-                    "color":white,"fontWeight":950,"fontSize":{"xs":46,"md":72},
-                    "lineHeight":.92,"letterSpacing":"-3px","mt":3
+                    "color":white,"fontWeight":950,"fontSize":{"xs":34,"sm":46,"md":72},
+                    "lineHeight":{"xs":.98,"md":.92},"letterSpacing":{"xs":"-1.5px","md":"-3px"},"mt":3
                 })
                 mui.Typography("EM EVOLUÇÃO", sx={
-                    "color":white,"fontWeight":950,"fontSize":{"xs":46,"md":72},
-                    "lineHeight":.92,"letterSpacing":"-3px"
+                    "color":white,"fontWeight":950,"fontSize":{"xs":34,"sm":46,"md":72},
+                    "lineHeight":{"xs":.98,"md":.92},"letterSpacing":{"xs":"-1.5px","md":"-3px"}
                 })
                 mui.Typography("ANÁLISE  •  EVOLUÇÃO  •  PERFORMANCE", sx={
                     "color":"#a7bbcc","fontSize":11,"fontWeight":800,"letterSpacing":"1.6px","mt":2.5

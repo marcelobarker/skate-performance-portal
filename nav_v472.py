@@ -31,6 +31,20 @@ def render_top_nav(nav_name="Usuário",nav_role="Membro",nav_photo=None,active="
 .sp429-item.sp429-active svg{color:#20e6ff;filter:drop-shadow(0 0 5px rgba(32,230,255,.60));stroke-width:2}
 .sp429-user{margin-left:auto;display:flex;align-items:center;gap:10px;flex:0 0 auto;padding-left:8px}.sp429-usertext{text-align:right;line-height:1.05;max-width:145px}.sp429-name{color:#f5f8fc;font-size:12px;font-weight:900;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.sp429-role{color:#20e6ff;font-size:10px;font-weight:800;letter-spacing:.45px;margin-top:3px}.sp429-avatar{box-sizing:border-box;width:40px;height:40px;border-radius:50%;object-fit:cover;border:1.5px solid #20e6ff;box-shadow:0 0 12px rgba(32,230,255,.22)}.sp429-initials{display:flex;align-items:center;justify-content:center;background:#0c3554;color:#20e6ff;font-size:12px;font-weight:950}
 @media(max-width:1350px){.sp429-row{gap:10px;padding:0 12px}.sp429-brand{margin-right:4px}.sp429-menu{gap:3px;padding:5px}.sp429-item{padding:0 9px}.sp429-usertext{display:none}}
+
+@media(max-width:700px){
+ .sp429-shell{margin-bottom:12px;border-radius:0 0 12px 12px;min-height:auto;overflow:hidden}
+ .sp429-row{min-height:auto;padding:12px 12px 10px;display:grid;grid-template-columns:1fr;gap:10px}
+ .sp429-brand{width:100%;margin:0;padding:0 2px}
+ .sp429-star{font-size:22px}.sp429-title{font-size:10px}.sp429-sub{font-size:6px;letter-spacing:1.2px}
+ .sp429-menu{width:100%;max-width:100%;overflow-x:auto;overflow-y:hidden;justify-content:flex-start;gap:5px;padding:5px;scrollbar-width:none;-webkit-overflow-scrolling:touch}
+ .sp429-menu::-webkit-scrollbar{display:none}
+ .sp429-item{height:42px;min-width:max-content;padding:0 12px;font-size:10px;border-radius:10px}
+ .sp429-item svg{width:15px;height:15px}
+ .sp429-item.sp429-active{padding:0 13px}
+ .sp429-item.sp429-active:after{bottom:-5px}
+ .sp429-user{display:none}
+}
 </style>''' 
     body=f'<nav class="sp429-shell" data-key="{html.escape(str(key),quote=True)}"><div class="sp429-row"><div class="sp429-brand"><div class="sp429-star">✦</div><div><div class="sp429-title">ANÁLISE • EVOLUÇÃO • PERFORMANCE</div><div class="sp429-sub">SKATEBOARDING PERFORMANCE SYSTEM</div></div></div><div class="sp429-menu">{"".join(links)}</div><div class="sp429-user"><div class="sp429-usertext"><div class="sp429-name">{html.escape(nav_name)}</div><div class="sp429-role">{html.escape(nav_role)}</div></div>{avatar}</div></div></nav>'
     st.markdown(css+body,unsafe_allow_html=True)
