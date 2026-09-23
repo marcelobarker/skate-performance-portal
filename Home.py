@@ -77,17 +77,6 @@ section[data-testid="stSidebar"],[data-testid="stSidebar"],[data-testid="stSideb
 [data-testid="stAppViewContainer"]>.main{margin-left:0!important;width:100%!important}
 </style>""", unsafe_allow_html=True)
 
-
-# V4.38 — teste de navegação real via callback do streamlit-elements
-def _nav_analise(*args, **kwargs):
-    st.switch_page("pages/03_Analise_de_Treino.py")
-
-def _nav_times(*args, **kwargs):
-    st.switch_page("pages/02_Times.py")
-
-def _nav_historico(*args, **kwargs):
-    st.switch_page("pages/04_Historico_de_Treinos.py")
-
 user = current_user()
 profile = current_profile()
 if user and not profile:
@@ -257,6 +246,50 @@ white = "#f5f8fc"
 cyan = "#20e6ff"
 blue = "#0787ff"
 
+
+# V4.39 — navegação nativa Streamlit (teste confiável)
+st.markdown("""
+<style>
+div[data-testid="stHorizontalBlock"]:has(a[data-testid="stPageLink-NavLink"]) {
+    background:#061523;
+    border:1px solid #163b59;
+    border-radius:12px;
+    padding:6px 10px;
+    gap:4px;
+    margin:0 0 8px 0;
+}
+a[data-testid="stPageLink-NavLink"] {
+    text-decoration:none!important;
+    border-radius:9px!important;
+    padding:7px 10px!important;
+}
+a[data-testid="stPageLink-NavLink"]:hover {
+    background:#0b2940!important;
+}
+a[data-testid="stPageLink-NavLink"] p {
+    color:#c4d1df!important;
+    font-weight:800!important;
+    font-size:13px!important;
+}
+@media (max-width:768px){
+  div[data-testid="stHorizontalBlock"]:has(a[data-testid="stPageLink-NavLink"]) {
+    overflow-x:auto!important;
+    flex-wrap:nowrap!important;
+  }
+}
+</style>
+""", unsafe_allow_html=True)
+
+_nav_cols = st.columns(4)
+with _nav_cols[0]:
+    st.page_link("Home.py", label="Home", icon=":material/home:")
+with _nav_cols[1]:
+    st.page_link("pages/03_Analise_de_Treino.py", label="Análise", icon=":material/analytics:")
+with _nav_cols[2]:
+    st.page_link("pages/02_Times.py", label="Times", icon=":material/groups:")
+with _nav_cols[3]:
+    st.page_link("pages/04_Historico_de_Treinos.py", label="Histórico", icon=":material/history:")
+
 nav_name = str((profile or {}).get("full_name") or getattr(user, "email", None) or "Usuário").strip()
 nav_role = str((profile or {}).get("role") or "membro").replace("_", " ").title()
 nav_photo = (profile or {}).get("photo_url")
@@ -299,16 +332,16 @@ with elements("skate_performance_home"):
                             "color":cyan,"fontWeight":850,"fontSize":7,
                             "letterSpacing":"2px","mt":.45
                         })
-                _nav_items = [
-                    ("Home", mui.icon.HomeOutlined, True, None),
-                    ("Análise", mui.icon.AnalyticsOutlined, False, _nav_analise),
-                    ("Atletas", mui.icon.GroupsOutlined, False, _nav_times),
-                    ("Times", mui.icon.ShieldOutlined, False, _nav_times),
-                    ("Histórico", mui.icon.History, False, _nav_historico),
-                ]
-                for label, Icon, active, callback in _nav_items:
+                for label, Icon, active, href in [
+                    ("Home", mui.icon.HomeOutlined, True, "/"),
+                    ("Análise", mui.icon.AnalyticsOutlined, False, "/Analise_de_Treino"),
+                    ("Atletas", mui.icon.GroupsOutlined, False, "/Times"),
+                    ("Times", mui.icon.ShieldOutlined, False, "/Times"),
+                    ("Histórico", mui.icon.History, False, "/Historico_de_Treinos"),
+                ]:
                     with mui.Button(
-                        onClick=callback,
+                        href=href,
+                        target="_top",
                         startIcon=Icon(),
                         sx={
                             "height":61,"minWidth":"auto","px":1,"flexShrink":0,
