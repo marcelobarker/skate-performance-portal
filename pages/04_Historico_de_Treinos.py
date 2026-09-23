@@ -3,40 +3,82 @@ import io, zipfile
 from datetime import date, timedelta
 import streamlit as st
 import plotly.graph_objects as go
+from streamlit_elements import elements, mui
 from auth_utils import require_login, get_supabase
 from report_engine import read_csv, is_aggregate, parse_raw, parse_aggregate, merge_sessions, make_pdf, make_visual_pdf
 
 from ui_theme import apply_ui_theme
 
-st.set_page_config(initial_sidebar_state="expanded", page_title="Histórico • Skate Performance", page_icon="📚", layout="wide")
+st.set_page_config(initial_sidebar_state="collapsed", page_title="Histórico • Seleção Brasileira de Skateboarding", page_icon="📚", layout="wide")
 apply_ui_theme()
 
-st.markdown("""<style>
-/* V2.0 — controles globais escuros */
-[data-testid="stButton"] button,
-[data-testid="stFormSubmitButton"] button,
-[data-testid="stDownloadButton"] button {
-  background:#0b1d31!important;color:#eef8ff!important;border:1px solid #245274!important;border-radius:10px!important;
+st.markdown(r"""<style>
+/* HISTÓRICO V4 — fullscreen, centralizado e dark/neon */
+[data-testid="stToolbar"], [data-testid="stHeader"],
+section[data-testid="stSidebar"], aside[data-testid="stSidebar"], div[data-testid="stSidebar"],
+[data-testid="stSidebar"], [data-testid="stSidebarNav"], [data-testid="stSidebarContent"],
+[data-testid="stSidebarCollapsedControl"], [data-testid="collapsedControl"],
+button[aria-label="Open sidebar"], button[aria-label="Close sidebar"], button[kind="headerNoPadding"]{
+display:none!important;width:0!important;min-width:0!important;max-width:0!important;visibility:hidden!important;}
+[data-testid="stAppViewContainer"], .stApp {background:linear-gradient(180deg,#03111e 0%,#020b14 55%,#04101c 100%)!important;color:#f5f8fc!important;}
+[data-testid="stAppViewContainer"]>.main,[data-testid="stAppViewContainer"]>section.main,section.main,
+[data-testid="stMain"],[data-testid="stMainBlockContainer"]{margin-left:0!important;width:100%!important;max-width:100%!important;}
+[data-testid="stAppViewContainer"]>section>div {margin-left:0!important;width:100%!important;}
+[data-testid="stCustomComponentV1"]{background:transparent!important;border:0!important;outline:0!important;box-shadow:none!important;padding:0!important;}
+[data-testid="stCustomComponentV1"] iframe{background:transparent!important;border:0!important;outline:0!important;box-shadow:none!important;}
+iframe[title="streamlit_elements.core.frame"]{border:0!important;outline:0!important;background:#03111e!important;}
+.block-container{width:100%!important;max-width:1480px!important;padding:0 26px 56px!important;margin:0 auto!important;}
+html,body,[class*="css"],.stApp{font-family:"Segoe UI Variable",Inter,Manrope,Arial,sans-serif!important;}
+h1,h2,h3,h4,p,label,[data-testid="stMarkdownContainer"]{color:#eef8ff!important;}
+[data-testid="stCaptionContainer"],small{color:#91a9bd!important;}
+/* controles */
+[data-testid="stButton"] button,[data-testid="stFormSubmitButton"] button,[data-testid="stDownloadButton"] button{background:linear-gradient(145deg,#0b2035,#081827)!important;color:#eef8ff!important;border:1px solid #20577b!important;border-radius:11px!important;min-height:43px!important;font-weight:800!important;box-shadow:inset 0 0 16px rgba(0,126,255,.05)!important;}
+[data-testid="stButton"] button:hover,[data-testid="stFormSubmitButton"] button:hover,[data-testid="stDownloadButton"] button:hover{border-color:#20e6ff!important;color:#fff!important;box-shadow:0 0 18px rgba(0,217,255,.20)!important;}
+[data-testid="stTextInput"] input,[data-testid="stNumberInput"] input,[data-testid="stDateInput"] input,[data-testid="stTimeInput"] input,[data-baseweb="select"]>div,[data-baseweb="input"],textarea{background:#081b2d!important;color:#eef8ff!important;border-color:#1b668d!important;border-radius:10px!important;-webkit-text-fill-color:#eef8ff!important;}
+[data-baseweb="select"] span,[data-baseweb="select"] svg{color:#eaf7ff!important;fill:#eaf7ff!important;}
+[data-baseweb="popover"] ul,[role="listbox"]{background:#081b2d!important;color:#f5f8fc!important;} [role="option"]{color:#eaf7ff!important;background:#081b2d!important;} [role="option"]:hover{background:#0d2b45!important;}
+/* cards das sessões */
+[data-testid="stVerticalBlockBorderWrapper"]{border-radius:16px!important;border:1px solid rgba(41,168,255,.25)!important;background:linear-gradient(145deg,rgba(8,27,45,.98),rgba(5,18,31,.98))!important;box-shadow:0 12px 30px rgba(0,0,0,.22),inset 0 1px rgba(255,255,255,.02)!important;}
+[data-testid="stVerticalBlockBorderWrapper"]:hover{border-color:rgba(32,230,255,.42)!important;box-shadow:0 12px 34px rgba(0,0,0,.28),0 0 22px rgba(0,217,255,.06)!important;}
+[data-testid="stMetric"]{background:linear-gradient(145deg,#071b2d,#061421)!important;border:1px solid #16476a!important;border-radius:14px!important;padding:14px 16px!important;box-shadow:0 0 22px rgba(8,124,255,.06)!important;}
+[data-testid="stMetricLabel"]{color:#8fa9bf!important;font-weight:800!important;text-transform:uppercase!important;letter-spacing:.6px!important;}
+[data-testid="stMetricValue"]{color:#f7fbff!important;font-weight:950!important;}
+/* cabeçalhos visuais */
+.hist-hero{margin:20px 0 18px;padding:26px 28px;border:1px solid #16476a;border-radius:18px;background:radial-gradient(circle at 88% 20%,rgba(0,217,255,.10),transparent 25%),linear-gradient(120deg,#071a2c,#061421 62%,#071b2d);box-shadow:0 16px 38px rgba(0,0,0,.20);}
+.hist-kicker{color:#20e6ff;font-size:11px;font-weight:900;letter-spacing:2.2px;text-transform:uppercase;margin-bottom:7px}.hist-title{font-size:30px;font-weight:950;letter-spacing:-.7px;color:#f5f8fc;line-height:1.08}.hist-sub{color:#9bb0c3;font-size:13px;margin-top:7px}.section-label{font-size:11px;font-weight:950;letter-spacing:1.8px;color:#20e6ff;text-transform:uppercase;margin:22px 0 8px;}
+/* tabela */
+[data-testid="stDataFrame"]{border:1px solid #16476a!important;border-radius:12px!important;overflow:hidden!important;}
+@media(max-width:768px){.block-container{padding:0 12px 40px!important}.hist-title{font-size:24px}[data-testid="stHorizontalBlock"]{flex-wrap:wrap!important;gap:8px!important}[data-testid="stHorizontalBlock"]>[data-testid="stColumn"]{min-width:100%!important;width:100%!important;flex:1 1 100%!important}}
+
+/* V4.19 — acabamento do histórico */
+[data-testid="stVerticalBlockBorderWrapper"] > div{padding-top:4px!important;padding-bottom:4px!important;}
+[data-testid="stCheckbox"] label{font-size:12px!important;color:#91a9bd!important;}
+[data-testid="stCheckbox"]{margin-top:2px!important;margin-bottom:-4px!important;}
+[data-testid="stButton"] button:disabled{opacity:.42!important;box-shadow:none!important;}
+
+/* V4.20 — KPIs de análise em vídeo */
+.hist-kpi-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin:8px 0 18px}.hist-kpi{background:linear-gradient(145deg,#0a2137,#07192a);border:1px solid #1a608a;border-radius:14px;padding:14px;display:grid;grid-template-columns:42px 1fr;gap:11px;align-items:center;box-shadow:0 8px 22px rgba(0,0,0,.16)}.hist-kpi-icon{width:40px;height:40px;border-radius:12px;display:flex;align-items:center;justify-content:center;color:#20e6ff;background:rgba(0,217,255,.08);border:1px solid rgba(32,230,255,.28)}.hist-kpi-icon svg{width:21px;height:21px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}.hist-kpi-label{font-size:10px;color:#a9c7dc;font-weight:850;letter-spacing:.08em}.hist-kpi-value{font-size:28px;color:#f6fbff;font-weight:950;line-height:1.05;margin-top:3px}.hist-kpi.error{border-color:#703044}.hist-kpi.error .hist-kpi-icon,.hist-kpi.error .hist-kpi-value{color:#ff5260}@media(max-width:900px){.hist-kpi-grid{grid-template-columns:repeat(2,1fr)}}
+
+/* V4.23 unified redesigned-page frame */
+[data-testid="stMainBlockContainer"]{
+  border-left:8px solid #f5f8fc!important;
+  border-right:8px solid #f5f8fc!important;
+  box-sizing:border-box!important;
 }
-[data-testid="stButton"] button:hover,[data-testid="stFormSubmitButton"] button:hover,[data-testid="stDownloadButton"] button:hover{
-  background:#102b46!important;color:#fff!important;border-color:#1398ff!important;
+[data-testid="stMainBlockContainer"]::before{
+  content:"";display:block;height:8px;background:#f5f8fc;margin:0 -0px 0;
 }
-[data-testid="stButton"] button:disabled,[data-testid="stFormSubmitButton"] button:disabled{
-  background:#0a1725!important;color:#668097!important;border-color:#18354d!important;opacity:.8!important;
+
+
+/* V4.24 — navbar encostada no topo */
+[data-testid="stMainBlockContainer"]{
+  padding-top:0!important;
+  margin-top:0!important;
 }
-[data-testid="stTextInput"] input,[data-testid="stNumberInput"] input,[data-testid="stDateInput"] input,[data-testid="stTimeInput"] input,
-[data-testid="stSelectbox"] [role="combobox"],[data-testid="stMultiSelect"] [role="combobox"],textarea{
-  background:#0b1d2d!important;color:#eef8ff!important;border-color:#245274!important;
+.main .block-container,.block-container{
+  padding-top:0!important;
+  margin-top:0!important;
 }
-[data-testid="stDateInput"] button,[data-testid="stTimeInput"] button{background:#0b1d2d!important;color:#eef8ff!important;}
-[data-baseweb="input"],[data-baseweb="select"]>div,[data-baseweb="textarea"]{background:#0b1d2d!important;color:#eef8ff!important;}
-</style>""", unsafe_allow_html=True)
-st.markdown("""<style>
-[data-testid="stToolbar"]{display:none!important}
-.stApp,[data-testid="stAppViewContainer"]{background:#06111f!important;color:#eef8ff!important}
-[data-testid="stSidebar"]{background:#081827!important}[data-testid="stSidebar"] *{color:#d9eafa!important}
-.block-container{padding-top:1.2rem!important} h1,h2,h3,p,label{color:#eef8ff!important}
-[data-testid="stSelectbox"]>div>div{background:#0b1d2d!important;color:#eef8ff!important;border-color:#24445d!important}
 </style>""", unsafe_allow_html=True)
 
 user, profile = require_login()
@@ -47,22 +89,39 @@ is_technician = role in ("tecnico","presidente","vice_presidente","chefe_equipe"
 is_family = role == "familiar"
 
 
-st.markdown('''<style>
-/* V3.6 histórico: cards mais compactos e ações legíveis */
-[data-testid="stVerticalBlockBorderWrapper"]{border-radius:14px!important;border-color:rgba(41,168,255,.24)!important;background:linear-gradient(145deg,#081b2d,#061727)!important;box-shadow:0 8px 22px rgba(0,0,0,.22)!important}
-[data-testid="stVerticalBlockBorderWrapper"] h4{font-size:18px!important;margin-bottom:2px!important}
-[data-testid="stVerticalBlockBorderWrapper"] [data-testid="stButton"] button,
-[data-testid="stVerticalBlockBorderWrapper"] [data-testid="stDownloadButton"] button{min-height:48px!important;height:auto!important;white-space:normal!important;line-height:1.15!important;font-size:12px!important;padding:8px 10px!important}
-@media(max-width:768px){
- [data-testid="stVerticalBlockBorderWrapper"]{padding:4px!important}
- [data-testid="stVerticalBlockBorderWrapper"] [data-testid="stHorizontalBlock"]{flex-wrap:wrap!important;gap:8px!important}
- [data-testid="stVerticalBlockBorderWrapper"] [data-testid="stHorizontalBlock"]>[data-testid="stColumn"]{min-width:100%!important;width:100%!important;flex:1 1 100%!important}
- [data-testid="stVerticalBlockBorderWrapper"] [data-testid="stButton"] button,[data-testid="stVerticalBlockBorderWrapper"] [data-testid="stDownloadButton"] button{font-size:13px!important;min-height:46px!important;width:100%!important}
-}
-</style>''',unsafe_allow_html=True)
 
-st.title("📚 Histórico de Treinos")
-st.caption("Sessões, CSVs e relatórios vinculados a cada skatista.")
+
+# Navbar padronizada com Home / Times / Análise.
+nav_name = str((profile or {}).get("full_name") or getattr(user, "email", None) or "Usuário").strip()
+nav_role = str((profile or {}).get("role") or "membro").replace("_", " ").title()
+nav_photo = (profile or {}).get("photo_url")
+nav_initials = "".join(part[:1].upper() for part in nav_name.split()[:2]) or "U"
+
+with elements("historico_top_nav"):
+    with mui.Box(sx={"backgroundColor":"#03111e","width":"100%","m":0,"p":0}):
+      with mui.Paper(elevation=0, square=True, sx={
+          "mb":0,"backgroundColor":"#061523","border":"1px solid #163b59",
+          "borderRadius":"0 0 14px 14px","minHeight":62,"display":"flex",
+          "alignItems":"center","px":{"xs":1,"md":2},"fontFamily":"\"Segoe UI Variable\", Inter, Manrope, Arial, sans-serif"
+      }):
+          with mui.Box(sx={"display":"flex","alignItems":"center","gap":{"xs":1,"md":3},"width":"100%","overflowX":"auto"}):
+              with mui.Box(sx={"display":"flex","alignItems":"center","gap":1.1,"mr":{"xs":1,"md":3},"flexShrink":0}):
+                  mui.icon.AutoAwesome(sx={"color":"#20e6ff","fontSize":27})
+                  with mui.Box:
+                      mui.Typography("ANÁLISE • EVOLUÇÃO • PERFORMANCE",sx={"color":"#f5f8fc","fontWeight":950,"fontSize":12,"letterSpacing":".7px","lineHeight":1.2})
+                      mui.Typography("SKATEBOARDING PERFORMANCE SYSTEM",sx={"color":"#20e6ff","fontWeight":850,"fontSize":7,"letterSpacing":"2px","mt":.45})
+              for label, Icon, active in [("Home",mui.icon.HomeOutlined,False),("Análise",mui.icon.AnalyticsOutlined,False),("Atletas",mui.icon.GroupsOutlined,False),("Times",mui.icon.ShieldOutlined,False),("Histórico",mui.icon.History,True)]:
+                  with mui.Button(startIcon=Icon(),sx={"height":61,"minWidth":"auto","px":1,"flexShrink":0,"textTransform":"none","borderRadius":0,"color":"#20e6ff" if active else "#9fb4c7","borderBottom":"2px solid #20e6ff" if active else "2px solid transparent","fontSize":12,"fontWeight":850}):
+                      mui.Typography(label,sx={"fontSize":12,"fontWeight":850})
+              with mui.Box(sx={"ml":"auto","display":{"xs":"none","md":"flex"},"alignItems":"center","gap":1.0,"pl":1.5,"flexShrink":0}):
+                  with mui.Box(sx={"textAlign":"right","lineHeight":1.05}):
+                      mui.Typography(nav_name,sx={"color":"#f5f8fc","fontSize":10.5,"fontWeight":900,"maxWidth":145,"whiteSpace":"nowrap","overflow":"hidden","textOverflow":"ellipsis"})
+                      mui.Typography(nav_role,sx={"color":"#20e6ff","fontSize":7.5,"fontWeight":800,"letterSpacing":".45px"})
+                  if nav_photo:
+                      mui.Avatar(src=nav_photo,sx={"width":35,"height":35,"border":"1px solid #20e6ff","boxShadow":"0 0 12px rgba(32,230,255,.22)"})
+                  else:
+                      mui.Avatar(nav_initials,sx={"width":35,"height":35,"bgcolor":"#0c3554","color":"#20e6ff","border":"1px solid #20e6ff","fontSize":10,"fontWeight":950})
+st.markdown("""<div class="hist-hero"><div class="hist-kicker">Performance archive</div><div class="hist-title">Histórico de Treinos</div><div class="hist-sub">Consulte sessões, análises, CSVs e relatórios de cada atleta em um único lugar.</div></div>""",unsafe_allow_html=True)
 
 try:
     if is_admin or is_technician:
@@ -102,7 +161,8 @@ try:
 except Exception as exc:
     st.error(f"Não foi possível carregar o histórico: {exc}"); st.stop()
 
-st.markdown(f"### {athlete.get('full_name') or 'Skatista'}")
+st.markdown('<div class="section-label">Atleta selecionado</div>',unsafe_allow_html=True)
+st.markdown(f"## {athlete.get('full_name') or 'Skatista'}")
 # Sessões codificadas em vídeo também fazem parte do histórico do atleta.
 try:
     video_posts=(sb.table("athlete_posts").select("id,session_title,created_at,analysis_status,upload_kind")
@@ -115,7 +175,8 @@ if not rows and not video_posts:
     st.info("Nenhum treino salvo para este skatista neste período."); st.stop()
 
 if video_posts:
-    st.markdown("## ▶ Treinos codificados em vídeo")
+    st.markdown('<div class="section-label">Análise por vídeo</div>',unsafe_allow_html=True)
+    st.markdown("## Treinos codificados em vídeo")
     st.caption("Sessões analisadas por tentativa, com a mesma leitura de performance do dashboard.")
     for vp in video_posts:
         ev=[x for x in all_events if x.get("post_id")==vp["id"]]
@@ -126,7 +187,12 @@ if video_posts:
                 st.caption("Ainda sem tentativas codificadas.")
                 continue
             total=len(ev); hits=sum(1 for x in ev if x.get('result')=='Acerto'); errors=total-hits; rate=hits/total*100 if total else 0
-            a,b,c,d=st.columns(4); a.metric('Tentativas',total); b.metric('Acertos',hits); c.metric('Erros',errors); d.metric('Taxa de acerto',f'{rate:.1f}%')
+            st.markdown(f"""<div class="hist-kpi-grid">
+<div class="hist-kpi"><div class="hist-kpi-icon"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="3"/><path d="M12 2v3M22 12h-3"/></svg></div><div><div class="hist-kpi-label">TENTATIVAS</div><div class="hist-kpi-value">{total}</div></div></div>
+<div class="hist-kpi"><div class="hist-kpi-icon"><svg viewBox="0 0 24 24"><path d="M5 12l4 4L19 6"/><circle cx="12" cy="12" r="9"/></svg></div><div><div class="hist-kpi-label">ACERTOS</div><div class="hist-kpi-value">{hits}</div></div></div>
+<div class="hist-kpi error"><div class="hist-kpi-icon"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M9 9l6 6M15 9l-6 6"/></svg></div><div><div class="hist-kpi-label">ERROS</div><div class="hist-kpi-value">{errors}</div></div></div>
+<div class="hist-kpi"><div class="hist-kpi-icon"><svg viewBox="0 0 24 24"><path d="M7 17L17 7"/><circle cx="8" cy="8" r="2"/><circle cx="16" cy="16" r="2"/></svg></div><div><div class="hist-kpi-label">TAXA DE ACERTO</div><div class="hist-kpi-value">{rate:.1f}%</div></div></div>
+</div>""",unsafe_allow_html=True)
             def dist(field):
                 out={}
                 for x in ev:
@@ -135,8 +201,10 @@ if video_posts:
                 return out
             def donut(title,data):
                 colors={'Excelente':'#16d98b','Bom':'#1398ff','Ruim':'#ff4050','Baixa':'#1398ff','Média':'#16d98b','Alta':'#ff4050','Baixo':'#1398ff','Médio':'#16d98b','Alto':'#ff4050','Lento':'#ff4050','Rápido':'#16d98b'}
-                fig=go.Figure(go.Pie(labels=list(data),values=list(data.values()),hole=.66,marker=dict(colors=[colors.get(k,'#29a8ff') for k in data],line=dict(color='#071522',width=1)),textinfo='percent',textfont=dict(size=13,color='#f5f8fc')))
-                fig.update_layout(title=dict(text=title,x=.04,font=dict(size=14,color='#f5f8fc')),height=280,margin=dict(l=8,r=8,t=42,b=60),paper_bgcolor='rgba(0,0,0,0)',font=dict(color='#9db3c8'),legend=dict(orientation='h',y=-.15,x=0,font=dict(size=9)))
+                fig=go.Figure(go.Pie(labels=list(data),values=list(data.values()),hole=.63,marker=dict(colors=[colors.get(k,'#29a8ff') for k in data],line=dict(color='#071522',width=1)),textinfo='percent',textfont=dict(size=17,color='#f5f8fc',family='Arial Black')))
+                fig.update_layout(title=dict(text=title,x=.04,font=dict(size=14,color='#f5f8fc')),height=314,margin=dict(l=4,r=4,t=38,b=52),paper_bgcolor='rgba(0,0,0,0)',font=dict(color='#9db3c8'),legend=dict(orientation='h',y=-.15,x=0,font=dict(size=9)))
+                total_chart=sum(data.values())
+                fig.add_annotation(x=.5,y=.5,text=f"<b>{total_chart:.0f}</b><br><span style='font-size:10px;color:#7fa4bd'>TOTAL</span>",showarrow=False,align='center',font=dict(size=24,color='#f5f8fc',family='Arial Black'))
                 return fig
             cols=st.columns(4)
             for col,title,field in zip(cols,['AVALIAÇÃO','DIFICULDADE','RISCO','VELOCIDADE'],['evaluation','difficulty','risk','speed']):
@@ -151,7 +219,9 @@ if video_posts:
                 tt=cnt['Acertos']+cnt['Erros']; table.append({'Manobra':n,'Acertos':cnt['Acertos'],'Erros':cnt['Erros'],'Tentativas':tt,'Taxa de acerto':f"{cnt['Acertos']/tt*100:.1f}%"})
             st.dataframe(table,use_container_width=True,hide_index=True)
 
-if rows: st.markdown("## ▦ Treinos com Sportscode / CSV")
+if rows:
+    st.markdown('<div class="section-label">Sportscode / CSV</div>',unsafe_allow_html=True)
+    st.markdown("## Treinos salvos")
 st.metric("Treinos salvos", len(rows))
 for row in rows:
     with st.container(border=True):

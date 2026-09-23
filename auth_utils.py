@@ -74,14 +74,16 @@ def sign_in(email, password, keep_connected=False):
     cm = _cookie_manager()
     if cm is not None:
         try:
-            if keep_connected and getattr(res.session, "refresh_token", None):
+            refresh_token = getattr(res.session, "refresh_token", None)
+            if refresh_token:
                 from datetime import datetime, timedelta
-                cm.set(COOKIE_NAME, res.session.refresh_token, expires_at=datetime.now() + timedelta(days=30), key="sp_keep_cookie")
-                # O componente grava o cookie no navegador de forma assíncrona.
-                # Um pequeno intervalo evita que o rerun interrompa a gravação.
+                # A navegação MUI entre páginas abre uma nova conexão do Streamlit.
+                # Guardamos o refresh token mesmo sem "manter conectado" para que
+                # F5 e a troca de páginas preservem a sessão. A opção marcada apenas
+                # aumenta a duração do cookie.
+                lifetime = timedelta(days=30) if keep_connected else timedelta(hours=12)
+                cm.set(COOKIE_NAME, refresh_token, expires_at=datetime.now() + lifetime, key="sp_keep_cookie")
                 time.sleep(0.65)
-            else:
-                cm.delete(COOKIE_NAME, key="sp_clear_cookie")
         except Exception:
             pass
     return res

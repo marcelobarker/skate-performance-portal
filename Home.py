@@ -1,11 +1,12 @@
 
 import streamlit as st
 import streamlit.components.v1 as components
+from streamlit_elements import elements, mui
 from auth_utils import sign_in, sign_up, sign_out, current_user, current_profile, load_profile, get_supabase, _navigation
 
 from ui_theme import apply_ui_theme
 
-st.set_page_config(initial_sidebar_state="expanded", page_title="Skate Performance • Portal", page_icon="🛹", layout="wide")
+st.set_page_config(initial_sidebar_state="expanded", page_title="Seleção Brasileira de Skateboarding", page_icon="🛹", layout="wide")
 apply_ui_theme()
 
 st.markdown("""<style>
@@ -30,6 +31,16 @@ st.markdown("""<style>
 [data-baseweb="popover"],[data-baseweb="menu"],[role="listbox"],[data-baseweb="calendar"]{background:#081827!important;color:#eef8ff!important;}
 [data-baseweb="menu"] li,[role="option"],[data-baseweb="calendar"] button{background:#081827!important;color:#eef8ff!important;}
 [data-baseweb="menu"] li:hover,[role="option"]:hover{background:#12304b!important;}
+
+/* V4.24 — navbar encostada no topo */
+[data-testid="stMainBlockContainer"]{
+  padding-top:0!important;
+  margin-top:0!important;
+}
+.main .block-container,.block-container{
+  padding-top:0!important;
+  margin-top:0!important;
+}
 </style>""", unsafe_allow_html=True)
 
 st.markdown("""
@@ -72,7 +83,7 @@ if user and not profile:
     profile = load_profile(user.id)
 
 if not user:
-    st.title("Bem-vindo ao Skate Performance")
+    st.title("Bem-vindo à Seleção Brasileira de Skateboarding")
     st.caption("Entre na sua conta ou solicite um novo cadastro.")
     login_tab, signup_tab = st.tabs(["ENTRAR", "CRIAR CONTA"])
 
@@ -151,6 +162,31 @@ status = (profile or {}).get("status","pendente")
 role = (profile or {}).get("role","skatista")
 name = (profile or {}).get("full_name", getattr(user,"email","Usuário"))
 
+# Dados reais usados na Home. Falhas de rede não derrubam a interface.
+home_feed_videos = []
+try:
+    sb_home = get_supabase()
+    _posts = sb_home.table("athlete_posts").select("id,athlete_id,session_title,caption,created_at,video_path").order("created_at", desc=True).limit(3).execute().data or []
+    _ids = list({p.get("athlete_id") for p in _posts if p.get("athlete_id")})
+    _profiles = sb_home.table("profiles").select("id,full_name").in_("id", _ids).execute().data if _ids else []
+    _names = {p.get("id"): p.get("full_name") for p in (_profiles or [])}
+    from datetime import datetime
+    for _post in _posts:
+        _created = _post.get("created_at") or ""
+        _when = "Vídeo recente"
+        try:
+            _dt = datetime.fromisoformat(_created.replace("Z", "+00:00"))
+            _when = _dt.strftime("%d/%m/%Y • %H:%M")
+        except Exception:
+            pass
+        home_feed_videos.append((
+            _post.get("session_title") or _post.get("caption") or "Vídeo de treino",
+            _names.get(_post.get("athlete_id")) or "Atleta",
+            _when,
+        ))
+except Exception:
+    home_feed_videos = []
+
 if role != "admin":
     st.markdown("""<style>[data-testid="stSidebarNav"] a[href*="01_Cadastros"],[data-testid="stSidebarNav"] a[href*="Cadastros"]{display:none!important}</style>""", unsafe_allow_html=True)
 if role in ("skatista","familiar"):
@@ -164,105 +200,446 @@ if status != "ativo":
     st.write("Assim que for aprovado, as áreas de equipe e análise serão liberadas.")
     st.stop()
 
-import base64
-from pathlib import Path
-from datetime import date
-
-# V4 PREMIUM — somente a aparência da Home autenticada.
-# Login, cadastro, autenticação, permissões e páginas existentes permanecem intactos.
-hero_b64 = base64.b64encode((Path(__file__).parent / 'hero_skater.jpg').read_bytes()).decode()
-try:
-    _hs = get_supabase().table('portal_settings').select('value').eq('key','home_hero_url').maybe_single().execute()
-    hero_url = (_hs.data or {}).get('value') if _hs else None
-except Exception:
-    hero_url = None
-hero_bg = f"url('{hero_url}')" if hero_url else f"url(data:image/jpeg;base64,{hero_b64})"
-
-try:
-    sb = get_supabase()
-    visible_profiles = sb.table('profiles').select('id,full_name,role,status,photo_url,modality,city,state').execute().data or []
-    visible_teams = sb.table('teams').select('id,name').execute().data or []
-    visible_trainings = sb.table('training_sessions').select('id,athlete_id,training_date,title,created_at').order('training_date',desc=True).limit(1000).execute().data or []
-except Exception as exc:
-    visible_profiles, visible_teams, visible_trainings = [], [], []
-    st.warning(f'Não foi possível atualizar os indicadores da Home: {exc}')
-
-athletes = [x for x in visible_profiles if x.get('role') == 'skatista' and x.get('status') == 'ativo']
-staff = [x for x in visible_profiles if x.get('role') in ('admin','tecnico','presidente','vice_presidente','chefe_equipe','comissao_tecnica') and x.get('status') == 'ativo']
-first = (name.split()[0] if name else 'Atleta')
-photo = (profile or {}).get('photo_url') or ''
-initials = ''.join([p[0].upper() for p in (name or 'SP').split()[:2]]) or 'SP'
-
-# V4.01 PREMIUM — reconstrução da Home em tela cheia, sem a Home antiga/Sidebar.
-def svg_icon(kind, color="#25c7ff"):
-    icons = {
-        "home": '<path d="M3 11.5 12 4l9 7.5v8a1.5 1.5 0 0 1-1.5 1.5H15v-6H9v6H4.5A1.5 1.5 0 0 1 3 19.5z"/>',
-        "chart": '<path d="M4 20V10m6 10V4m6 16v-7m5 7V7"/>',
-        "users": '<path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8zm13 10v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/>',
-        "team": '<path d="M8 21v-2a4 4 0 0 1 4-4h4a4 4 0 0 1 4 4v2M14 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8M2 21v-2a4 4 0 0 1 3-3.87M6 3.13a4 4 0 0 0 0 7.75"/>',
-        "history": '<path d="M3 12a9 9 0 1 0 3-6.7L3 8m0-5v5h5M12 7v5l3 2"/>',
-        "target": '<circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="3"/><path d="M12 2v3m10 7h-3M12 22v-3M2 12h3"/>',
-        "board": '<path d="M5 15c3 1 11 1 14 0M7 12h10M8 18a1.5 1.5 0 1 0 0 3 1.5 1.5 0 0 0 0-3zm8 0a1.5 1.5 0 1 0 0 3 1.5 1.5 0 0 0 0-3z"/>',
-        "play": '<path d="m9 7 8 5-8 5z"/>',
-        "arrow": '<path d="M5 12h14m-5-5 5 5-5 5"/>',
-    }
-    return f'<svg viewBox="0 0 24 24" aria-hidden="true" style="width:1em;height:1em;fill:none;stroke:{color};stroke-width:2;stroke-linecap:round;stroke-linejoin:round">{icons.get(kind, icons["chart"])}</svg>'
-
-hero_data = f"data:image/jpeg;base64,{hero_b64}"
-hero_image = hero_url or hero_data
-avatar_html = f"<img class='v401-avatar' src='{photo}'>" if photo else f"<div class='v401-avatar fallback'>{initials}</div>"
-role_label = 'Administrador' if role=='admin' else role.replace('_',' ').title()
-
-st.markdown(f"""
+st.markdown("""
 <style>
-html,body,[data-testid="stApp"],[data-testid="stAppViewContainer"],.stApp{{background:#020b14!important}}
-header[data-testid="stHeader"],[data-testid="stToolbar"],[data-testid="stDecoration"]{{display:none!important}}
-section[data-testid="stSidebar"],[data-testid="stSidebar"],[data-testid="stSidebarNav"]{{display:none!important;visibility:hidden!important;width:0!important;min-width:0!important;transform:translateX(-100%)!important}}
-[data-testid="stAppViewContainer"]>.main{{margin-left:0!important;width:100%!important}}
-.block-container{{max-width:1660px!important;width:100%!important;padding:18px 28px 38px!important;margin:0 auto!important}}
-.v401{{font-family:Inter,ui-sans-serif,system-ui,-apple-system,'Segoe UI',sans-serif;color:#f7fbff}} .v401 *{{box-sizing:border-box}}
-.v401-shell{{overflow:hidden;border:1px solid #0d4267;border-radius:18px;background:#020c16;box-shadow:0 26px 80px rgba(0,0,0,.55)}}
-.v401-top{{height:74px;display:flex;align-items:center;padding:0 26px;background:rgba(3,16,28,.97);border-bottom:1px solid #12324a;gap:34px}}
-.v401-brand{{display:flex;align-items:center;gap:10px;min-width:235px;text-decoration:none}} .v401-mark{{width:39px;height:39px;display:grid;place-items:center;filter:drop-shadow(0 0 12px #0caeff88)}} .v401-mark svg{{width:39px;height:39px}}
-.v401-brandtext{{line-height:.88}} .v401-brandtext b{{font-size:18px;font-weight:950;letter-spacing:-.8px;color:#fff}} .v401-brandtext b i{{color:#15b6ff;font-style:normal}} .v401-brandtext small{{display:block;color:#b6c8d6;font-size:6px;letter-spacing:1.6px;margin-top:7px;font-weight:800}}
-.v401-nav{{height:100%;display:flex;align-items:center;gap:32px;flex:1}} .v401-nav a{{height:100%;display:flex;align-items:center;gap:7px;color:#93a8ba!important;text-decoration:none!important;font-size:12px;font-weight:750;position:relative}} .v401-nav a svg{{font-size:15px}} .v401-nav a:hover{{color:#fff!important}} .v401-nav a.active{{color:#16bdff!important}} .v401-nav a.active:after{{content:'';height:3px;border-radius:3px;background:#12baff;box-shadow:0 0 15px #0baeff;position:absolute;left:0;right:0;bottom:0}}
-.v401-tools{{display:flex;align-items:center;gap:14px;color:#b8c8d5}} .v401-tool{{width:30px;height:30px;display:grid;place-items:center;border-radius:50%;font-size:17px}} .v401-user{{display:flex;align-items:center;gap:10px;margin-left:2px}} .v401-avatar{{width:38px;height:38px;border-radius:50%;object-fit:cover;border:2px solid #13baff;box-shadow:0 0 15px #0aaeff55}} .v401-avatar.fallback{{display:grid;place-items:center;background:#0b314b;font-size:11px;font-weight:900}} .v401-user b{{font-size:11px;color:#fff}} .v401-user small{{display:block;font-size:8px;color:#7f98ab;margin-top:2px}}
-.v401-hero{{height:490px;position:relative;background-image:linear-gradient(90deg,rgba(1,9,16,.90) 0%,rgba(1,9,16,.70) 30%,rgba(1,9,16,.10) 63%,rgba(1,9,16,.18) 100%),linear-gradient(0deg,#020c16 0%,rgba(2,12,22,.12) 45%),url('{hero_image}');background-size:cover;background-position:center 48%}}
-.v401-copy{{position:absolute;left:44px;top:82px;width:520px;text-shadow:0 4px 25px #000}} .v401-kicker{{font-size:13px;font-weight:950;letter-spacing:.7px;color:#fff}} .v401-country{{font-size:11px;color:#15c2ff;font-weight:950;letter-spacing:4px;margin-top:5px}} .v401-copy h1{{font-size:48px!important;line-height:.95!important;letter-spacing:-2.1px!important;color:#fff!important;margin:14px 0 12px!important;font-weight:950!important}} .v401-copy p{{font-size:10px!important;color:#dbe7ef!important;font-weight:800!important;letter-spacing:.3px}}
-.v401-actions{{position:absolute;left:44px;top:285px;display:flex;gap:13px}} .v401-btn{{height:50px;min-width:178px;padding:0 22px;border-radius:8px;border:1px solid #079cff;background:linear-gradient(180deg,#159cff,#0676f4);color:#fff!important;text-decoration:none!important;display:flex;align-items:center;justify-content:center;gap:9px;font-size:12px;font-weight:900;box-shadow:0 9px 24px #057cff55,inset 0 1px 0 #ffffff44;transition:.18s}} .v401-btn:hover{{transform:translateY(-2px);filter:brightness(1.08);box-shadow:0 11px 28px #057cff77}} .v401-btn.alt{{background:rgba(2,14,25,.72);border-color:#168bd0;box-shadow:inset 0 0 22px #0a82cf14}}
-.v401-kpis{{position:absolute;left:28px;right:28px;bottom:18px;display:grid;grid-template-columns:repeat(5,1fr);gap:10px}} .v401-kpi{{height:94px;border-radius:11px;border:1px solid #173b55;background:linear-gradient(145deg,rgba(13,35,51,.95),rgba(5,20,32,.96));display:flex;align-items:center;gap:13px;padding:14px 16px;box-shadow:0 12px 30px #0007,inset 0 1px #ffffff0d}} .v401-kicon{{width:45px;height:45px;flex:0 0 45px;border-radius:50%;display:grid;place-items:center;font-size:23px}} .v401-kicon svg{{font-size:23px}} .v401-kpi strong{{font-size:22px;color:#fff;line-height:1}} .v401-kpi label{{display:block!important;color:#a9bbc9!important;font-size:9px;margin-top:5px}} .v401-kpi em{{display:block;color:#14e8a0;font-size:9px;font-style:normal;font-weight:900;margin-top:3px}}
-.k-purple{{background:#171c4b;box-shadow:0 0 20px #685cff33}} .k-green{{background:#063d35;box-shadow:0 0 20px #00e4a433}} .k-gold{{background:#493b08;box-shadow:0 0 20px #ffc40033}} .k-blue{{background:#073857;box-shadow:0 0 20px #14b6ff33}} .k-cyan{{background:#07394c;box-shadow:0 0 20px #00dcff33}}
-.v401-body{{padding:19px 28px 28px;background:linear-gradient(180deg,#020c16,#03121f)}} .v401-title{{font-size:16px;font-weight:950;color:#fff;margin:0 0 13px}} .v401-quick{{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}} .v401-card{{height:155px;position:relative;overflow:hidden;border-radius:11px;border:1px solid #087ebf;text-decoration:none!important;background-size:cover;background-position:center;box-shadow:0 9px 25px #0007,0 0 18px #008cff12;transition:.2s}} .v401-card:before{{content:'';position:absolute;inset:0;background:linear-gradient(0deg,rgba(1,9,16,.96),rgba(1,9,16,.10) 72%),linear-gradient(90deg,rgba(3,20,32,.35),transparent)}} .v401-card:hover{{transform:translateY(-3px);border-color:#18baff;box-shadow:0 12px 30px #0008,0 0 22px #00aaff2e}} .v401-card span{{position:absolute;left:15px;bottom:13px;color:#fff;font-size:15px;font-weight:900;z-index:2}} .v401-card .arr{{position:absolute;right:12px;bottom:10px;width:31px;height:31px;border-radius:50%;display:grid;place-items:center;background:#ffffff12;border:1px solid #ffffff0c;z-index:2}} .v401-card .arr svg{{font-size:16px}}
-.v401-card.c1{{background-image:url('{hero_image}');background-position:20% 65%}} .v401-card.c2{{background-image:url('{hero_image}');background-position:48% 48%;filter:saturate(.75)}} .v401-card.c3{{background-image:url('{hero_image}');background-position:72% 60%}} .v401-card.c4{{background-image:linear-gradient(rgba(4,15,24,.30),rgba(4,15,24,.30)),url('{hero_image}');background-position:88% 45%;filter:grayscale(.75)}} .v401-mobilemenu{{display:none}}
-@media(max-width:800px){{.block-container{{padding:0!important;max-width:none!important}} .v401-shell{{border-radius:0;border-left:0;border-right:0;min-height:100vh}} .v401-top{{height:66px;padding:0 16px;gap:12px}} .v401-brand{{min-width:0;flex:1}} .v401-brandtext b{{font-size:15px}} .v401-brandtext small{{font-size:5px}} .v401-mark{{width:32px}} .v401-mark svg{{width:32px}} .v401-nav,.v401-tools,.v401-user{{display:none}} .v401-mobilemenu{{display:grid;width:38px;height:38px;place-items:center;font-size:24px;color:#dceaf5}} .v401-hero{{height:565px;background-position:61% center}} .v401-copy{{left:18px;right:18px;top:300px;width:auto}} .v401-kicker,.v401-country,.v401-copy p{{display:none}} .v401-copy h1{{font-size:31px!important;line-height:1!important;max-width:310px;margin:0!important}} .v401-actions{{left:18px;right:18px;top:378px}} .v401-btn{{width:100%;min-width:0;height:49px}} .v401-btn.alt{{display:none}} .v401-kpis{{left:18px;right:18px;bottom:16px;grid-template-columns:1fr;gap:7px}} .v401-kpi{{height:55px;padding:6px 12px}} .v401-kpi:nth-child(n+4){{display:none}} .v401-kicon{{width:37px;height:37px;flex-basis:37px}} .v401-kpi strong{{font-size:18px}} .v401-kpi label{{display:inline!important;margin-left:7px}} .v401-kpi em{{display:none}} .v401-body{{padding:17px 14px 82px}} .v401-quick{{grid-template-columns:1fr 1fr}} .v401-card{{height:120px}}}}
+:root {
+  --sp-bg:#020b14;
+  --sp-panel:#071727;
+  --sp-panel2:#0a1d30;
+  --sp-border:#153a59;
+  --sp-blue:#0787ff;
+  --sp-cyan:#20e6ff;
+  --sp-text:#f5f8fc;
+  --sp-muted:#8fa6ba;
+}
+html, body, [data-testid="stAppViewContainer"], .stApp {
+  background:
+    radial-gradient(circle at 75% 0%, rgba(0,126,255,.13), transparent 30%),
+    linear-gradient(180deg,#020b14 0%,#03111e 100%) !important;
+}
+[data-testid="stHeader"] {background:transparent !important;}
+[data-testid="stToolbar"], [data-testid="stDecoration"] {display:none !important;}
+[data-testid="stSidebar"] {display:none !important;}
+.block-container {
+  width:100% !important;
+  max-width:1480px !important;
+  padding:0 22px 44px !important;
+}
+iframe[title="streamlit_elements.core.frame"] {
+  width:100% !important;
+}
+@media (max-width: 900px) {
+  .block-container {padding:0 12px 30px !important;}
+}
 </style>
 """, unsafe_allow_html=True)
 
-logo_svg = '<svg viewBox="0 0 48 48"><path fill="#11baff" d="M8 10l8 8 8-13 6 14 10-9-5 29H13z"/><path fill="#fff" d="M15 31h19l-1 5H16z"/></svg>'
-st.markdown(f"""
-<div class="v401"><div class="v401-shell"><div class="v401-top">
-<a class="v401-brand" href="/" target="_self"><div class="v401-mark">{logo_svg}</div><div class="v401-brandtext"><b>SKATE<i>PERFORMANCE</i></b><small>ATHLETE MANAGEMENT • TRAINING INTELLIGENCE</small></div></a>
-<nav class="v401-nav"><a class="active" href="/" target="_self">{svg_icon('home')} Home</a><a href="/Analise_de_Treino" target="_self">{svg_icon('chart')} Análise</a><a href="/Times" target="_self">{svg_icon('users')} Atletas</a><a href="/Times" target="_self">{svg_icon('team')} Times</a><a href="/Historico_de_Treinos" target="_self">{svg_icon('history')} Histórico</a></nav>
-<div class="v401-tools"><div class="v401-tool">⌕</div><div class="v401-tool">♢</div></div><div class="v401-user">{avatar_html}<div><b>{name}</b><small>{role_label}</small></div></div><div class="v401-mobilemenu">☰</div></div>
-<section class="v401-hero"><div class="v401-copy"><div class="v401-kicker">SKATE PERFORMANCE</div><div class="v401-country">TIME BRASIL</div><h1>PERFORMANCE<br>EM EVOLUÇÃO</h1><p>ANÁLISE DE TREINOS • DADOS REAIS • RESULTADOS</p></div>
-<div class="v401-actions"><a class="v401-btn" href="/Analise_de_Treino" target="_self">{svg_icon('chart','#fff')} Nova Análise</a><a class="v401-btn alt" href="/Historico_de_Treinos" target="_self">{svg_icon('play','#fff')} Ver Histórico</a></div>
-<div class="v401-kpis"><div class="v401-kpi"><div class="v401-kicon k-purple">{svg_icon('chart','#8d7cff')}</div><div><strong>{len(visible_trainings)}</strong><label>Treinos</label><em>histórico</em></div></div><div class="v401-kpi"><div class="v401-kicon k-green">{svg_icon('target','#15e5b2')}</div><div><strong>{len(athletes)}</strong><label>Atletas</label><em>ativos</em></div></div><div class="v401-kpi"><div class="v401-kicon k-gold">{svg_icon('target','#ffc719')}</div><div><strong>{len(visible_teams)}</strong><label>Times</label><em>cadastrados</em></div></div><div class="v401-kpi"><div class="v401-kicon k-blue">{svg_icon('board','#20b8ff')}</div><div><strong>{len(staff)}</strong><label>Staff</label><em>ativo</em></div></div><div class="v401-kpi"><div class="v401-kicon k-cyan">{svg_icon('users','#21d7ff')}</div><div><strong>{len(visible_profiles)}</strong><label>Usuários</label><em>portal</em></div></div></div></section>
-<section class="v401-body"><div class="v401-title">Acesso rápido</div><div class="v401-quick"><a class="v401-card c1" href="/Analise_de_Treino" target="_self"><span>Análise</span><div class="arr">{svg_icon('arrow','#fff')}</div></a><a class="v401-card c2" href="/Times" target="_self"><span>Atletas</span><div class="arr">{svg_icon('arrow','#fff')}</div></a><a class="v401-card c3" href="/Times" target="_self"><span>Times</span><div class="arr">{svg_icon('arrow','#fff')}</div></a><a class="v401-card c4" href="/Historico_de_Treinos" target="_self"><span>Histórico</span><div class="arr">{svg_icon('arrow','#fff')}</div></a></div></section></div></div>
-""", unsafe_allow_html=True)
+# Cores/estilos reutilizados pelos componentes Material UI.
+card = {
+    "background": "linear-gradient(145deg,#081b2d,#061523)",
+    "border": "1px solid #163b59",
+    "borderRadius": "18px",
+    "boxShadow": "0 16px 40px rgba(0,0,0,.22)",
+}
+muted = "#8fa6ba"
+white = "#f5f8fc"
+cyan = "#20e6ff"
+blue = "#0787ff"
+
+nav_name = str((profile or {}).get("full_name") or getattr(user, "email", None) or "Usuário").strip()
+nav_role = str((profile or {}).get("role") or "membro").replace("_", " ").title()
+nav_photo = (profile or {}).get("photo_url")
+nav_initials = "".join(part[:1].upper() for part in nav_name.split()[:2]) or "U"
+
+with elements("skate_performance_home"):
+    # Container geral: NÃO é um quadrado central; ocupa 100% da área disponível.
+    with mui.Box(sx={
+        "width": "100%",
+        "maxWidth": "1480px",
+        "margin": "0 auto",
+        "backgroundColor": "transparent",
+        "fontFamily": "\"Segoe UI Variable\", Inter, Manrope, Arial, sans-serif",
+        "pb": 3,
+    }):
+        # Navigation bar feita com Material UI (Streamlit Elements).
+        # Evita incompatibilidade do streamlit-community-navigation-bar com
+        # versões novas do Streamlit (PagesManager.set_pages).
+        with mui.Paper(elevation=0, square=True, sx={
+            "mx":{"xs":0,"md":1},"mb":1,
+            "backgroundColor":"#061523",
+            "border":"1px solid #163b59",
+            "borderRadius":"0 0 14px 14px",
+            "minHeight":62,
+            "display":"flex","alignItems":"center",
+            "px":{"xs":1,"md":2},
+        }):
+            with mui.Box(sx={
+                "display":"flex","alignItems":"center","gap":{"xs":1,"md":3},
+                "width":"100%","overflowX":"auto"
+            }):
+                with mui.Box(sx={"display":"flex","alignItems":"center","gap":1.1,"mr":{"xs":1,"md":3},"flexShrink":0}):
+                    mui.icon.AutoAwesome(sx={"color":cyan,"fontSize":27})
+                    with mui.Box:
+                        mui.Typography("ANÁLISE • EVOLUÇÃO • PERFORMANCE", sx={
+                            "color":white,"fontWeight":950,"fontSize":12,
+                            "letterSpacing":".7px","lineHeight":1.2
+                        })
+                        mui.Typography("SKATEBOARDING PERFORMANCE SYSTEM", sx={
+                            "color":cyan,"fontWeight":850,"fontSize":7,
+                            "letterSpacing":"2px","mt":.45
+                        })
+                for label, Icon, active, href in [
+                    ("Home", mui.icon.HomeOutlined, True, "/"),
+                    ("Análise", mui.icon.AnalyticsOutlined, False, "/Analise_de_Treino"),
+                    ("Atletas", mui.icon.GroupsOutlined, False, "/Times"),
+                    ("Times", mui.icon.ShieldOutlined, False, "/Times"),
+                    ("Histórico", mui.icon.History, False, "/Historico_de_Treinos"),
+                ]:
+                    with mui.Button(
+                        href=href,
+                        target="_top",
+                        startIcon=Icon(),
+                        sx={
+                            "height":61,"minWidth":"auto","px":1,"flexShrink":0,
+                            "textTransform":"none","borderRadius":0,
+                            "color": cyan if active else "#9fb4c7",
+                            "borderBottom": f"2px solid {cyan}" if active else "2px solid transparent",
+                            "fontSize":12,"fontWeight":850,
+                        }
+                    ):
+                        mui.Typography(label, sx={"fontSize":12,"fontWeight":850})
+
+                with mui.Box(sx={"ml":"auto","display":{"xs":"none","md":"flex"},"alignItems":"center","gap":1.0,"pl":1.5,"flexShrink":0}):
+                    with mui.Box(sx={"textAlign":"right","lineHeight":1.05}):
+                        mui.Typography(nav_name, sx={"color":"#f5f8fc","fontSize":10.5,"fontWeight":900,"maxWidth":145,"whiteSpace":"nowrap","overflow":"hidden","textOverflow":"ellipsis"})
+                        mui.Typography(nav_role, sx={"color":"#20e6ff","fontSize":7.5,"fontWeight":800,"letterSpacing":".45px"})
+                    if nav_photo:
+                        mui.Avatar(src=nav_photo, sx={"width":35,"height":35,"border":"1px solid #20e6ff","boxShadow":"0 0 12px rgba(32,230,255,.22)"})
+                    else:
+                        mui.Avatar(nav_initials, sx={"width":35,"height":35,"bgcolor":"#0c3554","color":"#20e6ff","border":"1px solid #20e6ff","fontSize":10,"fontWeight":950})
+
+        # HERO
+        with mui.Paper(elevation=0, sx={
+            **card,
+            "position":"relative","overflow":"hidden",
+            "minHeight":{"xs":390,"md":465},
+            "mx":{"xs":0,"md":1},
+            "background":"radial-gradient(circle at 80% 25%, rgba(0,133,255,.26), transparent 28%), linear-gradient(115deg,#06111d 10%,#09223a 58%,#071827 100%)",
+        }):
+            # Elementos abstratos dão profundidade sem fingir uma foto.
+            mui.Box(sx={
+                "position":"absolute","right":"6%","top":"8%","width":"34%","height":"84%",
+                "border":"1px solid rgba(32,230,255,.16)","borderRadius":"50%",
+                "boxShadow":"0 0 90px rgba(0,126,255,.16) inset",
+                "transform":"rotate(-12deg)"
+            })
+            with mui.Box(sx={
+                "position":"relative","zIndex":2,"px":{"xs":3,"md":7},"py":{"xs":5,"md":7},
+                "maxWidth":820
+            }):
+                mui.Typography("SELEÇÃO BRASILEIRA", sx={
+                    "color":white,"fontSize":14,"fontWeight":900,"letterSpacing":"1.5px"
+                })
+                mui.Typography("DE SKATEBOARDING", sx={
+                    "color":cyan,"fontSize":11,"fontWeight":900,"letterSpacing":"5px","mt":.5
+                })
+                mui.Typography("PERFORMANCE", sx={
+                    "color":white,"fontWeight":950,"fontSize":{"xs":46,"md":72},
+                    "lineHeight":.92,"letterSpacing":"-3px","mt":3
+                })
+                mui.Typography("EM EVOLUÇÃO", sx={
+                    "color":white,"fontWeight":950,"fontSize":{"xs":46,"md":72},
+                    "lineHeight":.92,"letterSpacing":"-3px"
+                })
+                mui.Typography("ANÁLISE  •  EVOLUÇÃO  •  PERFORMANCE", sx={
+                    "color":"#a7bbcc","fontSize":11,"fontWeight":800,"letterSpacing":"1.6px","mt":2.5
+                })
+                with mui.Box(sx={"display":"flex","gap":1.5,"mt":3,"flexWrap":"wrap"}):
+                    mui.Button(
+                        mui.icon.CloudUploadOutlined(), " ENVIAR VÍDEO",
+                        href="/Enviar_Manobra", target="_top",
+                        variant="contained",
+                        sx={"bgcolor":blue,"fontWeight":900,"px":2.4,"py":1.15,"borderRadius":"10px"}
+                    )
+                    mui.Button(
+                        mui.icon.History(), " VER HISTÓRICO",
+                        href="/Historico_de_Treinos", target="_top",
+                        variant="outlined",
+                        sx={"color":white,"borderColor":"#31516c","fontWeight":900,"px":2.4,"py":1.15,"borderRadius":"10px"}
+                    )
+
+        # KPIs principais — cards neon, tipografia maior e labels mais legíveis
+        with mui.Box(sx={
+            "display":"grid",
+            "gridTemplateColumns":{"xs":"1fr","sm":"repeat(2,1fr)","lg":"repeat(4,1fr)"},
+            "gap":1.8,"mx":{"xs":0,"md":1},"mt":2.2
+        }):
+            kpis = [
+                ("TREINOS REALIZADOS","24","+12%", mui.icon.BarChartRounded, "#b85cff"),
+                ("TENTATIVAS REGISTRADAS","1.284","+8%", mui.icon.TrackChangesRounded, "#00e4a4"),
+                ("MANOBRAS ANALISADAS","58","+3%", mui.icon.SportsRounded, "#29a8ff"),
+                ("ATLETAS ATIVOS","10","+1", mui.icon.GroupsRounded, "#20e6ff"),
+            ]
+            for label, value, delta, Icon, color in kpis:
+                with mui.Paper(elevation=0, sx={
+                    "position":"relative","overflow":"hidden",
+                    "p":2.35,"minHeight":132,
+                    "background":"linear-gradient(145deg,#071a2b 0%,#04111d 100%)",
+                    "border":f"1px solid {color}70",
+                    "borderRadius":"18px",
+                    "boxShadow":f"0 0 0 1px {color}12, 0 0 24px {color}18, inset 0 1px 0 rgba(255,255,255,.035)",
+                    "transition":"transform .2s ease, box-shadow .2s ease",
+                    "&:hover":{
+                        "transform":"translateY(-3px)",
+                        "boxShadow":f"0 0 0 1px {color}35, 0 0 34px {color}30"
+                    }
+                }):
+                    mui.Box(sx={
+                        "position":"absolute","width":110,"height":110,"right":-35,"top":-45,
+                        "borderRadius":"50%","backgroundColor":f"{color}10",
+                        "boxShadow":f"0 0 45px {color}20"
+                    })
+                    with mui.Box(sx={"display":"flex","alignItems":"center","justifyContent":"space-between","position":"relative"}):
+                        with mui.Box(sx={
+                            "width":45,"height":45,"borderRadius":"13px",
+                            "display":"flex","alignItems":"center","justifyContent":"center",
+                            "background":f"linear-gradient(145deg,{color}25,{color}0D)",
+                            "border":f"1px solid {color}80",
+                            "boxShadow":f"0 0 18px {color}28"
+                        }):
+                            Icon(sx={"color":color,"fontSize":25,"filter":f"drop-shadow(0 0 5px {color})"})
+                        with mui.Box(sx={
+                            "px":1,"py":.45,"borderRadius":"20px",
+                            "backgroundColor":"rgba(0,228,164,.08)",
+                            "border":"1px solid rgba(0,228,164,.20)"
+                        }):
+                            mui.Typography(delta, sx={"color":"#25f0b0","fontSize":10,"fontWeight":950})
+                    mui.Typography(value, sx={
+                        "color":white,"fontSize":29,"fontWeight":950,"mt":1.35,
+                        "lineHeight":1,"letterSpacing":"-.7px"
+                    })
+                    mui.Typography(label, sx={
+                        "color":"#b5c9d9","fontSize":10.5,"fontWeight":900,
+                        "letterSpacing":"1.15px","mt":.85
+                    })
+
+        # NOVA FAIXA CENTRAL: calendário + tarefas + últimos vídeos
+        with mui.Box(sx={
+            "display":"grid",
+            "gridTemplateColumns":{"xs":"1fr","lg":"1.05fr .95fr 1fr"},
+            "gap":1.8,"mx":{"xs":0,"md":1},"mt":2
+        }):
+            # Calendário moderno
+            with mui.Paper(elevation=0, sx={**card,"p":2.4,"minHeight":330}):
+                with mui.Box(sx={"display":"flex","justifyContent":"space-between","alignItems":"center","mb":2}):
+                    with mui.Box(sx={"display":"flex","alignItems":"center","gap":1}):
+                        mui.icon.CalendarMonth(sx={"color":cyan})
+                        mui.Typography("Calendário", sx={"color":white,"fontSize":20,"fontWeight":950})
+                    mui.Typography("SET 2026", sx={"color":cyan,"fontSize":10,"fontWeight":900,"letterSpacing":"1.5px"})
+                with mui.Box(sx={"display":"grid","gridTemplateColumns":"repeat(7,1fr)","gap":.65}):
+                    for day in ["D","S","T","Q","Q","S","S"]:
+                        mui.Typography(day, sx={"textAlign":"center","color":"#66849c","fontSize":9,"fontWeight":900,"pb":.6})
+                    for d in range(1,31):
+                        active = d in [22,24,28]
+                        today = d == 22
+                        with mui.Box(sx={
+                            "height":32,"display":"flex","alignItems":"center","justifyContent":"center",
+                            "borderRadius":"9px",
+                            "backgroundColor":"#087cff" if today else ("rgba(32,230,255,.08)" if active else "transparent"),
+                            "border":"1px solid #20e6ff" if active and not today else "1px solid transparent",
+                        }):
+                            mui.Typography(str(d), sx={
+                                "color":"#fff" if today else ("#20e6ff" if active else "#b8c7d4"),
+                                "fontSize":10,"fontWeight":900 if active else 650
+                            })
+                with mui.Box(sx={"display":"flex","gap":1.5,"mt":2,"flexWrap":"wrap"}):
+                    for label,color in [("Treino","#20e6ff"),("Evento","#b85cff"),("Tarefa","#ffbf3f")]:
+                        with mui.Box(sx={"display":"flex","alignItems":"center","gap":.6}):
+                            mui.Box(sx={"width":7,"height":7,"borderRadius":"50%","bgcolor":color})
+                            mui.Typography(label,sx={"color":muted,"fontSize":10,"fontWeight":750})
+
+            # Tarefas do técnico
+            with mui.Paper(elevation=0, sx={**card,"p":2.4,"minHeight":330}):
+                with mui.Box(sx={"display":"flex","justifyContent":"space-between","alignItems":"center","mb":2}):
+                    with mui.Box(sx={"display":"flex","alignItems":"center","gap":1}):
+                        mui.icon.AssignmentTurnedInOutlined(sx={"color":"#ffbf3f"})
+                        mui.Typography("Tarefas", sx={"color":white,"fontSize":20,"fontWeight":950})
+                    mui.Typography("3 pendentes", sx={"color":"#ffbf3f","fontSize":10,"fontWeight":900})
+                tasks = [
+                    ("Revisar linha de Park","Wallace Gabriel",72,"#20e6ff"),
+                    ("Enviar vídeo do treino","Pedro Quintas",45,"#ffbf3f"),
+                    ("Finalizar análise técnica","Fernanda Tonissi",20,"#ff5364"),
+                ]
+                for title, athlete, pct, color in tasks:
+                    with mui.Box(sx={"mb":2.05}):
+                        with mui.Box(sx={"display":"flex","justifyContent":"space-between","gap":1,"mb":.55}):
+                            with mui.Box:
+                                mui.Typography(title,sx={"color":"#e7f0f7","fontSize":11,"fontWeight":850})
+                                mui.Typography(athlete,sx={"color":muted,"fontSize":10,"mt":.25})
+                            mui.Typography(f"{pct}%",sx={"color":color,"fontSize":10,"fontWeight":950})
+                        with mui.Box(sx={"height":6,"bgcolor":"#10283d","borderRadius":20,"overflow":"hidden"}):
+                            mui.Box(sx={"height":"100%","width":f"{pct}%","bgcolor":color,"borderRadius":20})
+
+            # Últimos vídeos do feed
+            with mui.Paper(elevation=0, sx={**card,"p":2.4,"minHeight":330}):
+                with mui.Box(sx={"display":"flex","justifyContent":"space-between","alignItems":"center","mb":2}):
+                    with mui.Box(sx={"display":"flex","alignItems":"center","gap":1}):
+                        mui.icon.SmartDisplayOutlined(sx={"color":"#b85cff"})
+                        mui.Typography("Últimos vídeos", sx={"color":white,"fontSize":20,"fontWeight":950})
+                    mui.Button("Ver feed", href="/Feed", target="_top", sx={"color":cyan,"fontSize":9,"fontWeight":900})
+                videos = home_feed_videos
+                if videos:
+                    for title, athlete, when in videos:
+                        with mui.Box(sx={"display":"flex","alignItems":"center","gap":1.2,"py":1.15,"borderBottom":"1px solid #122d45"}):
+                            with mui.Box(sx={
+                                "width":58,"height":48,"borderRadius":"10px","flexShrink":0,
+                                "display":"flex","alignItems":"center","justifyContent":"center",
+                                "background":"linear-gradient(135deg,#102f4a,#071522)",
+                                "border":"1px solid #1b4868"
+                            }):
+                                mui.icon.PlayCircleOutline(sx={"color":cyan,"fontSize":25})
+                            with mui.Box(sx={"minWidth":0,"flex":1}):
+                                mui.Typography(title,sx={"color":white,"fontSize":12,"fontWeight":850,"whiteSpace":"nowrap","overflow":"hidden","textOverflow":"ellipsis"})
+                                mui.Typography(athlete,sx={"color":"#9eb3c5","fontSize":9,"mt":.25})
+                                mui.Typography(when,sx={"color":"#607b91","fontSize":8,"mt":.2})
+                else:
+                    mui.Typography("Ainda não há vídeos publicados no feed.", sx={"color":muted,"fontSize":11,"py":3})
+
+        # FAIXA INFERIOR: ranking + top manobras + atletas
+        with mui.Box(sx={
+            "display":"grid",
+            "gridTemplateColumns":{"xs":"1fr","lg":"1.08fr .97fr .95fr"},
+            "gap":1.8,"mx":{"xs":0,"md":1},"mt":2
+        }):
+            # Ranking por quantidade de treinos
+            with mui.Paper(elevation=0, sx={**card,"p":2.4,"minHeight":390,"display":"flex","flexDirection":"column"}):
+                with mui.Box(sx={"display":"flex","justifyContent":"space-between","alignItems":"center","mb":2}):
+                    with mui.Box(sx={"display":"flex","alignItems":"center","gap":1}):
+                        mui.icon.EmojiEventsOutlined(sx={"color":"#ffbf3f"})
+                        mui.Typography("Ranking de treinos", sx={"color":white,"fontSize":20,"fontWeight":950})
+                    mui.Box()
+                ranking = [
+                    ("1","Wallace Gabriel","18 treinos","WG","#ffbf3f"),
+                    ("2","Fernanda Tonissi","15 treinos","FT","#c9d5df"),
+                    ("3","Pedro Quintas","13 treinos","PQ","#d18a55"),
+                    ("4","Fernanda Galdino","11 treinos","FG","#29a8ff"),
+                    ("5","Dan Sabino","9 treinos","DS","#29a8ff"),
+                ]
+                for pos,name,count,initials,color in ranking:
+                    with mui.Box(sx={"display":"flex","alignItems":"center","gap":1.2,"py":1.05,"borderBottom":"1px solid #122d45"}):
+                        mui.Typography(pos,sx={"width":18,"color":color,"fontSize":13,"fontWeight":950})
+                        mui.Avatar(initials,sx={"width":34,"height":34,"bgcolor":"#0c3554","color":cyan,"fontSize":9,"fontWeight":950})
+                        with mui.Box(sx={"flex":1}):
+                            mui.Typography(name,sx={"color":white,"fontSize":12,"fontWeight":850})
+                        mui.Typography(count,sx={"color":"#9eb3c5","fontSize":9.5,"fontWeight":850})
+                mui.Button(
+                    "VER RANKING COMPLETO",
+                    href="/Historico_de_Treinos", target="_top",
+                    endIcon=mui.icon.ArrowForwardRounded(),
+                    fullWidth=True,
+                    variant="outlined",
+                    sx={
+                        "mt":"auto","color":cyan,"borderColor":"#1b668d",
+                        "fontSize":10,"fontWeight":950,"letterSpacing":".7px",
+                        "borderRadius":"11px","py":1.05,
+                        "boxShadow":"0 0 18px rgba(32,230,255,.08)"
+                    }
+                )
+
+            # Top manobras
+            with mui.Paper(elevation=0, sx={**card,"p":2.4,"minHeight":390,"display":"flex","flexDirection":"column"}):
+                with mui.Box(sx={"display":"flex","justifyContent":"space-between","alignItems":"center","mb":2}):
+                    mui.Typography("Top manobras", sx={"color":white,"fontSize":20,"fontWeight":950})
+                    mui.Box()
+                tricks = [
+                    ("Noseblunt",95.3,"#00e4a4"),
+                    ("Blunt",94.9,"#00e4a4"),
+                    ("Flip Lipslide",78.6,"#a9df46"),
+                    ("Flip Board",68.4,"#ffbf3f"),
+                    ("Flip Crooked",17.1,"#ff5364"),
+                ]
+                for name, pct, color in tricks:
+                    with mui.Box(sx={"mb":1.9}):
+                        with mui.Box(sx={"display":"flex","justifyContent":"space-between","mb":.7}):
+                            mui.Typography(name, sx={"color":"#dce7f0","fontSize":12,"fontWeight":800})
+                            mui.Typography(f"{pct:.1f}%".replace(".",","), sx={"color":color,"fontSize":11,"fontWeight":950})
+                        with mui.Box(sx={"height":7,"bgcolor":"#10283d","borderRadius":20,"overflow":"hidden"}):
+                            mui.Box(sx={"height":"100%","width":f"{pct}%","bgcolor":color,"borderRadius":20})
+                mui.Button(
+                    "VER TODAS AS MANOBRAS",
+                    href="/Livro_de_Manobras", target="_top",
+                    endIcon=mui.icon.ArrowForwardRounded(),
+                    fullWidth=True,
+                    variant="outlined",
+                    sx={
+                        "mt":"auto","color":cyan,"borderColor":"#1b668d",
+                        "fontSize":10,"fontWeight":950,"letterSpacing":".7px",
+                        "borderRadius":"11px","py":1.05,
+                        "boxShadow":"0 0 18px rgba(32,230,255,.08)"
+                    }
+                )
+
+            # Comissão técnica
+            with mui.Paper(elevation=0, sx={**card,"p":2.4,"minHeight":390,"display":"flex","flexDirection":"column"}):
+                with mui.Box(sx={"display":"flex","justifyContent":"space-between","alignItems":"center","mb":2}):
+                    with mui.Box(sx={"display":"flex","alignItems":"center","gap":1}):
+                        mui.icon.GroupsOutlined(sx={"color":cyan})
+                        mui.Typography("Comissão técnica", sx={"color":white,"fontSize":20,"fontWeight":950})
+                    mui.Box()
+
+                # Ordem visual fixa por cargo. Na integração final, os nomes/fotos
+                # virão dos perfis reais do Supabase.
+                staff = [
+                    ("Presidente","Presidência","PR","#ffbf3f"),
+                    ("Vice-presidente","Vice-presidência","VP","#b85cff"),
+                    ("Chefe de equipe","Chefia de equipe","CE","#20e6ff"),
+                    ("Comissão técnica","Staff","CT","#29a8ff"),
+                ]
+                for name, role, initials, color in staff:
+                    with mui.Box(sx={
+                        "display":"flex","alignItems":"center","gap":1.25,"py":1.15,
+                        "borderBottom":"1px solid #122d45"
+                    }):
+                        mui.Avatar(initials, sx={
+                            "width":40,"height":40,
+                            "backgroundColor":f"{color}18",
+                            "color":color,
+                            "border":f"1px solid {color}55",
+                            "fontSize":9,"fontWeight":950
+                        })
+                        with mui.Box(sx={"flex":1,"minWidth":0}):
+                            mui.Typography(name, sx={
+                                "color":white,"fontSize":12,"fontWeight":850,
+                                "whiteSpace":"nowrap","overflow":"hidden","textOverflow":"ellipsis"
+                            })
+                            mui.Typography(role, sx={
+                                "color":muted,"fontSize":10,"mt":.3
+                            })
+                        mui.icon.ChevronRight(sx={"color":"#58748a","fontSize":18})
+
+                mui.Button(
+                    "VER MAIS DA EQUIPE",
+                    href="/Times", target="_top",
+                    endIcon=mui.icon.ArrowForward(),
+                    fullWidth=True,
+                    variant="outlined",
+                    sx={
+                        "mt":"auto","color":cyan,"borderColor":"#1b5277",
+                        "fontSize":9,"fontWeight":950,"letterSpacing":".8px",
+                        "borderRadius":"10px","py":1
+                    }
+                )
+
+# A navegação é propositalmente visual neste teste.
+# A integração real com as páginas existentes será feita somente após aprovação do layout.
 
 
-# Mantém a personalização de imagem que já existia para o administrador.
-if role == 'admin':
-    with st.expander('🖼️ Personalizar imagem principal da Home'):
-        hero_file = st.file_uploader('Imagem de fundo da Home', type=['jpg','jpeg','png','webp'], key='hero_upload_v4')
-        if hero_file and st.button('Salvar nova imagem de fundo', type='primary', use_container_width=True):
-            try:
-                ext = hero_file.name.rsplit('.',1)[-1].lower(); path = f"{user.id}/home-hero.{ext}"
-                try: sb.storage.from_('profile-photos').remove([path])
-                except Exception: pass
-                sb.storage.from_('profile-photos').upload(path, hero_file.getvalue(), {'content-type':hero_file.type,'upsert':'true'})
-                url = sb.storage.from_('profile-photos').get_public_url(path)
-                sb.table('portal_settings').upsert({'key':'home_hero_url','value':url}).execute()
-                st.success('Imagem principal atualizada.'); st.rerun()
-            except Exception as e: st.error(f'Não foi possível salvar a imagem: {e}')
-
+# Sessão autenticada: controle discreto, fora do layout principal.
+with st.container():
+    c1, c2 = st.columns([8, 1])
+    with c1:
+        st.caption(f"Conectado como: {name}")
+    with c2:
+        if st.button("Sair", key="home_logout", use_container_width=True):
+            sign_out()
+            st.rerun()

@@ -10,3 +10,5 @@ extra-streamlit-components>=0.1.80
 google-auth>=2.35
 
 requests>=2.32
+
+streamlit-elements==0.1.*

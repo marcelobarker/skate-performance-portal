@@ -8,10 +8,35 @@ import plotly.graph_objects as go
 import streamlit as st
 import streamlit.components.v1 as components
 from PIL import Image
+from streamlit_elements import elements, mui
 
 from ui_theme import apply_ui_theme
 
-st.set_page_config(initial_sidebar_state="expanded", page_title="Skate Performance", page_icon="🛹", layout="wide")
+st.set_page_config(initial_sidebar_state="collapsed", page_title="Análise de Treino • Seleção Brasileira", page_icon="🛹", layout="wide")
+
+# V4.23 early sidebar kill
+
+st.markdown("""<style>
+html,body,[data-testid="stAppViewContainer"]{background:#020b14!important;}
+section[data-testid="stSidebar"],aside[data-testid="stSidebar"],div[data-testid="stSidebar"],
+[data-testid="stSidebar"],[data-testid="stSidebarNav"],[data-testid="stSidebarContent"],
+[data-testid="stSidebarCollapsedControl"],[data-testid="collapsedControl"],
+button[aria-label="Open sidebar"],button[aria-label="Close sidebar"]{
+display:none!important;width:0!important;min-width:0!important;max-width:0!important;
+visibility:hidden!important;opacity:0!important;pointer-events:none!important;}
+[data-testid="stAppViewContainer"]>.main,section.main,[data-testid="stMain"]{
+margin-left:0!important;width:100%!important;max-width:100%!important;}
+
+/* V4.24 — navbar encostada no topo */
+[data-testid="stMainBlockContainer"]{
+  padding-top:0!important;
+  margin-top:0!important;
+}
+.main .block-container,.block-container{
+  padding-top:0!important;
+  margin-top:0!important;
+}
+</style>""", unsafe_allow_html=True)
 apply_ui_theme()
 
 st.markdown("""<style>
@@ -34,6 +59,24 @@ st.markdown("""<style>
 [data-testid="stDateInput"] button,[data-testid="stTimeInput"] button{background:#0b1d2d!important;color:#eef8ff!important;}
 [data-testid="stDateInput"]>div,[data-testid="stDateInput"] div[data-baseweb="input"]{background:#0b1d2d!important;color:#eef8ff!important;}
 [data-baseweb="input"],[data-baseweb="select"]>div,[data-baseweb="textarea"]{background:#0b1d2d!important;color:#eef8ff!important;}
+
+/* V4.20 — KPIs premium + ícones */
+.kpi2{display:grid!important;grid-template-columns:42px 1fr!important;grid-template-rows:auto auto auto!important;column-gap:11px!important;align-items:center!important;padding:14px 15px!important;min-height:100px!important}
+.kpi2-icon{grid-row:1/4;width:40px;height:40px;border-radius:12px;display:flex;align-items:center;justify-content:center;background:linear-gradient(145deg,rgba(0,217,255,.16),rgba(8,124,255,.07));border:1px solid rgba(32,230,255,.30);box-shadow:0 0 18px rgba(0,217,255,.08);color:#20e6ff}
+.kpi2-icon svg{width:21px;height:21px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.kpi2-label,.kpi2-value,.kpi2-sub{grid-column:2!important;margin:0!important}.kpi2-value{font-size:30px!important;margin-top:2px!important}.kpi2-error .kpi2-icon{color:#ff5260;border-color:rgba(255,82,96,.34);background:rgba(255,82,96,.07)}
+.video-kpi-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin:8px 0 18px}.video-kpi{background:linear-gradient(145deg,#0a2137,#07192a);border:1px solid #1a608a;border-radius:14px;padding:14px;display:grid;grid-template-columns:42px 1fr;gap:11px;align-items:center;box-shadow:0 8px 22px rgba(0,0,0,.16)}.video-kpi .vk-icon{width:40px;height:40px;border-radius:12px;display:flex;align-items:center;justify-content:center;color:#20e6ff;background:rgba(0,217,255,.08);border:1px solid rgba(32,230,255,.28)}.video-kpi .vk-icon svg{width:21px;height:21px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}.video-kpi .vk-label{font-size:10px;color:#a9c7dc;font-weight:850;letter-spacing:.08em}.video-kpi .vk-value{font-size:28px;color:#f6fbff;font-weight:950;line-height:1.05;margin-top:3px}.video-kpi.error{border-color:#703044}.video-kpi.error .vk-icon,.video-kpi.error .vk-value{color:#ff5260}@media(max-width:900px){.video-kpi-grid{grid-template-columns:repeat(2,1fr)}}
+
+/* V4.23 unified redesigned-page frame */
+[data-testid="stMainBlockContainer"]{
+  border-left:8px solid #f5f8fc!important;
+  border-right:8px solid #f5f8fc!important;
+  box-sizing:border-box!important;
+}
+[data-testid="stMainBlockContainer"]::before{
+  content:"";display:block;height:8px;background:#f5f8fc;margin:0 -0px 0;
+}
+
 </style>""", unsafe_allow_html=True)
 
 
@@ -52,8 +95,8 @@ st.markdown("""
 #MainMenu{visibility:hidden!important}
 footer{visibility:hidden!important}
 [data-testid="stDecoration"]{display:none!important}
-[data-testid="stSidebar"]{background:#071522;border-right:1px solid #173a58}
-[data-testid="stSidebar"] .block-container{padding-top:1.2rem}
+
+
 h1,h2,h3{letter-spacing:.02em}
 div[data-testid="stMetric"]{background:#09192b;border:1px solid #1b4567;border-radius:12px;padding:14px 16px}
 .kpi{height:122px;background:linear-gradient(145deg,#0b1d31,#091827);border:1px solid #1b4567;border-radius:12px;padding:16px}
@@ -73,8 +116,8 @@ div[data-testid="stMetric"]{background:#09192b;border:1px solid #1b4567;border-r
 [data-testid="stFileUploaderDropzone"] *{color:#dcecff!important}
 [data-testid="stFileUploaderFile"]{background:#0b1d31!important;color:#dcecff!important}
 [data-testid="stFileUploaderFile"] *{color:#dcecff!important}
-[data-testid="stSidebar"] label,[data-testid="stSidebar"] p,[data-testid="stSidebar"] span{color:#b9cee0!important}
-[data-testid="stSidebar"] h2,[data-testid="stSidebar"] strong{color:#eef7ff!important}
+
+
 .stSelectbox div[data-baseweb="select"]>div,.stTextInput input{background:#09192b!important;border-color:#245071!important;color:#eef7ff!important}
 div[data-baseweb="popover"],ul[role="listbox"]{background:#09192b!important}
 div[role="option"]{color:#eef7ff!important}
@@ -442,21 +485,27 @@ def donut(title,data):
                   for i,label in enumerate(data.keys())]
     fig=go.Figure(go.Pie(labels=list(data),values=list(data.values()),hole=.66,
         marker=dict(colors=chart_colors,line=dict(color="#071522",width=1)),
-        textinfo="percent",textfont=dict(size=14,color="#f5f8ff",family="Arial Black"),
+        textinfo="percent",textfont=dict(size=17,color="#f5f8ff",family="Arial Black"),
         hovertemplate="<b>%{label}</b><br>%{value:.0f} • %{percent}<extra></extra>"))
     if title=="OBSTÁCULO":
-        fig.update_traces(domain=dict(x=[0.18,0.82],y=[0.43,1.0]))
+        # Muitas categorias: percentuais ficam dentro das fatias para evitar linhas/labels sobrepostos.
+        fig.update_traces(textposition="inside", textinfo="percent", insidetextorientation="radial",
+                          textfont=dict(size=14,color="#f5f8ff",family="Arial Black"),
+                          domain=dict(x=[0.08,0.66],y=[0.08,0.95]))
         fig.update_layout(title=dict(text=title,x=.04,font=dict(size=15,color="#f5f8ff")),
-            height=455,margin=dict(l=8,r=8,t=45,b=195),paper_bgcolor="rgba(0,0,0,0)",
+            height=390,margin=dict(l=8,r=8,t=45,b=20),paper_bgcolor="rgba(0,0,0,0)",
             plot_bgcolor="rgba(0,0,0,0)",font=dict(color="#9db3c8"),
-            legend=dict(orientation="h",y=-.17,x=0,xanchor="left",yanchor="top",
-                        font=dict(size=9,color="#d9e9f7"),itemsizing="constant",
-                        entrywidth=105,entrywidthmode="pixels"))
+            legend=dict(orientation="v",y=.95,x=.70,xanchor="left",yanchor="top",
+                        font=dict(size=9,color="#d9e9f7"),itemsizing="constant"))
     else:
         fig.update_layout(title=dict(text=title,x=.04,font=dict(size=15,color="#f5f8ff")),
             height=300,margin=dict(l=8,r=8,t=45,b=75),paper_bgcolor="rgba(0,0,0,0)",
             plot_bgcolor="rgba(0,0,0,0)",font=dict(color="#9db3c8"),
             legend=dict(orientation="h",y=-.18,x=0,font=dict(size=10,color="#d9e9f7")))
+    total=sum(data.values())
+    fig.add_annotation(x=.37 if title=="OBSTÁCULO" else .5,y=.515 if title=="OBSTÁCULO" else .5,
+        text=f"<b>{total:.0f}</b><br><span style='font-size:10px;color:#7fa4bd'>TOTAL</span>",
+        showarrow=False,align="center",font=dict(size=24,color="#f5f8ff",family="Arial Black"))
     return fig
 
 def kpi(label,value,sub=""):
@@ -770,21 +819,101 @@ st.markdown("""<style>
 }
 </style>""",unsafe_allow_html=True)
 st.markdown("""
-<div class="site-header">
-  <div>
-    <div class="brand">SKATE <span>PERFORMANCE</span> <span style="color:#f5f8ff;font-size:.62em;font-style:normal">• TIME BRASIL</span></div>
-    <div class="tag">PERFORMANCE ANALYSIS • TRAINING INTELLIGENCE</div>
-  </div>
-  <div class="header-right">
-    <b>SPORTSCODE ANALYTICS</b>
-    <div>TRAINING DATA DASHBOARD</div>
-  </div>
-</div>
+<style>
+/* V4.15 — Análise em tela cheia: remove definitivamente a navegação lateral antiga */
+section[data-testid="stSidebar"],
+aside[data-testid="stSidebar"],
+div[data-testid="stSidebar"],
+[data-testid="stSidebar"],
+[data-testid="stSidebarNav"],
+[data-testid="stSidebarContent"],
+[data-testid="stSidebarCollapsedControl"],
+[data-testid="collapsedControl"]{display:none!important;width:0!important;min-width:0!important;max-width:0!important;visibility:hidden!important}
+[data-testid="stAppViewContainer"] > .main,
+[data-testid="stAppViewContainer"] > section.main,
+section.main{margin-left:0!important;width:100%!important;max-width:100%!important}
+[data-testid="stMain"], [data-testid="stMainBlockContainer"]{margin-left:0!important;width:100%!important;max-width:100%!important}
+.block-container{max-width:1480px!important;width:100%!important;margin:0 auto!important;padding:0 26px 52px!important}
+.analysis-nav{height:62px;margin:0 -26px 26px;padding:0 26px;display:flex;align-items:center;justify-content:space-between;
+ background:linear-gradient(90deg,#061522,#071c2e 58%,#081827);border-bottom:1px solid #123d5c;box-shadow:0 10px 28px rgba(0,0,0,.2)}
+.analysis-brand{display:flex;align-items:center;gap:11px}.analysis-mark{width:34px;height:34px;border:1px solid #087cff;border-radius:10px;
+ display:grid;place-items:center;color:#20e6ff;box-shadow:0 0 18px rgba(0,217,255,.16);font-size:16px;font-weight:900}
+.analysis-brand-main{font-size:12px;font-weight:900;letter-spacing:.11em;color:#f5f8fc}.analysis-brand-sub{font-size:8px;color:#29a8ff;letter-spacing:.13em;margin-top:2px}
+.analysis-links{display:flex;gap:25px;font-size:10px;letter-spacing:.08em;color:#9bb0c4;font-weight:800}.analysis-links span.active{color:#f7fbff;border-bottom:2px solid #20e6ff;padding-bottom:18px}
+.analysis-eyebrow{font-size:10px;color:#20e6ff;font-weight:900;letter-spacing:.18em;margin-bottom:6px}.analysis-title{font-size:38px;line-height:1.05;font-weight:950;color:#f7fbff;letter-spacing:-.02em;margin:0}
+.analysis-lead{font-size:13px;color:#89a5bf;max-width:720px;margin-top:8px}.setup-card{background:linear-gradient(145deg,rgba(8,27,45,.96),rgba(5,19,32,.96));border:1px solid #174c70;border-radius:18px;padding:22px;margin:22px 0 18px;box-shadow:0 18px 45px rgba(0,0,0,.2)}
+.setup-title{font-size:17px;font-weight:900;color:#f5f8fc;margin-bottom:2px}.setup-sub{font-size:11px;color:#7895ae;margin-bottom:14px}
+.video-card{background:linear-gradient(145deg,#081b2d,#071625);border:1px solid #244a68;border-radius:16px;padding:18px 20px;margin:18px 0}.video-title{font-size:17px;font-weight:900;color:#f5f8fc}.video-kicker{font-size:10px;color:#d45aff;font-weight:900;letter-spacing:.14em;margin-bottom:4px}
+[data-testid="stRadio"] label,[data-testid="stRadio"] p{color:#dcecff!important}
+[data-testid="stTextInput"] label,[data-testid="stDateInput"] label,[data-testid="stSelectbox"] label,[data-testid="stFileUploader"] label{color:#dcecff!important;font-weight:700!important}
+/* V4.15 — todos os campos da configuração permanecem dark, inclusive data e calendário */
+[data-testid="stTextInput"] > div > div,
+[data-testid="stDateInput"] > div > div,
+[data-testid="stDateInput"] div[data-baseweb="input"],
+[data-testid="stDateInput"] input,
+[data-testid="stDateInput"] button,
+[data-testid="stSelectbox"] div[data-baseweb="select"] > div,
+[data-testid="stFileUploaderDropzone"]{background:#0a1d30!important;background-color:#0a1d30!important;border-color:#245274!important;color:#eef8ff!important}
+[data-testid="stTextInput"] input,[data-testid="stDateInput"] input{color:#eef8ff!important;-webkit-text-fill-color:#eef8ff!important}
+[data-testid="stDateInput"] input::placeholder,[data-testid="stTextInput"] input::placeholder{color:#6f8ba4!important;-webkit-text-fill-color:#6f8ba4!important}
+[data-baseweb="calendar"], [data-baseweb="calendar"] > div, [role="dialog"] [data-baseweb="calendar"]{background:#081827!important;color:#eef8ff!important}
+[data-baseweb="calendar"] button,[data-baseweb="calendar"] div,[data-baseweb="calendar"] span{color:#dcecff!important}
+[data-baseweb="input"], [data-baseweb="select"]>div, [data-testid="stFileUploaderDropzone"]{background:#0a1d30!important;border-color:#245274!important;color:#eef8ff!important}
+[data-baseweb="input"] input,[data-baseweb="select"] *,[data-testid="stFileUploaderDropzone"] *{color:#eef8ff!important;-webkit-text-fill-color:#eef8ff!important}
+[data-testid="stFileUploaderDropzone"] button{background:#0d2a43!important;color:#eef8ff!important;border:1px solid #178bd1!important}
+[data-testid="stFileUploaderFile"]{background:#0a1d30!important;border:1px solid #245274!important}[data-testid="stFileUploaderFile"] *{color:#dcecff!important;-webkit-text-fill-color:#dcecff!important}
+.analysis-status{display:inline-flex;gap:8px;align-items:center;padding:7px 11px;border-radius:999px;background:#08263a;border:1px solid #15577b;color:#86d8ff;font-size:10px;font-weight:800;margin:4px 6px 4px 0}
+@media(max-width:800px){.analysis-links{display:none}.analysis-title{font-size:30px}.block-container{padding-left:15px!important;padding-right:15px!important}.analysis-nav{margin-left:-15px;margin-right:-15px;padding-left:15px;padding-right:15px}}
+</style>
 """, unsafe_allow_html=True)
 
-st.sidebar.markdown("## 🛹 SKATE **PERFORMANCE**")
+# V4.17 — mesma navbar Material UI aprovada na Home/Times.
+nav_name = str((profile or {}).get("full_name") or getattr(user, "email", None) or "Usuário").strip()
+nav_role = str((profile or {}).get("role") or "membro").replace("_", " ").title()
+nav_photo = (profile or {}).get("photo_url")
+nav_initials = "".join(part[:1].upper() for part in nav_name.split()[:2]) or "U"
 
-# V2.0.2 — a análise pode nascer de um upload novo OU de uma sessão já salva.
+with elements("analysis_top_nav"):
+    with mui.Paper(elevation=0, square=True, sx={
+        "mb":2,"backgroundColor":"#061523","border":"1px solid #163b59",
+        "borderRadius":"0 0 14px 14px","minHeight":62,"display":"flex",
+        "alignItems":"center","px":{"xs":1,"md":2},"fontFamily":"\"Segoe UI Variable\", Inter, Manrope, Arial, sans-serif"
+    }):
+        with mui.Box(sx={"display":"flex","alignItems":"center","gap":{"xs":1,"md":3},"width":"100%","overflowX":"auto"}):
+            with mui.Box(sx={"display":"flex","alignItems":"center","gap":1.1,"mr":{"xs":1,"md":3},"flexShrink":0}):
+                mui.icon.AutoAwesome(sx={"color":"#20e6ff","fontSize":27})
+                with mui.Box:
+                    mui.Typography("ANÁLISE • EVOLUÇÃO • PERFORMANCE", sx={"color":"#f5f8fc","fontWeight":950,"fontSize":12,"letterSpacing":".7px","lineHeight":1.2})
+                    mui.Typography("SKATEBOARDING PERFORMANCE SYSTEM", sx={"color":"#20e6ff","fontWeight":850,"fontSize":7,"letterSpacing":"2px","mt":.45})
+            for label, Icon, active in [
+                ("Home",mui.icon.HomeOutlined,False),("Análise",mui.icon.AnalyticsOutlined,True),
+                ("Atletas",mui.icon.GroupsOutlined,False),("Times",mui.icon.ShieldOutlined,False),
+                ("Histórico",mui.icon.History,False)
+            ]:
+                with mui.Button(startIcon=Icon(), sx={
+                    "height":61,"minWidth":"auto","px":1,"flexShrink":0,"textTransform":"none",
+                    "borderRadius":0,"color":"#20e6ff" if active else "#9fb4c7",
+                    "borderBottom":"2px solid #20e6ff" if active else "2px solid transparent",
+                    "fontSize":12,"fontWeight":850
+                }):
+                    mui.Typography(label,sx={"fontSize":12,"fontWeight":850})
+
+            with mui.Box(sx={"ml":"auto","display":{"xs":"none","md":"flex"},"alignItems":"center","gap":1.0,"pl":1.5,"flexShrink":0}):
+                with mui.Box(sx={"textAlign":"right","lineHeight":1.05}):
+                    mui.Typography(nav_name,sx={"color":"#f5f8fc","fontSize":10.5,"fontWeight":900,"maxWidth":145,"whiteSpace":"nowrap","overflow":"hidden","textOverflow":"ellipsis"})
+                    mui.Typography(nav_role,sx={"color":"#20e6ff","fontSize":7.5,"fontWeight":800,"letterSpacing":".45px"})
+                if nav_photo:
+                    mui.Avatar(src=nav_photo,sx={"width":35,"height":35,"border":"1px solid #20e6ff","boxShadow":"0 0 12px rgba(32,230,255,.22)"})
+                else:
+                    mui.Avatar(nav_initials,sx={"width":35,"height":35,"bgcolor":"#0c3554","color":"#20e6ff","border":"1px solid #20e6ff","fontSize":10,"fontWeight":950})
+
+st.markdown("""
+<div class="analysis-eyebrow">SELEÇÃO BRASILEIRA • PERFORMANCE ANALYTICS</div>
+<div class="analysis-title">Análise de Treino</div>
+<div class="analysis-lead">Centralize os dados do treino, importe os CSVs do Sportscode e acompanhe a evolução técnica do atleta em um único dashboard.</div>
+""", unsafe_allow_html=True)
+
+# V4.14 — a análise pode nascer de upload novo ou de uma sessão salva, sem controles na sidebar.
 sb = get_supabase()
 try:
     athlete_rows = (
@@ -795,197 +924,143 @@ try:
 except Exception as e:
     st.error(f"Não foi possível carregar os skatistas cadastrados: {e}"); st.stop()
 
+analysis_photo = None
 if history_view:
     selected_athlete = next((r for r in athlete_rows if r.get("id") == history_view.get("athlete_id")), None)
     if selected_athlete is None:
         st.error("Este treino não está disponível para o seu perfil."); st.stop()
     athlete = selected_athlete.get("full_name") or "ATLETA"
     photo_url = selected_athlete.get("photo_url")
-    st.sidebar.markdown("### 👁 MODO HISTÓRICO")
-    st.sidebar.caption(f"{history_view.get('title','Treino')} • {history_view.get('training_date') or '—'}")
-    if st.sidebar.button("← VOLTAR AO HISTÓRICO", use_container_width=True):
-        st.session_state.pop("history_analysis_view", None)
-        st.switch_page("pages/04_Historico_de_Treinos.py")
-else:
-    analysis_subject = st.sidebar.radio("QUEM SERÁ ANALISADO?", ["Atleta cadastrado", "Atleta convidado / sem cadastro"], horizontal=False)
-    guest_mode = analysis_subject.startswith("Atleta convidado")
-    if guest_mode:
-        guest_name = st.sidebar.text_input("NOME DO ATLETA CONVIDADO", placeholder="Ex.: John Doe")
-        guest_modality = st.sidebar.selectbox("MODALIDADE DO CONVIDADO", ["Street","Park","Vert","Outro"])
-        guest_stance = st.sidebar.selectbox("BASE DO CONVIDADO", ["Regular","Goofy","Não informado"])
-        selected_athlete={"id":None,"full_name":guest_name.strip() or "ATLETA CONVIDADO","modality":guest_modality,"stance":None if guest_stance=="Não informado" else guest_stance,"photo_url":None}
-        athlete=selected_athlete["full_name"]; photo_url=None
-        st.sidebar.caption("Análise temporária: o convidado não é cadastrado nem salvo no Histórico.")
-    else:
-        if not athlete_rows:
-            msg = "Nenhum skatista ativo do seu time está disponível para análise." if profile.get("role") in ("tecnico","presidente","vice_presidente","chefe_equipe","comissao_tecnica") else "Ainda não há skatistas ativos cadastrados. Use Atleta convidado para uma análise sem cadastro."
-            st.info(msg); st.stop()
-        athlete_by_label = {f"{r.get('full_name') or 'Sem nome'}" + (f" • {r.get('modality')}" if r.get('modality') else ""): r for r in athlete_rows}
-        athlete_label = st.sidebar.selectbox("ATLETA CADASTRADO", list(athlete_by_label.keys()))
-        selected_athlete = athlete_by_label[athlete_label]
-        athlete = selected_athlete.get("full_name") or "ATLETA"
-        photo_url = selected_athlete.get("photo_url")
-
-photo = None
-if photo_url:
-    try: photo = io.BytesIO(urlopen(photo_url, timeout=8).read())
-    except Exception: photo = None
-
-st.sidebar.caption(" • ".join([x for x in [selected_athlete.get("modality"), selected_athlete.get("stance")] if x]))
-analysis_photo = None
-if not history_view:
-    analysis_photo = st.sidebar.file_uploader("FOTO PARA A ANÁLISE (OPCIONAL)", type=["jpg", "jpeg", "png", "webp"], accept_multiple_files=False)
-    if analysis_photo is not None: photo = io.BytesIO(analysis_photo.getvalue())
-    training_date = st.sidebar.date_input("DATA DO TREINO", value=date.today())
-    training_title = st.sidebar.text_input("TÍTULO DO TREINO", placeholder="Ex.: Treino Street - manhã")
-    files=st.sidebar.file_uploader("ARQUIVOS CSV (TREINOS)",type=["csv","txt"],accept_multiple_files=True)
-else:
+    with st.container(border=True):
+        c1,c2=st.columns([5,1])
+        with c1:
+            st.markdown("#### 👁 Modo histórico")
+            st.caption(f"{history_view.get('title','Treino')} • {history_view.get('training_date') or '—'}")
+        with c2:
+            if st.button("← Histórico", use_container_width=True):
+                st.session_state.pop("history_analysis_view", None); st.switch_page("pages/04_Historico_de_Treinos.py")
     class ArchivedUpload(io.BytesIO):
-        def __init__(self, data, name):
-            super().__init__(data); self.name=name
-        def getvalue(self):
-            return super().getvalue()
+        def __init__(self, data, name): super().__init__(data); self.name=name
+        def getvalue(self): return super().getvalue()
     files=[ArchivedUpload(item["data"], item["name"]) for item in history_view.get("files",[])]
     training_date = date.fromisoformat(history_view["training_date"]) if history_view.get("training_date") else date.today()
     training_title = history_view.get("title") or "Treino"
+else:
+    st.markdown('<div class="setup-card"><div class="setup-title">Configurar nova análise</div><div class="setup-sub">Selecione o atleta, identifique o treino e importe um ou mais arquivos CSV.</div></div>', unsafe_allow_html=True)
+    analysis_subject = st.radio("QUEM SERÁ ANALISADO?", ["Atleta cadastrado", "Atleta convidado / sem cadastro"], horizontal=True)
+    guest_mode = analysis_subject.startswith("Atleta convidado")
+    if guest_mode:
+        c1,c2,c3=st.columns([2,1,1])
+        with c1: guest_name=st.text_input("NOME DO ATLETA CONVIDADO",placeholder="Ex.: John Doe")
+        with c2: guest_modality=st.selectbox("MODALIDADE",["Street","Park","Vert","Outro"])
+        with c3: guest_stance=st.selectbox("BASE",["Regular","Goofy","Não informado"])
+        selected_athlete={"id":None,"full_name":guest_name.strip() or "ATLETA CONVIDADO","modality":guest_modality,"stance":None if guest_stance=="Não informado" else guest_stance,"photo_url":None}
+        athlete=selected_athlete["full_name"]; photo_url=None
+        st.caption("Análise temporária: o convidado não é cadastrado nem salvo no Histórico.")
+    else:
+        if not athlete_rows:
+            st.info("Ainda não há skatistas ativos disponíveis para análise."); st.stop()
+        athlete_by_label={f"{r.get('full_name') or 'Sem nome'}"+(f" • {r.get('modality')}" if r.get('modality') else ""):r for r in athlete_rows}
+        athlete_label=st.selectbox("ATLETA CADASTRADO",list(athlete_by_label.keys()))
+        selected_athlete=athlete_by_label[athlete_label]; athlete=selected_athlete.get("full_name") or "ATLETA"; photo_url=selected_athlete.get("photo_url")
+    info=" • ".join([x for x in [selected_athlete.get("modality"),selected_athlete.get("stance")] if x])
+    if info: st.caption(info)
+    c1,c2=st.columns([1,2])
+    with c1: training_date=st.date_input("DATA DO TREINO",value=date.today())
+    with c2: training_title=st.text_input("TÍTULO DO TREINO",placeholder="Ex.: Treino Street - manhã")
+    analysis_photo=st.file_uploader("FOTO PARA A ANÁLISE (OPCIONAL)",type=["jpg","jpeg","png","webp"],accept_multiple_files=False)
+    files=st.file_uploader("ARQUIVOS CSV (TREINOS)",type=["csv","txt"],accept_multiple_files=True)
 
-# V3.9 — entrada direta para codificação de vídeo dentro da página Análise.
+photo=None
+if photo_url:
+    try: photo=io.BytesIO(urlopen(photo_url,timeout=8).read())
+    except Exception: photo=None
+if analysis_photo is not None: photo=io.BytesIO(analysis_photo.getvalue())
+
+# Área de vídeo separada visualmente da análise por CSV.
 if selected_athlete.get("id") and profile.get("role") == "admin":
-    try:
-        video_posts = sb.table("athlete_posts").select("id,session_title,created_at,upload_kind,analysis_status").eq("athlete_id", selected_athlete["id"]).order("created_at", desc=True).execute().data or []
-    except Exception:
-        video_posts = []
+    try: video_posts=sb.table("athlete_posts").select("id,session_title,created_at,upload_kind,analysis_status").eq("athlete_id",selected_athlete["id"]).order("created_at",desc=True).execute().data or []
+    except Exception: video_posts=[]
     if video_posts:
-        with st.container(border=True):
-            st.markdown("### 🎬 CODIFICAÇÃO DE VÍDEO")
-            st.caption("Abra uma sessão e marque cada tentativa enquanto assiste, no estilo de video coding esportivo.")
-            labels=[]
-            for vp in video_posts:
-                date=(vp.get("created_at") or "")[:10]
-                labels.append(f"{vp.get('session_title') or 'Vídeo de treino'} • {date}")
-            pick=st.selectbox("Sessão de vídeo", range(len(video_posts)), format_func=lambda i: labels[i], key="video_session_pick")
-            if st.button("▶ ABRIR CODIFICAÇÃO", type="primary", use_container_width=True, key="open_video_coding"):
-                st.session_state["selected_video_post_id"]=video_posts[pick]["id"]
-                st.switch_page("pages/10_Codificar_Sessao.py")
+        with st.expander("🎬 CODIFICAÇÃO DE VÍDEO", expanded=False):
+            st.caption("Abra uma sessão de vídeo para marcar tentativas. Esta área fica separada do dashboard de CSV.")
+            labels=[f"{vp.get('session_title') or 'Vídeo de treino'} • {(vp.get('created_at') or '')[:10]}" for vp in video_posts]
+            pick=st.selectbox("Sessão de vídeo",range(len(video_posts)),format_func=lambda i:labels[i],key="video_session_pick")
+            if st.button("ABRIR CODIFICAÇÃO",type="primary",use_container_width=True,key="open_video_coding"):
+                st.session_state["selected_video_post_id"]=video_posts[pick]["id"]; st.switch_page("pages/10_Codificar_Sessao.py")
 
-# V3.8 — resultados de vídeos: uma sessão pode conter várias tentativas/manobras codificadas.
+# Resultados de vídeo em painel recolhível para não competir com a análise de CSV.
 if selected_athlete.get('id'):
-    try:
-        ve=sb.table('trick_video_events').select('*').eq('athlete_id',selected_athlete['id']).order('created_at',desc=True).execute().data or []
-    except Exception:
-        ve=[]
-    try:
-        legacy=sb.table('trick_video_analyses').select('*').eq('athlete_id',selected_athlete['id']).order('analyzed_at',desc=True).execute().data or []
-    except Exception:
-        legacy=[]
-    video_attempts = ve if ve else legacy
+    try: ve=sb.table('trick_video_events').select('*').eq('athlete_id',selected_athlete['id']).order('created_at',desc=True).execute().data or []
+    except Exception: ve=[]
+    try: legacy=sb.table('trick_video_analyses').select('*').eq('athlete_id',selected_athlete['id']).order('analyzed_at',desc=True).execute().data or []
+    except Exception: legacy=[]
+    video_attempts=ve if ve else legacy
     if video_attempts:
-        st.markdown("### 🎥 Análise de vídeo")
-        total=len(video_attempts); hits=sum(1 for x in video_attempts if x.get('result')=='Acerto'); errors=total-hits; rate=(hits/total*100) if total else 0
-        m1,m2,m3,m4=st.columns(4); m1.metric('Tentativas',total); m2.metric('Acertos',hits); m3.metric('Erros',errors); m4.metric('Taxa de acerto',f'{rate:.1f}%')
-        def dist_video(field):
-            out={}
-            for x in video_attempts:
-                v=x.get(field)
-                if v: out[v]=out.get(v,0)+1
-            return out
-        d1,d2,d3,d4=st.columns(4)
-        for col,title,field in [(d1,'AVALIAÇÃO','evaluation'),(d2,'DIFICULDADE','difficulty'),(d3,'RISCO','risk'),(d4,'VELOCIDADE','speed')]:
-            vals=dist_video(field)
-            with col:
-                if vals: st.plotly_chart(donut(title,vals),use_container_width=True,config={"displayModeBar":False})
-        if ve:
-            try:
-                tr=sb.table('tricks').select('id,name').execute().data or []; tn={x['id']:x['name'] for x in tr}
-                counts={}
-                for x in ve:
-                    tid=x.get('trick_id'); name=tn.get(tid,'Manobra')
-                    if name not in counts: counts[name]={'Acerto':0,'Erro':0}
-                    counts[name][x.get('result','Erro')]+=1
-                rows=[]
-                for name,c in counts.items():
-                    tt=c['Acerto']+c['Erro']; rows.append({'Manobra':name,'Acertos':c['Acerto'],'Erros':c['Erro'],'Tentativas':tt,'Taxa de acerto':f"{(c['Acerto']/tt*100 if tt else 0):.1f}%"})
-                if rows: st.dataframe(rows,use_container_width=True,hide_index=True)
-            except Exception: pass
-        st.caption('As marcações feitas durante os vídeos são somadas como tentativas reais e ficam vinculadas ao atleta e à manobra.')
-        st.divider()
+        with st.expander("🎥 RESULTADOS DE VÍDEO", expanded=False):
+            total=len(video_attempts); hits=sum(1 for x in video_attempts if x.get('result')=='Acerto'); errors=total-hits; rate=(hits/total*100) if total else 0
+            st.markdown(f"""<div class="video-kpi-grid">
+<div class="video-kpi"><div class="vk-icon"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="3"/><path d="M12 2v3M22 12h-3"/></svg></div><div><div class="vk-label">TENTATIVAS</div><div class="vk-value">{total}</div></div></div>
+<div class="video-kpi"><div class="vk-icon"><svg viewBox="0 0 24 24"><path d="M5 12l4 4L19 6"/><circle cx="12" cy="12" r="9"/></svg></div><div><div class="vk-label">ACERTOS</div><div class="vk-value">{hits}</div></div></div>
+<div class="video-kpi error"><div class="vk-icon"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M9 9l6 6M15 9l-6 6"/></svg></div><div><div class="vk-label">ERROS</div><div class="vk-value">{errors}</div></div></div>
+<div class="video-kpi"><div class="vk-icon"><svg viewBox="0 0 24 24"><path d="M7 17L17 7"/><circle cx="8" cy="8" r="2"/><circle cx="16" cy="16" r="2"/></svg></div><div><div class="vk-label">TAXA DE ACERTO</div><div class="vk-value">{rate:.1f}%</div></div></div>
+</div>""",unsafe_allow_html=True)
+            def dist_video(field):
+                out={}
+                for x in video_attempts:
+                    v=x.get(field)
+                    if v: out[v]=out.get(v,0)+1
+                return out
+            d1,d2,d3,d4=st.columns(4)
+            for col,title,field in [(d1,'AVALIAÇÃO','evaluation'),(d2,'DIFICULDADE','difficulty'),(d3,'RISCO','risk'),(d4,'VELOCIDADE','speed')]:
+                vals=dist_video(field)
+                with col:
+                    if vals: st.plotly_chart(donut(title,vals),use_container_width=True,config={"displayModeBar":False})
 
 if not files:
-    st.title("SKATE PERFORMANCE")
-    st.info("Envie um ou mais CSVs do Sportscode para a análise completa. Se houver vídeos avaliados, o resumo deles aparece acima.")
+    st.markdown('<div class="video-card"><div class="video-kicker">PRONTO PARA COMEÇAR</div><div class="video-title">Importe os CSVs para gerar o dashboard</div></div>', unsafe_allow_html=True)
+    st.info("Envie um ou mais CSVs do Sportscode acima. O dashboard completo aparecerá aqui sem alterar os dados originais.")
     st.stop()
 
-sessions=[];problems=[]
+sessions=[]; problems=[]
 for f in files:
     try:
-        d=read_csv(f)
-        sessions.append(parse_aggregate(d,Path(f.name).stem) if is_aggregate(d) else parse_raw(d,Path(f.name).stem))
-    except Exception as e:problems.append(f"{f.name}: {e}")
-for p in problems:st.sidebar.warning(p)
+        d=read_csv(f); sessions.append(parse_aggregate(d,Path(f.name).stem) if is_aggregate(d) else parse_raw(d,Path(f.name).stem))
+    except Exception as e: problems.append(f"{f.name}: {e}")
+for p in problems: st.warning(p)
 
-# V2.0.1 — um envio com vários CSVs representa UM treino no histórico.
-# Os arquivos originais continuam separados no Storage, mas compartilham um único
-# registro de sessão e um único par de relatórios consolidados.
-if sessions and not history_view and profile.get("role") in ("admin","tecnico","presidente","vice_presidente","chefe_equipe","comissao_tecnica") and selected_athlete.get("id"):
-    if st.sidebar.button("💾 SALVAR NO HISTÓRICO", use_container_width=True):
-        uploaded_paths = []
-        report_path = visual_path = None
+# Um envio com vários CSVs representa um treino consolidado no histórico.
+can_save = sessions and not history_view and profile.get("role") in ("admin","tecnico","presidente","vice_presidente","chefe_equipe","comissao_tecnica") and selected_athlete.get("id")
+if can_save:
+    if st.button("💾 SALVAR TREINO NO HISTÓRICO",use_container_width=True):
+        uploaded_paths=[]; report_path=visual_path=None
         try:
-            token = uuid.uuid4().hex
-            base_path = f"{selected_athlete['id']}/{training_date.isoformat()}/{token}"
-            for idx, f in enumerate(files):
-                raw = f.getvalue()
-                ext = Path(f.name).suffix.lower() or ".csv"
-                safe_stem = re.sub(r"[^A-Za-z0-9_-]+", "_", Path(f.name).stem)[:70] or f"treino_{idx+1}"
-                object_path = f"{base_path}/{idx+1:02d}_{safe_stem}{ext}"
-                sb.storage.from_("training-csvs").upload(
-                    object_path, raw, {"content-type": "text/csv", "upsert": "false"}
-                )
-                uploaded_paths.append(object_path)
-
-            title = training_title.strip() or (Path(files[0].name).stem if len(files) == 1 else f"Treino consolidado • {len(files)} CSVs")
-            report_path = f"{base_path}_relatorio.pdf"
-            visual_path = f"{base_path}_dashboard_visual.pdf"
-            merged = merge_sessions(sessions)
-            report_bytes = make_pdf(athlete, merged, sessions, "TODOS OS TREINOS")
-            if photo is not None:
-                photo.seek(0)
-            visual_bytes = make_visual_pdf(athlete, merged, sessions, "TODOS OS TREINOS", photo)
-            sb.storage.from_("training-reports").upload(
-                report_path, report_bytes, {"content-type": "application/pdf", "upsert": "false"}
-            )
-            sb.storage.from_("training-reports").upload(
-                visual_path, visual_bytes, {"content-type": "application/pdf", "upsert": "false"}
-            )
-            sb.table("training_sessions").insert({
-                "athlete_id": selected_athlete["id"],
-                "training_date": training_date.isoformat(),
-                "title": title,
-                "csv_path": uploaded_paths[0] if uploaded_paths else None,
-                "csv_paths": uploaded_paths,
-                "report_pdf_path": report_path,
-                "visual_pdf_path": visual_path,
-            }).execute()
-            st.sidebar.success(f"Treino salvo no histórico com {len(uploaded_paths)} CSV(s) consolidados.")
+            token=uuid.uuid4().hex; base_path=f"{selected_athlete['id']}/{training_date.isoformat()}/{token}"
+            for idx,f in enumerate(files):
+                raw=f.getvalue(); ext=Path(f.name).suffix.lower() or ".csv"; safe_stem=re.sub(r"[^A-Za-z0-9_-]+","_",Path(f.name).stem)[:70] or f"treino_{idx+1}"
+                object_path=f"{base_path}/{idx+1:02d}_{safe_stem}{ext}"
+                sb.storage.from_("training-csvs").upload(object_path,raw,{"content-type":"text/csv","upsert":"false"}); uploaded_paths.append(object_path)
+            title=training_title.strip() or (Path(files[0].name).stem if len(files)==1 else f"Treino consolidado • {len(files)} CSVs")
+            report_path=f"{base_path}_relatorio.pdf"; visual_path=f"{base_path}_dashboard_visual.pdf"; merged=merge_sessions(sessions)
+            report_bytes=make_pdf(athlete,merged,sessions,"TODOS OS TREINOS")
+            if photo is not None: photo.seek(0)
+            visual_bytes=make_visual_pdf(athlete,merged,sessions,"TODOS OS TREINOS",photo)
+            sb.storage.from_("training-reports").upload(report_path,report_bytes,{"content-type":"application/pdf","upsert":"false"})
+            sb.storage.from_("training-reports").upload(visual_path,visual_bytes,{"content-type":"application/pdf","upsert":"false"})
+            sb.table("training_sessions").insert({"athlete_id":selected_athlete["id"],"training_date":training_date.isoformat(),"title":title,"csv_path":uploaded_paths[0] if uploaded_paths else None,"csv_paths":uploaded_paths,"report_pdf_path":report_path,"visual_pdf_path":visual_path}).execute()
+            st.success(f"Treino salvo no histórico com {len(uploaded_paths)} CSV(s) consolidados.")
         except Exception as exc:
             try:
-                if uploaded_paths:
-                    sb.storage.from_("training-csvs").remove(uploaded_paths)
-                cleanup = [x for x in [report_path, visual_path] if x]
-                if cleanup:
-                    sb.storage.from_("training-reports").remove(cleanup)
-            except Exception:
-                pass
-            st.sidebar.error(f"Não foi possível salvar o histórico: {exc}")
+                if uploaded_paths: sb.storage.from_("training-csvs").remove(uploaded_paths)
+                cleanup=[x for x in [report_path,visual_path] if x]
+                if cleanup: sb.storage.from_("training-reports").remove(cleanup)
+            except Exception: pass
+            st.error(f"Não foi possível salvar o histórico: {exc}")
 
 names=[s["name"] for s in sessions]
-choice=st.sidebar.selectbox("SESSÃO",["TODOS OS TREINOS"]+names, key="session_sidebar")
-# No celular a sidebar costuma ficar recolhida; o mesmo seletor fica visível no conteúdo.
-if len(sessions)>1:
-    choice=st.selectbox("📱 VISUALIZAR SESSÃO / CSV", ["TODOS OS TREINOS"]+names, index=(["TODOS OS TREINOS"]+names).index(choice), key="session_mobile_main")
+choice=st.selectbox("VISUALIZAR SESSÃO / CSV",["TODOS OS TREINOS"]+names,key="session_main")
 cur=merge_sessions(sessions) if choice=="TODOS OS TREINOS" else next(s for s in sessions if s["name"]==choice)
-st.sidebar.success(f"{len(sessions)} CSV(s) importado(s)")
-for n in names:st.sidebar.markdown(f'<span class="session-pill">✓ {n}</span>',unsafe_allow_html=True)
+st.markdown("".join([f'<span class="analysis-status">✓ {n}</span>' for n in names]),unsafe_allow_html=True)
 
 head1,head2=st.columns([1.05,4.5])
 with head1:
@@ -1007,11 +1082,11 @@ with head2:
       <div class="kpi-title">{(athlete.upper() if athlete else "DASHBOARD DE PERFORMANCE")}</div>
       <div class="kpi-subtitle">SKATEBOARDING • ANÁLISE DE PERFORMANCE • {choice}</div>
       <div class="kpi-grid">
-        <div class="kpi2"><div class="kpi2-label">TENTATIVAS</div><div class="kpi2-value">{cur["attempts"]:.0f}</div><div class="kpi2-sub">volume total</div></div>
-        <div class="kpi2"><div class="kpi2-label">MANOBRAS</div><div class="kpi2-value">{len(cur["maneuvers"])}</div><div class="kpi2-sub">manobras diferentes</div></div>
-        <div class="kpi2"><div class="kpi2-label">ACERTOS</div><div class="kpi2-value">{cur["hits"]:.0f}</div><div class="kpi2-sub">{rate:.1f}% de acerto</div></div>
-        <div class="kpi2 kpi2-error"><div class="kpi2-label">ERROS</div><div class="kpi2-value">{cur["errors"]:.0f}</div><div class="kpi2-sub">{100-rate:.1f}%</div></div>
-        <div class="kpi2"><div class="kpi2-label">TREINOS</div><div class="kpi2-value">{len(sessions)}</div><div class="kpi2-sub">CSVs importados</div></div>
+        <div class="kpi2"><div class="kpi2-icon"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="3"/><path d="M12 2v3M22 12h-3"/></svg></div><div class="kpi2-label">TENTATIVAS</div><div class="kpi2-value">{cur["attempts"]:.0f}</div><div class="kpi2-sub">volume total</div></div>
+        <div class="kpi2"><div class="kpi2-icon"><svg viewBox="0 0 24 24"><path d="M5 16h14M7 16l-2 3M17 16l2 3"/><circle cx="8" cy="20" r="1.5"/><circle cx="16" cy="20" r="1.5"/><path d="M8 12c2-4 6-4 8 0"/></svg></div><div class="kpi2-label">MANOBRAS</div><div class="kpi2-value">{len(cur["maneuvers"])}</div><div class="kpi2-sub">manobras diferentes</div></div>
+        <div class="kpi2"><div class="kpi2-icon"><svg viewBox="0 0 24 24"><path d="M5 12l4 4L19 6"/><circle cx="12" cy="12" r="9"/></svg></div><div class="kpi2-label">ACERTOS</div><div class="kpi2-value">{cur["hits"]:.0f}</div><div class="kpi2-sub">{rate:.1f}% de acerto</div></div>
+        <div class="kpi2 kpi2-error"><div class="kpi2-icon"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M9 9l6 6M15 9l-6 6"/></svg></div><div class="kpi2-label">ERROS</div><div class="kpi2-value">{cur["errors"]:.0f}</div><div class="kpi2-sub">{100-rate:.1f}%</div></div>
+        <div class="kpi2"><div class="kpi2-icon"><svg viewBox="0 0 24 24"><rect x="4" y="5" width="16" height="15" rx="2"/><path d="M8 3v4M16 3v4M4 10h16"/></svg></div><div class="kpi2-label">TREINOS</div><div class="kpi2-value">{len(sessions)}</div><div class="kpi2-sub">CSVs importados</div></div>
       </div>
     </div>
     """,unsafe_allow_html=True)
@@ -1082,6 +1157,31 @@ with ex2:
 
 
 
+
+st.markdown("""
+<style>
+/* V4.16 — acabamento premium do dashboard; somente apresentação */
+.section{font-size:22px!important;font-weight:950!important;color:#f7fbff!important;letter-spacing:.045em!important;margin:34px 0 14px!important;position:relative;padding-left:14px}
+.section:before{content:"";position:absolute;left:0;top:4px;bottom:4px;width:3px;border-radius:5px;background:linear-gradient(180deg,#20e6ff,#087cff);box-shadow:0 0 14px rgba(32,230,255,.5)}
+.kpi-shell{background:radial-gradient(circle at 88% 0%,rgba(0,217,255,.08),transparent 28%),linear-gradient(145deg,#081b2d,#061522)!important;border:1px solid #17608a!important;border-radius:18px!important;padding:22px!important;box-shadow:0 18px 45px rgba(0,0,0,.26),inset 0 1px 0 rgba(255,255,255,.025)!important}
+.kpi-title{font-size:27px!important;letter-spacing:.015em!important}.kpi-subtitle{color:#50c8ff!important}
+.kpi2{position:relative;overflow:hidden;background:linear-gradient(145deg,#0a2137,#07192a)!important;border:1px solid #1a608a!important;border-radius:14px!important;padding:15px!important;min-height:94px!important;box-shadow:inset 0 1px 0 rgba(255,255,255,.025),0 8px 22px rgba(0,0,0,.16)}
+.kpi2:after{content:"";position:absolute;left:0;right:0;bottom:0;height:2px;background:linear-gradient(90deg,transparent,#16cfff,transparent);opacity:.75}
+.kpi2-value{font-size:31px!important}.kpi2-label{color:#a9c7dc!important}.kpi2-sub{color:#52c9ff!important}.kpi2-error{border-color:#703044!important}.kpi2-error:after{background:linear-gradient(90deg,transparent,#ff4050,transparent)}
+.analysis-status{background:linear-gradient(145deg,#08263a,#071d2f)!important;border-color:#1678a8!important;box-shadow:0 0 12px rgba(0,217,255,.08)}
+/* cada gráfico ganha superfície própria sem alterar o Plotly */
+[data-testid="stPlotlyChart"]{background:linear-gradient(145deg,rgba(9,28,46,.82),rgba(5,18,31,.82));border:1px solid #153f5d;border-radius:16px;padding:8px 8px 2px;box-shadow:0 12px 28px rgba(0,0,0,.14);overflow:hidden}
+.table-wrap{border:1px solid #1b5378!important;border-radius:15px!important;background:#071522!important;box-shadow:0 14px 30px rgba(0,0,0,.16);max-height:620px;overflow:auto!important}
+.sk-table{font-size:13px!important}.sk-table thead th{position:sticky;top:0;z-index:2;background:#0d2942!important;color:#b9d7eb!important;letter-spacing:.045em}.sk-table td{padding:12px 14px!important}.sk-table tbody tr:nth-child(even) td{background:rgba(12,32,53,.28)}
+.sk-table tr:hover td{background:#0d2942!important}
+/* atleta/foto e cards de conteúdo */
+[data-testid="stImage"] img{border-radius:16px!important;border:1px solid #1c638e!important;box-shadow:0 15px 35px rgba(0,0,0,.28)}
+[data-testid="stDownloadButton"] button{min-height:48px!important;border-radius:11px!important;background:linear-gradient(135deg,#0b2942,#0a2136)!important;border:1px solid #168ac4!important;color:#eefaff!important;font-weight:850!important;box-shadow:0 0 18px rgba(0,174,255,.08)}
+[data-testid="stDownloadButton"] button:hover{border-color:#20e6ff!important;box-shadow:0 0 22px rgba(0,217,255,.18)!important;transform:translateY(-1px)}
+[data-testid="stSelectbox"] div[data-baseweb="select"]>div{border-color:#285b7c!important}
+@media(max-width:900px){.kpi-grid{grid-template-columns:repeat(2,1fr)!important}.section{font-size:19px!important}.table-wrap{max-height:520px}}
+</style>
+""",unsafe_allow_html=True)
 
 st.markdown("""
 <style>
