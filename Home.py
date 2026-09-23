@@ -77,6 +77,17 @@ section[data-testid="stSidebar"],[data-testid="stSidebar"],[data-testid="stSideb
 [data-testid="stAppViewContainer"]>.main{margin-left:0!important;width:100%!important}
 </style>""", unsafe_allow_html=True)
 
+
+# V4.38 — teste de navegação real via callback do streamlit-elements
+def _nav_analise(*args, **kwargs):
+    st.switch_page("pages/03_Analise_de_Treino.py")
+
+def _nav_times(*args, **kwargs):
+    st.switch_page("pages/02_Times.py")
+
+def _nav_historico(*args, **kwargs):
+    st.switch_page("pages/04_Historico_de_Treinos.py")
+
 user = current_user()
 profile = current_profile()
 if user and not profile:
@@ -288,16 +299,16 @@ with elements("skate_performance_home"):
                             "color":cyan,"fontWeight":850,"fontSize":7,
                             "letterSpacing":"2px","mt":.45
                         })
-                for label, Icon, active, href in [
-                    ("Home", mui.icon.HomeOutlined, True, "/"),
-                    ("Análise", mui.icon.AnalyticsOutlined, False, "/Analise_de_Treino"),
-                    ("Atletas", mui.icon.GroupsOutlined, False, "/Times"),
-                    ("Times", mui.icon.ShieldOutlined, False, "/Times"),
-                    ("Histórico", mui.icon.History, False, "/Historico_de_Treinos"),
-                ]:
+                _nav_items = [
+                    ("Home", mui.icon.HomeOutlined, True, None),
+                    ("Análise", mui.icon.AnalyticsOutlined, False, _nav_analise),
+                    ("Atletas", mui.icon.GroupsOutlined, False, _nav_times),
+                    ("Times", mui.icon.ShieldOutlined, False, _nav_times),
+                    ("Histórico", mui.icon.History, False, _nav_historico),
+                ]
+                for label, Icon, active, callback in _nav_items:
                     with mui.Button(
-                        href=href,
-                        target="_top",
+                        onClick=callback,
                         startIcon=Icon(),
                         sx={
                             "height":61,"minWidth":"auto","px":1,"flexShrink":0,
