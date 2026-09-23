@@ -148,8 +148,29 @@ if not user:
                 sign_in(email, password, keep_connected=keep_connected)
                 st.success("Login realizado.")
                 st.rerun()
-            except Exception:
-                st.error("Não foi possível entrar. Confira e-mail, senha e se o e-mail já foi confirmado.")
+            except Exception as e:
+                # O Supabase bloqueia o login quando a confirmação de e-mail está ativa
+                # e o usuário ainda aparece como "Waiting for verification". Antes,
+                # essa situação caía na mesma mensagem genérica de senha/e-mail incorretos.
+                msg = str(e).lower()
+                if (
+                    "email not confirmed" in msg
+                    or "email_not_confirmed" in msg
+                    or "not confirmed" in msg
+                    or "not verified" in msg
+                    or "unverified" in msg
+                ):
+                    st.error("Seu e-mail ainda não foi verificado. Abra o e-mail enviado pela plataforma e confirme sua conta antes de entrar.")
+                    st.info("Se não encontrar a mensagem, verifique também Spam, Lixo eletrônico e Promoções. Depois de confirmar o e-mail, volte aqui e faça o login normalmente.")
+                elif (
+                    "invalid login credentials" in msg
+                    or "invalid credentials" in msg
+                    or "invalid email or password" in msg
+                    or "wrong password" in msg
+                ):
+                    st.error("E-mail ou senha incorretos. Confira os dados e tente novamente.")
+                else:
+                    st.error("Não foi possível entrar agora. Confira seus dados e tente novamente.")
 
     with signup_tab:
         with st.form("signup_form"):
@@ -174,20 +195,47 @@ if not user:
             if not full_name.strip() or not email2.strip() or len(password2) < 6 or not accept:
                 st.error("Preencha os campos, use uma senha com pelo menos 6 caracteres e confirme os dados.")
             else:
+                role_map={"Skatista":"skatista","Técnico":"tecnico","Presidente":"presidente","Vice-presidente":"vice_presidente","Chefe de Equipe":"chefe_equipe","Comissão Técnica":"comissao_tecnica","Familiar":"familiar"}
+                role = role_map[role_label]
+
+                # A criação da conta e o carregamento do perfil são etapas diferentes.
+                # Antes, qualquer falha logo após o sign_up (por exemplo, o perfil ainda
+                # não estar disponível na primeira leitura) caía no mesmo except e fazia
+                # o usuário receber uma falsa mensagem de que a conta não foi criada.
                 try:
-                    role_map={"Skatista":"skatista","Técnico":"tecnico","Presidente":"presidente","Vice-presidente":"vice_presidente","Chefe de Equipe":"chefe_equipe","Comissão Técnica":"comissao_tecnica","Familiar":"familiar"}
-                    role = role_map[role_label]
                     res = sign_up(full_name, email2, password2, role, modality, linked_athlete_id)
-                    if getattr(res, "session", None):
-                        st.session_state["sp_user"] = res.user
-                        st.session_state["sp_session"] = res.session
-                        load_profile(res.user.id)
-                        st.success("Conta criada. Seu cadastro está aguardando aprovação.")
-                        st.rerun()
-                    else:
-                        st.success("Conta criada. Confira seu e-mail para confirmar o cadastro; depois volte aqui para entrar.")
                 except Exception as e:
-                    st.error("Não foi possível criar a conta. O e-mail pode já estar cadastrado ou os dados precisam ser revisados.")
+                    msg = str(e).lower()
+                    if "already" in msg or "registered" in msg or "exists" in msg or "duplicate" in msg:
+                        st.error("Este e-mail já possui uma conta cadastrada. Tente entrar ou use outro e-mail.")
+                    else:
+                        st.error("Não foi possível criar a conta. Revise os dados e tente novamente.")
+                else:
+                    created_user = getattr(res, "user", None)
+                    created_session = getattr(res, "session", None)
+
+                    if created_user:
+                        # Se o Supabase abriu a sessão imediatamente, preservamos o login.
+                        # O perfil pode levar um instante para aparecer via trigger/RLS, então
+                        # uma falha nessa leitura não invalida um cadastro já concluído.
+                        if created_session:
+                            st.session_state["sp_user"] = created_user
+                            st.session_state["sp_session"] = created_session
+                            try:
+                                load_profile(created_user.id)
+                            except Exception:
+                                pass
+
+                        st.success("Cadastro realizado com sucesso!")
+                        if created_session:
+                            st.info("Sua conta foi criada e está aguardando aprovação do administrador.")
+                        else:
+                            st.info("Agora confirme seu e-mail pelo link enviado pela plataforma. Depois da confirmação, aguarde a aprovação do administrador para acessar o sistema.")
+                    else:
+                        # Alguns projetos Supabase com confirmação de e-mail podem não
+                        # devolver uma sessão imediatamente. Não classificamos isso como erro.
+                        st.success("Solicitação de cadastro enviada.")
+                        st.info("Confira sua caixa de entrada e confirme o e-mail pelo link enviado pela plataforma. Depois disso, aguarde a aprovação do administrador.")
     st.stop()
 
 status = (profile or {}).get("status","pendente")
