@@ -128,31 +128,31 @@ def render_top_nav(nav_name="Usuário", nav_role="Membro", nav_photo=None, activ
 .sp429-force-mobile .sp429-mobile-profile:after{content:"";position:absolute;right:-1px;bottom:1px;width:14px;height:14px;border-radius:50%;background:#20e6ff;border:3px solid #05131f;box-sizing:border-box}
 </style>'''
 
-    desktop = f'''
-    <div class="sp429-row sp429-desktop">
-      <div class="sp429-brand">
-        <div class="sp429-star">✦</div>
-        <div><div class="sp429-title">ANÁLISE • EVOLUÇÃO • PERFORMANCE</div><div class="sp429-sub">SKATEBOARDING PERFORMANCE SYSTEM</div></div>
-      </div>
-      <div class="sp429-menu">{"".join(desktop_links)}</div>
-      <div class="sp429-user">
-        <div class="sp429-usertext"><div class="sp429-name">{html.escape(nav_name)}</div><div class="sp429-role">{html.escape(nav_role)}</div></div>
-        <a class="sp429-profile-link" href="/Meu_Perfil" target="_self" aria-label="Meu Perfil">{avatar}</a>
-      </div>
-    </div>'''
+    # IMPORTANT: keep the first HTML tag at column 0. Markdown treats lines
+    # indented by four spaces as a code block, which would print the navbar HTML.
+    desktop = f'''<div class="sp429-row sp429-desktop">
+<div class="sp429-brand">
+<div class="sp429-star">✦</div>
+<div><div class="sp429-title">ANÁLISE • EVOLUÇÃO • PERFORMANCE</div><div class="sp429-sub">SKATEBOARDING PERFORMANCE SYSTEM</div></div>
+</div>
+<div class="sp429-menu">{"".join(desktop_links)}</div>
+<div class="sp429-user">
+<div class="sp429-usertext"><div class="sp429-name">{html.escape(nav_name)}</div><div class="sp429-role">{html.escape(nav_role)}</div></div>
+<a class="sp429-profile-link" href="/Meu_Perfil" target="_self" aria-label="Meu Perfil">{avatar}</a>
+</div>
+</div>'''
 
-    mobile = f'''
-    <div class="sp429-mobilebar">
-      <div class="sp429-mobile-brand">
-        <div class="sp429-star">✦</div>
-        <div style="min-width:0"><div class="sp429-title">ANÁLISE • EVOLUÇÃO • PERFORMANCE</div><div class="sp429-sub">SKATEBOARDING PERFORMANCE SYSTEM</div></div>
-      </div>
-      <details class="sp429-details">
-        <summary class="sp429-menu-button">{SVG['menu']}<span>MENU</span></summary>
-        <div class="sp429-dropdown">{"".join(mobile_links)}</div>
-      </details>
-      <a class="sp429-mobile-profile" href="/Meu_Perfil" target="_self" aria-label="Abrir Meu Perfil">{avatar}</a>
-    </div>'''
+    mobile = f'''<div class="sp429-mobilebar">
+<div class="sp429-mobile-brand">
+<div class="sp429-star">✦</div>
+<div style="min-width:0"><div class="sp429-title">ANÁLISE • EVOLUÇÃO • PERFORMANCE</div><div class="sp429-sub">SKATEBOARDING PERFORMANCE SYSTEM</div></div>
+</div>
+<details class="sp429-details">
+<summary class="sp429-menu-button">{SVG['menu']}<span>MENU</span></summary>
+<div class="sp429-dropdown">{"".join(mobile_links)}</div>
+</details>
+<a class="sp429-mobile-profile" href="/Meu_Perfil" target="_self" aria-label="Abrir Meu Perfil">{avatar}</a>
+</div>'''
 
     body = f'<nav class="sp429-shell{force_mobile}" data-key="{html.escape(str(key), quote=True)}">{desktop}{mobile}</nav>'
     st.markdown(css + body, unsafe_allow_html=True)
