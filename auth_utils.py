@@ -94,6 +94,36 @@ def sign_up(full_name, email, password, role, modality, linked_athlete_id=None):
     if linked_athlete_id: data["linked_athlete_id"]=linked_athlete_id
     return sb.auth.sign_up({"email":email.strip(),"password":password,"options":{"data":data,"email_redirect_to":"https://skateperformance.streamlit.app/"}})
 
+
+def request_password_reset(email):
+    """Envia o e-mail de recuperação de senha pelo Supabase Auth."""
+    sb = get_supabase()
+    email = (email or "").strip()
+    if not email:
+        raise ValueError("Informe o e-mail cadastrado.")
+    return sb.auth.reset_password_for_email(
+        email,
+        {"redirect_to": "https://skateperformance.streamlit.app/"},
+    )
+
+def start_password_recovery(access_token, refresh_token):
+    """Restaura a sessão temporária emitida pelo link de recuperação."""
+    sb = get_supabase()
+    res = sb.auth.set_session(access_token, refresh_token)
+    user = getattr(res, "user", None)
+    session = getattr(res, "session", None)
+    if user is not None:
+        st.session_state["sp_user"] = user
+    if session is not None:
+        st.session_state["sp_session"] = session
+    st.session_state["sp_password_recovery"] = True
+    return res
+
+def update_password(new_password):
+    """Atualiza a senha do usuário autenticado pela sessão de recuperação."""
+    sb = get_supabase()
+    return sb.auth.update_user({"password": new_password})
+
 def sign_out():
     sb = st.session_state.get("sp_supabase")
     if sb is not None:

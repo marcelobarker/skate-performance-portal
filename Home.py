@@ -2,7 +2,11 @@
 import streamlit as st
 import streamlit.components.v1 as components
 from streamlit_elements import elements, mui
-from auth_utils import sign_in, sign_up, sign_out, current_user, current_profile, load_profile, get_supabase, _navigation
+from auth_utils import (
+    sign_in, sign_up, sign_out, current_user, current_profile, load_profile,
+    get_supabase, _navigation, request_password_reset, start_password_recovery,
+    update_password,
+)
 
 from ui_theme import apply_ui_theme
 
@@ -77,6 +81,11 @@ h1,h2,h3,p,label{color:#eef8ff}
 [data-testid="stFormSubmitButton"] button{background:#1398ff!important;color:#fff!important;border:1px solid #1398ff!important;border-radius:10px!important;font-weight:800!important}
 [data-testid="stFormSubmitButton"] button:hover{background:#087fd8!important;border-color:#34aaff!important;color:#fff!important}
 [data-testid="stForm"]{border-color:#173b5a!important;background:#081827!important}
+/* V4.81 — botões de autenticação compactos, sem esticar pela tela */
+[data-testid="stFormSubmitButton"]{width:auto!important;display:flex!important;}
+[data-testid="stFormSubmitButton"] button{width:auto!important;min-width:170px!important;padding-left:28px!important;padding-right:28px!important;}
+.sp-auth-link [data-testid="stButton"] button{width:auto!important;min-width:0!important;padding:.35rem .15rem!important;border:0!important;background:transparent!important;color:#6bc1f7!important;box-shadow:none!important;}
+.sp-auth-link [data-testid="stButton"] button:hover{color:#fff!important;background:transparent!important;border:0!important;}
 </style>
 """, unsafe_allow_html=True)
 
@@ -109,14 +118,15 @@ section[data-testid="stSidebar"],[data-testid="stSidebar"],[data-testid="stSideb
 [data-testid="stAppViewContainer"]>.main{margin-left:0!important;width:100%!important}
 </style>""", unsafe_allow_html=True)
 
-user = current_user()
-profile = current_profile()
+# V4.81 — recuperação de senha. O Supabase devolve os tokens no fragmento (#).\n# Como fragmentos não chegam ao Python, um pequeno bridge os move uma única vez\n# para query params; o servidor consome os tokens e limpa a URL imediatamente.\ncomponents.html("""<script>\n(function(){\n  try{\n    const w = window.parent;\n    const h = w.location.hash || '';\n    if(h && h.indexOf('type=recovery') !== -1){\n      const hp = new URLSearchParams(h.substring(1));\n      const at = hp.get('access_token');\n      const rt = hp.get('refresh_token');\n      if(at && rt){\n        const u = new URL(w.location.href);\n        u.hash = '';\n        u.searchParams.set('sp_recovery_access', at);\n        u.searchParams.set('sp_recovery_refresh', rt);\n        w.location.replace(u.toString());\n      }\n    }\n  }catch(e){}\n})();\n</script>""", height=0)\n\n_recovery_access = st.query_params.get("sp_recovery_access")\n_recovery_refresh = st.query_params.get("sp_recovery_refresh")\nif _recovery_access and _recovery_refresh:\n    try:\n        start_password_recovery(_recovery_access, _recovery_refresh)\n        st.query_params.clear()\n        st.rerun()\n    except Exception:\n        st.query_params.clear()\n        st.session_state["sp_recovery_error"] = "O link de recuperação expirou ou já foi utilizado. Solicite um novo e-mail."\n        st.rerun()\n\nif st.session_state.get("sp_password_recovery"):\n    st.title("Criar nova senha")\n    st.caption("Digite uma nova senha para sua conta.")\n    with st.form("password_recovery_form"):\n        new_password = st.text_input("Nova senha", type="password", help="Use pelo menos 6 caracteres.")\n        new_password_confirm = st.text_input("Confirmar nova senha", type="password")\n        change_password = st.form_submit_button("Salvar nova senha", use_container_width=False)\n    if change_password:\n        if len(new_password) < 6:\n            st.error("A nova senha precisa ter pelo menos 6 caracteres.")\n        elif new_password != new_password_confirm:\n            st.error("As duas senhas não são iguais.")\n        else:\n            try:\n                update_password(new_password)\n                sign_out()\n                st.session_state.pop("sp_password_recovery", None)\n                st.success("Senha alterada com sucesso. Agora entre com sua nova senha.")\n                st.rerun()\n            except Exception:\n                st.error("Não foi possível alterar a senha. Solicite um novo link de recuperação e tente novamente.")\n    st.stop()\n\nuser = current_user()\nprofile = current_profile()
 if user and not profile:
     profile = load_profile(user.id)
 
 if not user:
     st.title("Bem-vindo à Seleção Brasileira de Skateboarding")
     st.caption("Entre na sua conta ou solicite um novo cadastro.")
+    if st.session_state.pop("sp_recovery_error", None):
+        st.error("O link de recuperação expirou ou já foi utilizado. Solicite um novo e-mail.")
     login_tab, signup_tab = st.tabs(["ENTRAR", "CRIAR CONTA"])
 
     with login_tab:
@@ -142,7 +152,7 @@ if not user:
             email = st.text_input("E-mail", placeholder="seu@email.com")
             password = st.text_input("Senha", type="password")
             keep_connected = st.checkbox("Me manter conectado neste dispositivo")
-            submit = st.form_submit_button("Entrar", use_container_width=True)
+            submit = st.form_submit_button("Entrar", use_container_width=False)
         if submit:
             try:
                 sign_in(email, password, keep_connected=keep_connected)
@@ -172,6 +182,32 @@ if not user:
                 else:
                     st.error("Não foi possível entrar agora. Confira seus dados e tente novamente.")
 
+        st.markdown('<div class="sp-auth-link">', unsafe_allow_html=True)
+        forgot = st.button("Esqueci minha senha", key="forgot_password_btn")
+        st.markdown('</div>', unsafe_allow_html=True)
+        if forgot:
+            st.session_state["show_password_reset"] = True
+
+        if st.session_state.get("show_password_reset"):
+            st.markdown("#### Recuperar senha")
+            st.caption("Informe o e-mail cadastrado. Vamos enviar um link para você criar uma nova senha.")
+            with st.form("forgot_password_form"):
+                reset_email = st.text_input("E-mail cadastrado", key="reset_email", placeholder="seu@email.com")
+                send_reset = st.form_submit_button("Enviar link de recuperação", use_container_width=False)
+            if send_reset:
+                if not reset_email.strip():
+                    st.error("Informe seu e-mail.")
+                else:
+                    try:
+                        request_password_reset(reset_email)
+                        st.success("Se esse e-mail estiver cadastrado, o link de recuperação será enviado. Confira também Spam e Lixo eletrônico.")
+                    except Exception as e:
+                        msg = str(e).lower()
+                        if "rate" in msg or "limit" in msg or "too many" in msg:
+                            st.error("O limite de envio de e-mails foi atingido. Aguarde um pouco ou configure um SMTP próprio no Supabase.")
+                        else:
+                            st.error("Não foi possível enviar o e-mail de recuperação agora. Tente novamente em alguns minutos.")
+
     with signup_tab:
         with st.form("signup_form"):
             full_name = st.text_input("Nome completo")
@@ -190,7 +226,7 @@ if not user:
                     st.info("Ainda não há atleta ativo disponível para vínculo.")
             modality = st.selectbox("Modalidade principal", ["Street","Park","Vert","Outro"])
             accept = st.checkbox("Confirmo que os dados acima estão corretos.")
-            create = st.form_submit_button("Solicitar cadastro", use_container_width=True)
+            create = st.form_submit_button("Solicitar cadastro", use_container_width=False)
         if create:
             if not full_name.strip() or not email2.strip() or len(password2) < 6 or not accept:
                 st.error("Preencha os campos, use uma senha com pelo menos 6 caracteres e confirme os dados.")

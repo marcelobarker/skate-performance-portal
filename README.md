@@ -267,3 +267,9 @@ V4.75 mobile navigation fix: responsive MENU dropdown + overlapping clickable pr
 - Staff técnico também pode salvar análises/CSVs/PDFs para qualquer skatista.
 - Familiar continua limitado ao atleta vinculado e skatista mantém as restrições de dados pessoais aplicáveis.
 - Execute **uma vez** `supabase_v4_80_acesso_staff_todas_modalidades.sql` no SQL Editor do Supabase. Apenas atualizar os arquivos do Streamlit não altera as regras RLS do banco.
+
+## V4.81 — recuperação de senha e login compacto
+- Adicionado botão **Esqueci minha senha** na tela de login.
+- Envio de link de recuperação via Supabase Auth.
+- Fluxo de retorno do link para criar uma nova senha dentro do portal.
+- Botões **Entrar**, **Solicitar cadastro**, **Enviar link** e **Salvar nova senha** agora usam largura compacta em vez de ocupar toda a tela.
