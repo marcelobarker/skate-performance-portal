@@ -1,0 +1,9 @@
+V4.86 - Relatorios para treinos e voltas de campeonato
+
+Textos neutros: Sessoes, Todas as sessoes e Evolucao entre sessoes.
+A tela de Analise agora aceita titulo como Volta 1 - campeonato.
+Nomes dos CSVs e titulos existentes no historico sao preservados.
+
+Substitua report_engine.py, pages/03_Analise_de_Treino.py e
+pages/04_Historico_de_Treinos.py. Reinicie o Streamlit e gere um novo PDF.
+Botao de download: DASHBOARD MOBILE V4.86.

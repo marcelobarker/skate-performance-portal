@@ -77,7 +77,7 @@ def parse_aggregate(d,name):
     return s
 
 def merge_sessions(ss):
-    out=empty_session("TODOS OS TREINOS")
+    out=empty_session("TODAS AS SESSÕES")
     for s in ss:
         for k in ("attempts","hits","errors"):out[k]+=s[k]
         for m,(h,e) in s["maneuvers"].items():
@@ -104,7 +104,7 @@ def make_pdf(athlete, cur, sessions, choice):
     story=[Paragraph("SKATE PERFORMANCE",title),
            Paragraph(f"{athlete or 'ATLETA'} - {choice}",body),Spacer(1,6)]
     rate=cur["hits"]/cur["attempts"]*100 if cur["attempts"] else 0
-    kdata=[["TENTATIVAS","ACERTOS","ERROS","TAXA DE ACERTO","TREINOS"],
+    kdata=[["TENTATIVAS","ACERTOS","ERROS","TAXA DE ACERTO","SESSÕES"],
            [f'{cur["attempts"]:.0f}',f'{cur["hits"]:.0f}',f'{cur["errors"]:.0f}',f'{rate:.1f}%',str(len(sessions))]]
     kt=Table(kdata,colWidths=[50*mm]*5,rowHeights=[8*mm,13*mm])
     kt.setStyle(TableStyle([
@@ -130,8 +130,8 @@ def make_pdf(athlete, cur, sessions, choice):
     ]))
     story.append(mt)
     if len(sessions)>1:
-        story += [PageBreak(),Paragraph("EVOLUCAO ENTRE TREINOS",title)]
-        ev=[["TREINO","TENTATIVAS","ACERTOS","ERROS","TAXA","DIFICULDADE ALTA"]]
+        story += [PageBreak(),Paragraph("EVOLUCAO ENTRE SESSÕES",title)]
+        ev=[["SESSÃO","TENTATIVAS","ACERTOS","ERROS","TAXA","DIFICULDADE ALTA"]]
         for s in sessions:
             rr=s["hits"]/s["attempts"]*100 if s["attempts"] else 0
             alta=s["cats"]["DIFICULDADE"].get("ALTA",0)
@@ -211,11 +211,11 @@ def make_visual_pdf(athlete, cur, sessions, choice, photo_file=None):
             name_x += 76
         except Exception: pass
     wrapped((athlete or 'ATLETA').upper(),name_x,top,width-(name_x-margin),21,bold=True)
-    wrapped(f'{len(sessions)} treino(s) • {choice}',name_x,top-45,width-(name_x-margin),12,muted)
+    wrapped(f'{len(sessions)} sessões • {choice}',name_x,top-45,width-(name_x-margin),12,muted)
     top -= 90
     rate = cur['hits']/cur['attempts']*100 if cur['attempts'] else 0
     metrics = [('TENTATIVAS',cur['attempts']),('MANOBRAS',len(cur['maneuvers'])),
-               ('ACERTOS',cur['hits']),('ERROS',cur['errors']),('TREINOS',len(sessions)),('TAXA DE ACERTO',f'{rate:.1f}%')]
+               ('ACERTOS',cur['hits']),('ERROS',cur['errors']),('SESSÕES',len(sessions)),('TAXA DE ACERTO',f'{rate:.1f}%')]
     cw = (width-12)/2
     for i,(label,value) in enumerate(metrics):
         x = margin+(i%2)*(cw+12); y = top-66-(i//2)*78
@@ -330,8 +330,8 @@ def make_visual_pdf(athlete, cur, sessions, choice, photo_file=None):
                 c.setFillColor(colors.HexColor(white)); c.setFont('Helvetica-Bold',12)
                 c.drawCentredString(xx,yy+10,f'{values[i]:.1f}%' if key is None else f'{values[i]:g}')
                 c.setFillColor(colors.HexColor(muted)); c.setFont('Helvetica',11); c.drawCentredString(xx,y-19,str(start+i+1))
-            text(margin,top-152,'Treinos (ordem do histórico)',11,muted); top -= 173
-        reserve(25+24*len(group)); heading('IDENTIFICAÇÃO DOS TREINOS')
+            text(margin,top-152,'Sessões (ordem do histórico)',11,muted); top -= 173
+        reserve(25+24*len(group)); heading('IDENTIFICAÇÃO DOS SESSÕES')
         for i,s in enumerate(group):
             reserve(42); hh=wrapped(f'{start+i+1}. {s["name"]}',margin,top,width,13); top -= hh+10
     c.save(); return buf.getvalue()
