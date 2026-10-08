@@ -1,0 +1,11 @@
+V4.85 - Dashboard visual para celular
+
+Para instalar, extraia o ZIP na pasta onde esta Home.py, mantendo a pasta pages.
+Confirme a substituicao dos arquivos existentes. Reinicie o Streamlit.
+
+No site, procure o botao DASHBOARD MOBILE V4.85 na Analise ou no Historico.
+O arquivo baixado deve conter dashboard_mobile_v485 no nome. PDFs antigos
+na pasta Downloads continuam com a versao anterior.
+
+Mudancas: PDF vertical para celular, letras maiores, graficos em duas colunas,
+tabelas sem corte fixo apos oito manobras e evolucao em graficos separados.
