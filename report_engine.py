@@ -149,224 +149,189 @@ def make_pdf(athlete, cur, sessions, choice):
     return buf.getvalue()
 
 def make_visual_pdf(athlete, cur, sessions, choice, photo_file=None):
+    """Portrait PDF with readable type and space-based pagination (shared by both pages)."""
     from reportlab.pdfgen import canvas
-    from reportlab.lib.pagesizes import A3, landscape
     from reportlab.lib import colors
-    from reportlab.lib.units import mm
     from reportlab.lib.utils import ImageReader
+    from reportlab.platypus import Paragraph
+    from reportlab.lib.styles import ParagraphStyle
+    from xml.sax.saxutils import escape
     import math
 
-    buf=io.BytesIO(); W,H=landscape(A3)
-    bg=colors.HexColor("#06111f"); panel=colors.HexColor("#0b1d31")
-    panel2=colors.HexColor("#0d243b"); white=colors.HexColor("#f5f8ff")
-    muted=colors.HexColor("#9bb2c8"); blue=colors.HexColor("#1398ff")
-    lightblue=colors.HexColor("#6bc1f7"); red=colors.HexColor("#ff4050")
-    green=colors.HexColor("#16d98b"); yellow=colors.HexColor("#f4cf43")
-    purple=colors.HexColor("#a46cff"); orange=colors.HexColor("#ff8b3d")
-    palette=[blue,lightblue,red,green,yellow,purple,orange]
-    c=canvas.Canvas(buf,pagesize=(W,H))
+    W, H, margin = 420, 746, 18
+    width = W - 2 * margin
+    buf = io.BytesIO()
+    c = canvas.Canvas(buf, pagesize=(W, H))
+    c.setTitle(f'Dashboard - {athlete or "ATLETA"}')
+    bg, panel = '#06111f', '#0d243b'
+    white, muted, blue, green, red = '#f5f8ff', '#a9c2d8', '#1398ff', '#16d98b', '#ff4050'
+    palette = [blue, '#6bc1f7', '#ff8b3d', '#a46cff', '#f4cf43', green, red]
+    semantic = {'ACERTO':green, 'ERRO':red, 'EXCELENTE':green, 'BOM':blue, 'RUIM':red,
+                'MEDIA':green, 'MEDIO':green, 'BAIXA':blue, 'BAIXO':blue, 'ALTA':red, 'ALTO':red,
+                'RAPIDO':green, 'LENTO':red, 'FRONTSIDE':green, 'BACKSIDE':'#6bc1f7', 'NOLLIE':green}
+    page, top, legend_step = 0, 0, 36
 
-    def page_bg():
-        c.setFillColor(bg); c.rect(0,0,W,H,fill=1,stroke=0)
+    def text(x, y, value, size=14, color=white, bold=False):
+        c.setFillColor(colors.HexColor(color))
+        c.setFont('Helvetica-Bold' if bold else 'Helvetica', size)
+        c.drawString(x, y, str(value))
 
-    def header(sub="PERFORMANCE ANALYSIS • TRAINING INTELLIGENCE"):
-        c.setFillColor(panel); c.roundRect(10*mm,H-31*mm,W-20*mm,20*mm,4*mm,fill=1,stroke=0)
-        # Cabeçalho com posições calculadas para nunca sobrepor PERFORMANCE / TIME BRASIL
-        hx=17*mm
-        c.setFillColor(white); c.setFont("Helvetica-BoldOblique",23)
-        c.drawString(hx,H-22*mm,"SKATE")
-        skate_w=c.stringWidth("SKATE","Helvetica-BoldOblique",23)
+    def wrapped(value, x, y, w, size=14, color=white, bold=False):
+        style = ParagraphStyle('mobile', fontName='Helvetica-Bold' if bold else 'Helvetica',
+                               fontSize=size, leading=size*1.25, textColor=colors.HexColor(color))
+        p = Paragraph(escape(str(value)), style)
+        _, h = p.wrap(w, H)
+        p.drawOn(c, x, y-h)
+        return h
 
-        perf_x=hx+skate_w+2.0*mm
-        c.setFillColor(blue); c.setFont("Helvetica-BoldOblique",23)
-        c.drawString(perf_x,H-22*mm,"PERFORMANCE")
-        perf_w=c.stringWidth("PERFORMANCE","Helvetica-BoldOblique",23)
+    def new_page():
+        nonlocal page, top
+        if page: c.showPage()
+        page += 1
+        c.setFillColor(colors.HexColor(bg)); c.rect(0,0,W,H,fill=1,stroke=0)
+        c.setFillColor(colors.HexColor(panel)); c.roundRect(margin,H-66,width,48,8,fill=1,stroke=0)
+        text(margin+12,H-39,'SELEÇÃO BRASILEIRA',17,bold=True)
+        text(margin+12,H-56,'DE SKATEBOARDING  |  DASHBOARD',11,muted)
+        text(margin,14,f'{athlete or "ATLETA"}  •  {page}',10,muted)
+        top = H - 86
 
-        time_x=perf_x+perf_w+5.5*mm
-        c.setStrokeColor(colors.HexColor("#6f8da5")); c.setLineWidth(.6)
-        c.line(time_x-2.8*mm,H-26*mm,time_x-2.8*mm,H-16.5*mm)
-        c.setFillColor(white); c.setFont("Helvetica-Bold",11.5)
-        c.drawString(time_x,H-22*mm,"TIME BRASIL")
-        c.setFillColor(lightblue); c.setFont("Helvetica",8.5); c.drawString(17*mm,H-27*mm,sub)
-        c.setFillColor(blue); c.setFont("Helvetica-Bold",9.5); c.drawRightString(W-17*mm,H-21*mm,"SPORTSCODE ANALYTICS")
-        c.setFillColor(muted); c.setFont("Helvetica",8); c.drawRightString(W-17*mm,H-26*mm,"TRAINING DATA DASHBOARD")
+    def reserve(height):
+        if top - height < 38: new_page()
 
-    def section(title,y):
-        c.setFillColor(white); c.setFont("Helvetica-Bold",17); c.drawString(12*mm,y,title)
+    def heading(title):
+        nonlocal top
+        text(margin,top-17,title,17,bold=True); top -= 35
 
-    def card(x,y,w,h,label,value,sub="",value_color=None):
-        c.setFillColor(panel2); c.roundRect(x,y,w,h,3*mm,fill=1,stroke=0)
-        c.setStrokeColor(colors.HexColor("#245071")); c.roundRect(x,y,w,h,3*mm,fill=0,stroke=1)
-        c.setFillColor(muted); c.setFont("Helvetica-Bold",12.5); c.drawString(x+4*mm,y+h-7*mm,label)
-        c.setFillColor(value_color or white); c.setFont("Helvetica-Bold",30); c.drawString(x+4*mm,y+8*mm,str(value))
-        if sub:
-            c.setFillColor(lightblue if value_color is None else value_color); c.setFont("Helvetica",11.5); c.drawString(x+4*mm,y+3.5*mm,sub)
-
-    def donut(x,y,r,title,data,colorset=None):
-        vals=[(str(k),float(v)) for k,v in data.items() if float(v)>0]
-        total=sum(v for _,v in vals)
-        c.setFillColor(white); c.setFont("Helvetica-Bold",15); c.drawCentredString(x,y+r+9*mm,title)
-        if not vals or total<=0:
-            c.setFillColor(muted); c.setFont("Helvetica",10); c.drawCentredString(x,y,"SEM DADOS"); return
-
-        # Cores fixas por significado. Assim pizza e legenda sempre usam a MESMA cor,
-        # independentemente da ordem em que o Sportscode exportar as categorias.
-        semantic = {
-            "ACERTO": green, "ERRO": red,
-            "BOM": blue, "RUIM": red, "EXCELENTE": green,
-            "BAIXA": blue, "MEDIA": green, "MÉDIA": green, "ALTA": red,
-            "BAIXO": blue, "MEDIO": green, "MÉDIO": green, "ALTO": red,
-            "NORMAL": blue, "LENTO": red, "RAPIDO": green, "RÁPIDO": green,
-            "SWITCH": blue, "NOLLIE": green, "FAKIE": red,
-            "FRONTSIDE": green, "BACKSIDE": lightblue, "REVERSE": red,
-        }
-        assigned=[]
-        for i,(lab,v) in enumerate(vals):
-            key=lab.strip().upper()
-            if colorset is not None and i < len(colorset):
-                assigned.append(colorset[i])
-            elif key in semantic:
-                assigned.append(semantic[key])
-            else:
-                assigned.append(palette[i%len(palette)])
-
-        angle=90
-        for i,(lab,v) in enumerate(vals):
-            extent=360*v/total
-            c.setFillColor(assigned[i])
-            c.wedge(x-r,y-r,x+r,y+r,angle,extent,fill=1,stroke=0)
-            # V2.0 — percentual diretamente na fatia do dashboard visual.
-            # Posiciona o texto entre o furo e a borda para permanecer legível.
-            import math
-            mid = math.radians(angle + extent / 2.0)
-            tx = x + math.cos(mid) * r * .79
-            ty = y + math.sin(mid) * r * .79
-            pct = v / total * 100
-            c.setFillColor(white)
-            c.setFont("Helvetica-Bold", 15.5 if extent >= 24 else 12.0)
-            c.drawCentredString(tx, ty-1.5, f"{pct:.0f}%")
-            angle+=extent
-        c.setFillColor(bg); c.circle(x,y,r*.58,fill=1,stroke=0)
-
-        ly=y-r-7*mm; colw=36*mm
-        for i,(lab,v) in enumerate(vals[:8]):
-            row=i//2; col=i%2; lx=x-r+col*colw
-            c.setFillColor(assigned[i]); c.rect(lx,ly-row*5*mm,2.5*mm,2.5*mm,fill=1,stroke=0)
-            c.setFillColor(white); c.setFont("Helvetica-Bold",10.8)
-            pct=v/total*100
-            c.drawString(lx+4*mm,ly-row*5*mm,f"{lab[:16]}  {pct:.1f}%")
-
-    def line_chart(x,y,w,h,title,values,color=blue,suffix=""):
-        c.setFillColor(white); c.setFont("Helvetica-Bold",13); c.drawString(x,y+h+5*mm,title)
-        c.setStrokeColor(colors.HexColor("#173047")); c.setLineWidth(.5)
-        for j in range(5):
-            gy=y+j*h/4; c.line(x,gy,x+w,gy)
-        if not values:return
-        mx=max(max(values),1); pts=[]
-        for i,v in enumerate(values):
-            xx=x+w*(i/max(1,len(values)-1)); yy=y+h*(v/mx*.88); pts.append((xx,yy))
-        c.setStrokeColor(color); c.setLineWidth(2)
-        for a,b in zip(pts,pts[1:]): c.line(a[0],a[1],b[0],b[1])
-        for i,(xx,yy) in enumerate(pts):
-            c.setFillColor(color); c.circle(xx,yy,1.7*mm,fill=1,stroke=0)
-            c.setFillColor(white); c.setFont("Helvetica-Bold",8); c.drawCentredString(xx,yy+3*mm,f"{values[i]:.1f}{suffix}")
-            c.setFillColor(muted); c.setFont("Helvetica",7); c.drawCentredString(xx,y-4*mm,sessions[i]["name"][:24])
-
-    # PAGE 1
-    page_bg(); header()
-    # Athlete/photo block
-    px,py,pw,ph=12*mm,H-92*mm,55*mm,54*mm
-    c.setFillColor(panel); c.roundRect(px,py,pw,ph,3*mm,fill=1,stroke=0)
+    new_page()
+    name_x = margin
     if photo_file is not None:
         try:
-            photo_file.seek(0); im=ImageReader(photo_file)
-            iw,ih=im.getSize(); scale=min((pw-4*mm)/iw,(ph-4*mm)/ih)
-            dw,dh=iw*scale,ih*scale
-            c.drawImage(im,px+(pw-dw)/2,py+(ph-dh)/2,dw,dh,preserveAspectRatio=True,mask='auto')
+            photo_file.seek(0)
+            c.drawImage(ImageReader(photo_file),margin,top-74,64,74,preserveAspectRatio=True,anchor='c',mask='auto')
+            name_x += 76
         except Exception: pass
-    c.setFillColor(white); c.setFont("Helvetica-Bold",22); c.drawString(12*mm,H-101*mm,(athlete or "ATLETA").upper())
-    c.setFillColor(muted); c.setFont("Helvetica",12); c.drawString(12*mm,H-107*mm,f"{len(sessions)} treino(s) • {choice}")
+    wrapped((athlete or 'ATLETA').upper(),name_x,top,width-(name_x-margin),21,bold=True)
+    wrapped(f'{len(sessions)} treino(s) • {choice}',name_x,top-45,width-(name_x-margin),12,muted)
+    top -= 90
+    rate = cur['hits']/cur['attempts']*100 if cur['attempts'] else 0
+    metrics = [('TENTATIVAS',cur['attempts']),('MANOBRAS',len(cur['maneuvers'])),
+               ('ACERTOS',cur['hits']),('ERROS',cur['errors']),('TREINOS',len(sessions)),('TAXA DE ACERTO',f'{rate:.1f}%')]
+    cw = (width-12)/2
+    for i,(label,value) in enumerate(metrics):
+        x = margin+(i%2)*(cw+12); y = top-66-(i//2)*78
+        c.setFillColor(colors.HexColor(panel)); c.roundRect(x,y,cw,66,8,fill=1,stroke=0)
+        text(x+12,y+45,label,12,muted,True)
+        text(x+12,y+14,f'{value:.0f}' if isinstance(value,(int,float)) else value,27,red if label=='ERROS' else green if label in ('ACERTOS','TAXA DE ACERTO') else white,True)
+    top -= 238
 
-    rate=cur["hits"]/cur["attempts"]*100 if cur["attempts"] else 0
-    vals=[("TENTATIVAS",f'{cur["attempts"]:.0f}',"volume total",None),
-          ("MANOBRAS",str(len(cur["maneuvers"])),"diferentes",None),
-          ("ACERTOS",f'{cur["hits"]:.0f}',f"{rate:.1f}% de acerto",None),
-          ("ERROS",f'{cur["errors"]:.0f}',f"{100-rate:.1f}%",red),
-          ("TREINOS",str(len(sessions)),"CSVs importados",None)]
-    kx=73*mm; ky=H-78*mm; gap=3*mm; kw=(W-kx-12*mm-gap*4)/5
-    for i,(lab,val,sub,col) in enumerate(vals): card(kx+i*(kw+gap),ky,kw,28*mm,lab,val,sub,col)
+    def draw_donut(x, y, w, h, title, data, legend_values):
+        c.setFillColor(colors.HexColor(panel)); c.roundRect(x,y-h,w,h,8,fill=1,stroke=0)
+        text(x+12,y-25,title,14,bold=True)
+        vals = [(str(k),float(v)) for k,v in data.items() if float(v)>0]
+        total = sum(v for _,v in vals)
+        cx,cy,r = x+w/2,y-88,42
+        if not total:
+            text(x+12,y-79,'Sem dados',14,muted); return
+        angle = 90
+        for i,(lab,v) in enumerate(vals):
+            color = semantic.get(norm(lab),palette[i%len(palette)])
+            extent = 360*v/total
+            c.setFillColor(colors.HexColor(color)); c.wedge(cx-r,cy-r,cx+r,cy+r,angle,extent,fill=1,stroke=0)
+            if v/total>=.08:
+                theta = math.radians(angle+extent/2)
+                c.setFillColor(colors.HexColor(white)); c.setFont('Helvetica-Bold',12)
+                c.drawCentredString(cx+math.cos(theta)*r*.79,cy+math.sin(theta)*r*.79-4,f'{v/total*100:.0f}%')
+            angle += extent
+        c.setFillColor(colors.HexColor(panel)); c.circle(cx,cy,r*.57,fill=1,stroke=0)
+        for i,(lab,v) in legend_values:
+            yy = y-151-legend_values.index((i,(lab,v)))*legend_step
+            color = semantic.get(norm(lab),palette[i%len(palette)])
+            c.setFillColor(colors.HexColor(color)); c.rect(x+12,yy-2,6,6,fill=1,stroke=0)
+            wrapped(lab,x+23,yy+8,w-83,11.5,bold=True)
+            c.setFillColor(colors.HexColor(white)); c.setFont('Helvetica-Bold',12)
+            c.drawRightString(x+w-10,yy,f'{v/total*100:.1f}%')
 
-    section("DISTRIBUIÇÕES GERAIS",H-123*mm)
-    cy=H-169*mm; rr=25*mm
-    ds=[("RESULTADO",{"ACERTO":cur["hits"],"ERRO":cur["errors"]},[green,red]),
-        ("DIFICULDADE",cur["cats"]["DIFICULDADE"],None),
-        ("RISCO",cur["cats"]["RISCO"],None),
-        ("DIREÇÃO",cur["cats"]["DIRECAO"],None)]
-    centers=[58*mm,150*mm,242*mm,334*mm]
-    for xx,(t,d,cc) in zip(centers,ds): donut(xx,cy,rr,t,d,cc)
+    def donut_group(title, items):
+        nonlocal top, legend_step
+        legend_step = 24
+        expanded = []
+        for label, data in items:
+            vals = [(str(k),float(v)) for k,v in data.items() if float(v)>0]
+            indexed = list(enumerate(vals))
+            for start in range(0,max(1,len(indexed)),8):
+                expanded.append((label + (' (cont.)' if start else ''), data, indexed[start:start+8]))
+        for i in range(0,len(expanded),2):
+            pair = expanded[i:i+2]
+            count = max([len(legend) for _,_,legend in pair]+[1])
+            legend_style = ParagraphStyle("legend",fontName="Helvetica-Bold",fontSize=11.5,leading=14.375)
+            legend_step = 24
+            for _,_,legend in pair:
+                for _,(label,_) in legend:
+                    pp = Paragraph(escape(label),legend_style)
+                    _,lh = pp.wrap(cw-83,H)
+                    legend_step = max(legend_step,lh+8)
+            height = max(174,158+count*legend_step)
+            reserve(height+35)
+            heading(title if i==0 else title+' - CONTINUAÇÃO')
+            for j,(label,data,legend) in enumerate(pair): draw_donut(margin+j*(cw+12),top,cw,height,label,data,legend)
+            top -= height+16
 
-    # Maneuver table lower
-    section("MANOBRAS",H-221*mm)
-    tx=12*mm; ty=H-232*mm; widths=[12*mm,220*mm,38*mm,38*mm,38*mm,44*mm]
-    headers=["#","MANOBRA","ACERTOS","ERROS","TOTAL","TAXA"]
-    c.setFillColor(colors.HexColor("#0d2237")); c.rect(tx,ty-8*mm,sum(widths),8*mm,fill=1,stroke=0)
-    c.setFillColor(muted); c.setFont("Helvetica-Bold",10.5); xx=tx
-    for h,w in zip(headers,widths): c.drawString(xx+2*mm,ty-5*mm,h); xx+=w
-    yy=ty-15*mm
-    all_maneuvers=sorted(cur["maneuvers"].items(),key=lambda z:sum(z[1]),reverse=True)
-    for idx,(m,(hh,ee)) in enumerate(all_maneuvers[:8],1):
-        tt=hh+ee; rr2=hh/tt*100 if tt else 0
-        row=[str(idx),m[:35],f"{hh:.0f}",f"{ee:.0f}",f"{tt:.0f}",f"{rr2:.1f}%"]
-        c.setFillColor(panel if idx%2 else panel2); c.rect(tx,yy,sum(widths),6.7*mm,fill=1,stroke=0)
-        xx=tx
-        for j,(v,w) in enumerate(zip(row,widths)):
-            c.setFillColor(red if j==3 else (blue if j in (2,5) else white)); c.setFont("Helvetica-Bold" if j in (1,2,3,5) else "Helvetica",11.5)
-            c.drawString(xx+2*mm,yy+2.2*mm,v); xx+=w
-        yy-=7.2*mm
-    c.showPage()
+    donut_group('DISTRIBUIÇÕES GERAIS',[
+        ('RESULTADO',{'ACERTO':cur['hits'],'ERRO':cur['errors']}),
+        ('DIFICULDADE',cur['cats']['DIFICULDADE']),('RISCO',cur['cats']['RISCO']),('DIREÇÃO',cur['cats']['DIRECAO'])])
 
-    # PÁGINAS EXTRAS: todas as manobras restantes, sem cortar a lista.
-    remaining=all_maneuvers[8:]
-    chunk_size=28
-    for chunk_start in range(0,len(remaining),chunk_size):
-        page_bg(); header("MANEUVER ANALYSIS • COMPLETE LIST")
-        section("MANOBRAS — CONTINUAÇÃO",H-45*mm)
-        tx=12*mm; ty=H-57*mm
-        widths=[12*mm,220*mm,38*mm,38*mm,38*mm,44*mm]
-        headers=["#","MANOBRA","ACERTOS","ERROS","TOTAL","TAXA"]
-        c.setFillColor(colors.HexColor("#0d2237")); c.rect(tx,ty-9*mm,sum(widths),9*mm,fill=1,stroke=0)
-        c.setFillColor(muted); c.setFont("Helvetica-Bold",10.5); xx=tx
-        for h,w in zip(headers,widths):
-            c.drawString(xx+2*mm,ty-5.8*mm,h); xx+=w
-        yy=ty-17*mm
-        chunk=remaining[chunk_start:chunk_start+chunk_size]
-        for local_i,(m,(hh,ee)) in enumerate(chunk):
-            idx=9+chunk_start+local_i
-            tt=hh+ee; rr2=hh/tt*100 if tt else 0
-            row=[str(idx),m[:58],f"{hh:.0f}",f"{ee:.0f}",f"{tt:.0f}",f"{rr2:.1f}%"]
-            c.setFillColor(panel if idx%2 else panel2); c.rect(tx,yy,sum(widths),7*mm,fill=1,stroke=0)
-            xx=tx
-            for j,(v,w) in enumerate(zip(row,widths)):
-                c.setFillColor(red if j==3 else (blue if j in (2,5) else white))
-                c.setFont("Helvetica-Bold" if j in (1,2,3,5) else "Helvetica",11.5)
-                c.drawString(xx+2*mm,yy+2.3*mm,v); xx+=w
-            yy-=7.6*mm
-        c.setFillColor(muted); c.setFont("Helvetica",8)
-        c.drawRightString(W-12*mm,10*mm,f"Manobras {9+chunk_start}–{8+chunk_start+len(chunk)} de {len(all_maneuvers)}")
-        c.showPage()
+    # The whole table stays together when it fits a page; long tables repeat headers.
+    mans = sorted(cur['maneuvers'].items(),key=lambda z:sum(z[1]),reverse=True)
+    rows = []
+    for idx,(name,(hits,errors)) in enumerate(mans,1):
+        style=ParagraphStyle('row',fontName='Helvetica-Bold',fontSize=12.5,leading=15.5,textColor=colors.HexColor(white))
+        p=Paragraph(escape(name),style); _,ph=p.wrap(143,H)
+        rows.append((idx,p,max(26,ph+10),hits,errors))
+    total_height = 70+sum(row[2] for row in rows)
+    if total_height <= H-124: reserve(total_height)
+    elif top < 150: new_page()
+    def table_header(continued=False):
+        nonlocal top
+        heading('MANOBRAS'+(' - CONTINUAÇÃO' if continued else ''))
+        text(margin,top-12,'Manobra',12,muted,True)
+        for x,label in [(224,'Ac.'),(269,'Er.'),(314,'Total'),(397,'Taxa')]:
+            c.setFillColor(colors.HexColor(muted)); c.setFont('Helvetica-Bold',12); c.drawRightString(x,top-12,label)
+        top -= 26
+    table_header()
+    if not rows:
+        text(margin,top-18,'Sem manobras registradas',14,muted); top -= 40
+    for idx,p,rh,hits,errors in rows:
+        if top-rh<38: new_page(); table_header(True)
+        c.setFillColor(colors.HexColor(panel if idx%2 else '#102b44')); c.rect(margin,top-rh,width,rh-2,fill=1,stroke=0)
+        text(margin+5,top-20,idx,11,muted)
+        _,ph=p.wrap(143,H); p.drawOn(c,margin+27,top-8-ph)
+        total=hits+errors
+        for x,value,col in [(224,f'{hits:.0f}',blue),(269,f'{errors:.0f}',red),(314,f'{total:.0f}',white),(397,f'{hits/total*100 if total else 0:.1f}%',green)]:
+            c.setFillColor(colors.HexColor(col)); c.setFont('Helvetica-Bold',13); c.drawRightString(x,top-rh/2-4,value)
+        top -= rh
+    top -= 20
+    donut_group('DETALHES',[(label,cur['cats'][key]) for label,key in [('AVALIAÇÃO','AVALIACAO'),('VELOCIDADE','VELOCIDADE'),('OBSTÁCULO','OBSTACULO'),('BASE','BASE')]])
 
-    # ÚLTIMA PÁGINA: evolution + details
-    page_bg(); header("SESSION EVOLUTION • PERFORMANCE DISTRIBUTION")
-    section("EVOLUÇÃO ENTRE TREINOS",H-45*mm)
-    rates=[ss["hits"]/ss["attempts"]*100 if ss["attempts"] else 0 for ss in sessions]
-    line_chart(18*mm,H-105*mm,W-36*mm,45*mm,"TAXA DE ACERTO",rates,blue,"%")
-    section("EVOLUÇÃO DA DIFICULDADE",H-125*mm)
-    chartw=(W-42*mm)/3
-    for i,(dif,col) in enumerate([("ALTA",red),("MEDIA",blue),("BAIXA",lightblue)]):
-        vv=[ss["cats"]["DIFICULDADE"].get(dif,0) for ss in sessions]
-        line_chart(14*mm+i*(chartw+7*mm),H-180*mm,chartw,35*mm,dif,vv,col,"")
-    section("DETALHES",H-201*mm)
-    details=[("AVALIAÇÃO",cur["cats"]["AVALIACAO"]),("VELOCIDADE",cur["cats"]["VELOCIDADE"]),
-             ("OBSTÁCULO",cur["cats"]["OBSTACULO"]),("BASE",cur["cats"]["BASE"])]
-    for xx,(t,d) in zip(centers,details): donut(xx,H-246*mm,22*mm,t,d,None)
-    c.save(); buf.seek(0); return buf.getvalue()
+    # Eight sessions per panel keeps values and labels readable for long histories.
+    for start in range(0,len(sessions),8):
+        group=sessions[start:start+8]
+        for label,key,color in [('TAXA DE ACERTO',None,blue),('DIFICULDADE ALTA','ALTA',red),('DIFICULDADE MÉDIA','MEDIA',green),('DIFICULDADE BAIXA','BAIXA','#6bc1f7')]:
+            reserve(185); heading(label)
+            x,y,w,h=margin+12,top-110,width-24,100
+            c.setStrokeColor(colors.HexColor('#244058')); c.setLineWidth(.5)
+            for j in range(5): c.line(x,y+j*h/4,x+w,y+j*h/4)
+            values=[s['hits']/s['attempts']*100 if s['attempts'] else 0 for s in group] if key is None else [sum(float(v) for k,v in s['cats']['DIFICULDADE'].items() if norm(k)==key) for s in group]
+            maximum=100 if key is None else max(max(values,default=0),1)
+            points=[(x+w*(i/max(1,len(group)-1)),y+h*.82*v/maximum) for i,v in enumerate(values)]
+            c.setStrokeColor(colors.HexColor(color)); c.setLineWidth(2)
+            for a,b in zip(points,points[1:]): c.line(*a,*b)
+            for i,(xx,yy) in enumerate(points):
+                c.setFillColor(colors.HexColor(color)); c.circle(xx,yy,3,fill=1,stroke=0)
+                c.setFillColor(colors.HexColor(white)); c.setFont('Helvetica-Bold',12)
+                c.drawCentredString(xx,yy+10,f'{values[i]:.1f}%' if key is None else f'{values[i]:g}')
+                c.setFillColor(colors.HexColor(muted)); c.setFont('Helvetica',11); c.drawCentredString(xx,y-19,str(start+i+1))
+            text(margin,top-152,'Treinos (ordem do histórico)',11,muted); top -= 173
+        reserve(25+24*len(group)); heading('IDENTIFICAÇÃO DOS TREINOS')
+        for i,s in enumerate(group):
+            reserve(42); hh=wrapped(f'{start+i+1}. {s["name"]}',margin,top,width,13); top -= hh+10
+    c.save(); return buf.getvalue()

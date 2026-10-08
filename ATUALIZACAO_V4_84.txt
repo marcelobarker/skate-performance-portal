@@ -1,0 +1,10 @@
+V4.84 - PDF visual para leitura no celular
+
+Substitua report_engine.py e pages/03_Analise_de_Treino.py pelos arquivos deste pacote.
+Reinicie o Streamlit com: python -m streamlit run Home.py
+Gere novamente o DASHBOARD VISUAL na Analise ou no Historico.
+PDFs ja baixados e arquivos antigos salvos continuam no formato anterior.
+
+Alteracoes: paginas verticais, fontes maiores, graficos em duas colunas,
+evolucao em graficos verticais, tabela com quebra conforme o espaco,
+gerador compartilhado entre Analise e Historico.
