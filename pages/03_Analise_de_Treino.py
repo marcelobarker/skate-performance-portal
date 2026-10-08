@@ -12,7 +12,7 @@ from streamlit_elements import elements, mui
 
 from ui_theme import apply_ui_theme
 
-st.set_page_config(initial_sidebar_state="collapsed", page_title="Análise de Treino • Seleção Brasileira", page_icon="🛹", layout="wide")
+st.set_page_config(initial_sidebar_state="collapsed", page_title="Análise de Sessão • Seleção Brasileira", page_icon="🛹", layout="wide")
 
 # V4.23 early sidebar kill
 
@@ -454,7 +454,7 @@ def parse_aggregate(d,name):
     return s
 
 def merge_sessions(ss):
-    out=empty_session("TODOS OS TREINOS")
+    out=empty_session("TODAS AS SESSÕES")
     for s in ss:
         for k in ("attempts","hits","errors"):out[k]+=s[k]
         for m,(h,e) in s["maneuvers"].items():
@@ -526,7 +526,7 @@ def make_pdf(athlete, cur, sessions, choice):
     story=[Paragraph("SKATE PERFORMANCE",title),
            Paragraph(f"{athlete or 'ATLETA'} - {choice}",body),Spacer(1,6)]
     rate=cur["hits"]/cur["attempts"]*100 if cur["attempts"] else 0
-    kdata=[["TENTATIVAS","ACERTOS","ERROS","TAXA DE ACERTO","TREINOS"],
+    kdata=[["TENTATIVAS","ACERTOS","ERROS","TAXA DE ACERTO","SESSÕES"],
            [f'{cur["attempts"]:.0f}',f'{cur["hits"]:.0f}',f'{cur["errors"]:.0f}',f'{rate:.1f}%',str(len(sessions))]]
     kt=Table(kdata,colWidths=[50*mm]*5,rowHeights=[8*mm,13*mm])
     kt.setStyle(TableStyle([
@@ -552,8 +552,8 @@ def make_pdf(athlete, cur, sessions, choice):
     ]))
     story.append(mt)
     if len(sessions)>1:
-        story += [PageBreak(),Paragraph("EVOLUCAO ENTRE TREINOS",title)]
-        ev=[["TREINO","TENTATIVAS","ACERTOS","ERROS","TAXA","DIFICULDADE ALTA"]]
+        story += [PageBreak(),Paragraph("EVOLUCAO ENTRE SESSÕES",title)]
+        ev=[["SESSÃO","TENTATIVAS","ACERTOS","ERROS","TAXA","DIFICULDADE ALTA"]]
         for s in sessions:
             rr=s["hits"]/s["attempts"]*100 if s["attempts"] else 0
             alta=s["cats"]["DIFICULDADE"].get("ALTA",0)
@@ -653,8 +653,8 @@ render_top_nav(nav_name=nav_name, nav_role=nav_role, nav_photo=nav_photo, active
 
 st.markdown("""
 <div class="analysis-eyebrow">SELEÇÃO BRASILEIRA • PERFORMANCE ANALYTICS</div>
-<div class="analysis-title">Análise de Treino</div>
-<div class="analysis-lead">Centralize os dados do treino, importe os CSVs do Sportscode e acompanhe a evolução técnica do atleta em um único dashboard.</div>
+<div class="analysis-title">Análise de Sessão</div>
+<div class="analysis-lead">Analise treinos ou voltas de campeonato, importe os CSVs do Sportscode e acompanhe a evolução técnica do atleta em um único dashboard.</div>
 """, unsafe_allow_html=True)
 
 # V4.14 — a análise pode nascer de upload novo ou de uma sessão salva, sem controles na sidebar.
@@ -672,14 +672,14 @@ analysis_photo = None
 if history_view:
     selected_athlete = next((r for r in athlete_rows if r.get("id") == history_view.get("athlete_id")), None)
     if selected_athlete is None:
-        st.error("Este treino não está disponível para o seu perfil."); st.stop()
+        st.error("Esta sessão não está disponível para o seu perfil."); st.stop()
     athlete = selected_athlete.get("full_name") or "ATLETA"
     photo_url = selected_athlete.get("photo_url")
     with st.container(border=True):
         c1,c2=st.columns([5,1])
         with c1:
             st.markdown("#### 👁 Modo histórico")
-            st.caption(f"{history_view.get('title','Treino')} • {history_view.get('training_date') or '—'}")
+            st.caption(f"{history_view.get('title','Sessão')} • {history_view.get('training_date') or '—'}")
         with c2:
             if st.button("← Histórico", use_container_width=True):
                 st.session_state.pop("history_analysis_view", None); st.switch_page("pages/04_Historico_de_Treinos.py")
@@ -688,9 +688,9 @@ if history_view:
         def getvalue(self): return super().getvalue()
     files=[ArchivedUpload(item["data"], item["name"]) for item in history_view.get("files",[])]
     training_date = date.fromisoformat(history_view["training_date"]) if history_view.get("training_date") else date.today()
-    training_title = history_view.get("title") or "Treino"
+    training_title = history_view.get("title") or "Sessão"
 else:
-    st.markdown('<div class="setup-card"><div class="setup-title">Configurar nova análise</div><div class="setup-sub">Selecione o atleta, identifique o treino e importe um ou mais arquivos CSV.</div></div>', unsafe_allow_html=True)
+    st.markdown('<div class="setup-card"><div class="setup-title">Configurar nova análise</div><div class="setup-sub">Selecione o atleta, identifique a sessão e importe um ou mais arquivos CSV.</div></div>', unsafe_allow_html=True)
     analysis_subject = st.radio("QUEM SERÁ ANALISADO?", ["Atleta cadastrado", "Atleta convidado / sem cadastro"], horizontal=True)
     guest_mode = analysis_subject.startswith("Atleta convidado")
     if guest_mode:
@@ -710,10 +710,10 @@ else:
     info=" • ".join([x for x in [selected_athlete.get("modality"),selected_athlete.get("stance")] if x])
     if info: st.caption(info)
     c1,c2=st.columns([1,2])
-    with c1: training_date=st.date_input("DATA DO TREINO",value=date.today())
-    with c2: training_title=st.text_input("TÍTULO DO TREINO",placeholder="Ex.: Treino Street - manhã")
+    with c1: training_date=st.date_input("DATA DA SESSÃO",value=date.today())
+    with c2: training_title=st.text_input("TÍTULO DA SESSÃO",placeholder="Ex.: Volta 1 - campeonato / Treino Street")
     analysis_photo=st.file_uploader("FOTO PARA A ANÁLISE (OPCIONAL)",type=["jpg","jpeg","png","webp"],accept_multiple_files=False)
-    files=st.file_uploader("ARQUIVOS CSV (TREINOS)",type=["csv","txt"],accept_multiple_files=True)
+    files=st.file_uploader("ARQUIVOS CSV (SESSÕES)",type=["csv","txt"],accept_multiple_files=True)
 
 photo=None
 if photo_url:
@@ -728,7 +728,7 @@ if selected_athlete.get("id"):
     if video_posts:
         with st.expander("🎬 CODIFICAÇÃO DE VÍDEO", expanded=False):
             st.caption("Abra uma sessão de vídeo para marcar tentativas. Esta área fica separada do dashboard de CSV.")
-            labels=[f"{vp.get('session_title') or 'Vídeo de treino'} • {(vp.get('created_at') or '')[:10]}" for vp in video_posts]
+            labels=[f"{vp.get('session_title') or 'Vídeo de sessão'} • {(vp.get('created_at') or '')[:10]}" for vp in video_posts]
             pick=st.selectbox("Sessão de vídeo",range(len(video_posts)),format_func=lambda i:labels[i],key="video_session_pick")
             if st.button("ABRIR CODIFICAÇÃO",type="primary",use_container_width=True,key="open_video_coding"):
                 st.session_state["selected_video_post_id"]=video_posts[pick]["id"]; st.switch_page("pages/10_Codificar_Sessao.py")
@@ -773,10 +773,10 @@ for f in files:
     except Exception as e: problems.append(f"{f.name}: {e}")
 for p in problems: st.warning(p)
 
-# Um envio com vários CSVs representa um treino consolidado no histórico.
+# Um envio com vários CSVs representa uma sessão consolidada no histórico.
 can_save = sessions and not history_view and bool(selected_athlete.get("id"))
 if can_save:
-    if st.button("💾 SALVAR TREINO NO HISTÓRICO",use_container_width=True):
+    if st.button("💾 SALVAR SESSÃO NO HISTÓRICO",use_container_width=True):
         uploaded_paths=[]; report_path=visual_path=None
         try:
             token=uuid.uuid4().hex; base_path=f"{selected_athlete['id']}/{training_date.isoformat()}/{token}"
@@ -784,15 +784,15 @@ if can_save:
                 raw=f.getvalue(); ext=Path(f.name).suffix.lower() or ".csv"; safe_stem=re.sub(r"[^A-Za-z0-9_-]+","_",Path(f.name).stem)[:70] or f"treino_{idx+1}"
                 object_path=f"{base_path}/{idx+1:02d}_{safe_stem}{ext}"
                 sb.storage.from_("training-csvs").upload(object_path,raw,{"content-type":"text/csv","upsert":"false"}); uploaded_paths.append(object_path)
-            title=training_title.strip() or (Path(files[0].name).stem if len(files)==1 else f"Treino consolidado • {len(files)} CSVs")
+            title=training_title.strip() or (Path(files[0].name).stem if len(files)==1 else f"Sessão consolidada • {len(files)} CSVs")
             report_path=f"{base_path}_relatorio.pdf"; visual_path=f"{base_path}_dashboard_visual.pdf"; merged=merge_sessions(sessions)
-            report_bytes=make_pdf(athlete,merged,sessions,"TODOS OS TREINOS")
+            report_bytes=make_pdf(athlete,merged,sessions,"TODAS AS SESSÕES")
             if photo is not None: photo.seek(0)
-            visual_bytes=make_visual_pdf(athlete,merged,sessions,"TODOS OS TREINOS",photo)
+            visual_bytes=make_visual_pdf(athlete,merged,sessions,"TODAS AS SESSÕES",photo)
             sb.storage.from_("training-reports").upload(report_path,report_bytes,{"content-type":"application/pdf","upsert":"false"})
             sb.storage.from_("training-reports").upload(visual_path,visual_bytes,{"content-type":"application/pdf","upsert":"false"})
             sb.table("training_sessions").insert({"athlete_id":selected_athlete["id"],"training_date":training_date.isoformat(),"title":title,"csv_path":uploaded_paths[0] if uploaded_paths else None,"csv_paths":uploaded_paths,"report_pdf_path":report_path,"visual_pdf_path":visual_path}).execute()
-            st.success(f"Treino salvo no histórico com {len(uploaded_paths)} CSV(s) consolidados.")
+            st.success(f"Sessão salva no histórico com {len(uploaded_paths)} CSV(s) consolidados.")
         except Exception as exc:
             try:
                 if uploaded_paths: sb.storage.from_("training-csvs").remove(uploaded_paths)
@@ -802,8 +802,8 @@ if can_save:
             st.error(f"Não foi possível salvar o histórico: {exc}")
 
 names=[s["name"] for s in sessions]
-choice=st.selectbox("VISUALIZAR SESSÃO / CSV",["TODOS OS TREINOS"]+names,key="session_main")
-cur=merge_sessions(sessions) if choice=="TODOS OS TREINOS" else next(s for s in sessions if s["name"]==choice)
+choice=st.selectbox("VISUALIZAR SESSÃO / CSV",["TODAS AS SESSÕES"]+names,key="session_main")
+cur=merge_sessions(sessions) if choice=="TODAS AS SESSÕES" else next(s for s in sessions if s["name"]==choice)
 st.markdown("".join([f'<span class="analysis-status">✓ {n}</span>' for n in names]),unsafe_allow_html=True)
 
 head1,head2=st.columns([1.05,4.5])
@@ -818,7 +818,7 @@ with head1:
     sport_info = " • ".join([x for x in [selected_athlete.get("modality"), selected_athlete.get("stance")] if x])
     if sport_info:
         st.caption(sport_info)
-    st.caption(f"{len(sessions)} treino(s) carregado(s)")
+    st.caption(f"{len(sessions)} sessões carregado(s)")
 with head2:
     rate=cur["hits"]/cur["attempts"]*100 if cur["attempts"] else 0
     st.markdown(f"""
@@ -830,7 +830,7 @@ with head2:
         <div class="kpi2"><div class="kpi2-icon"><svg viewBox="0 0 24 24"><path d="M5 16h14M7 16l-2 3M17 16l2 3"/><circle cx="8" cy="20" r="1.5"/><circle cx="16" cy="20" r="1.5"/><path d="M8 12c2-4 6-4 8 0"/></svg></div><div class="kpi2-label">MANOBRAS</div><div class="kpi2-value">{len(cur["maneuvers"])}</div><div class="kpi2-sub">manobras diferentes</div></div>
         <div class="kpi2"><div class="kpi2-icon"><svg viewBox="0 0 24 24"><path d="M5 12l4 4L19 6"/><circle cx="12" cy="12" r="9"/></svg></div><div class="kpi2-label">ACERTOS</div><div class="kpi2-value">{cur["hits"]:.0f}</div><div class="kpi2-sub">{rate:.1f}% de acerto</div></div>
         <div class="kpi2 kpi2-error"><div class="kpi2-icon"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M9 9l6 6M15 9l-6 6"/></svg></div><div class="kpi2-label">ERROS</div><div class="kpi2-value">{cur["errors"]:.0f}</div><div class="kpi2-sub">{100-rate:.1f}%</div></div>
-        <div class="kpi2"><div class="kpi2-icon"><svg viewBox="0 0 24 24"><rect x="4" y="5" width="16" height="15" rx="2"/><path d="M8 3v4M16 3v4M4 10h16"/></svg></div><div class="kpi2-label">TREINOS</div><div class="kpi2-value">{len(sessions)}</div><div class="kpi2-sub">CSVs importados</div></div>
+        <div class="kpi2"><div class="kpi2-icon"><svg viewBox="0 0 24 24"><rect x="4" y="5" width="16" height="15" rx="2"/><path d="M8 3v4M16 3v4M4 10h16"/></svg></div><div class="kpi2-label">SESSÕES</div><div class="kpi2-value">{len(sessions)}</div><div class="kpi2-sub">CSVs importados</div></div>
       </div>
     </div>
     """,unsafe_allow_html=True)
@@ -848,7 +848,7 @@ st.markdown('<div class="section">MANOBRAS</div>',unsafe_allow_html=True)
 st.markdown(table_html(cur["maneuvers"]),unsafe_allow_html=True)
 
 if len(sessions)>1:
-    st.markdown('<div class="section">EVOLUÇÃO ENTRE TREINOS</div>',unsafe_allow_html=True)
+    st.markdown('<div class="section">EVOLUÇÃO ENTRE SESSÕES</div>',unsafe_allow_html=True)
     x=[s["name"] for s in sessions]
     y=[s["hits"]/s["attempts"]*100 if s["attempts"] else 0 for s in sessions]
     fig=go.Figure(go.Scatter(x=x,y=y,mode="lines+markers+text",
@@ -860,7 +860,7 @@ if len(sessions)>1:
         margin=dict(l=30,r=20,t=30,b=40))
     st.plotly_chart(fig,use_container_width=True,config={"displayModeBar":False})
     evrows="".join(f"<tr><td>{s['name']}</td><td>{s['attempts']:.0f}</td><td class='hit'>{s['hits']:.0f}</td><td class='err'>{s['errors']:.0f}</td><td class='rate'>{(s['hits']/s['attempts']*100 if s['attempts'] else 0):.1f}%</td></tr>" for s in sessions)
-    st.markdown('<div class="table-wrap"><table class="sk-table"><thead><tr><th>TREINO</th><th>TENTATIVAS</th><th>ACERTOS</th><th>ERROS</th><th>TAXA</th></tr></thead><tbody>' + evrows + '</tbody></table></div>', unsafe_allow_html=True)
+    st.markdown('<div class="table-wrap"><table class="sk-table"><thead><tr><th>SESSÃO</th><th>TENTATIVAS</th><th>ACERTOS</th><th>ERROS</th><th>TAXA</th></tr></thead><tbody>' + evrows + '</tbody></table></div>', unsafe_allow_html=True)
 
     st.markdown('<div class="section">EVOLUÇÃO DA DIFICULDADE</div>',unsafe_allow_html=True)
     difficulty_choice=st.selectbox("Dificuldade para acompanhar",["ALTA","MEDIA","BAIXA"],index=0,key="difficulty_evolution")
@@ -896,8 +896,8 @@ with ex2:
     if photo is not None:
         photo.seek(0)
     visual_pdf=make_visual_pdf(athlete,cur,sessions,choice,photo)
-    st.download_button("⬇ BAIXAR DASHBOARD MOBILE V4.85 EM PDF", data=visual_pdf,
-        file_name=f"skate_performance_dashboard_mobile_v485_{safe_name}.pdf", mime="application/pdf", use_container_width=True)
+    st.download_button("⬇ BAIXAR DASHBOARD MOBILE V4.86 EM PDF", data=visual_pdf,
+        file_name=f"skate_performance_dashboard_mobile_v486_{safe_name}.pdf", mime="application/pdf", use_container_width=True)
 
 
 

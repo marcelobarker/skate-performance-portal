@@ -98,7 +98,7 @@ nav_photo = (profile or {}).get("photo_url")
 from nav_v472 import render_top_nav
 render_top_nav(nav_name=nav_name, nav_role=nav_role, nav_photo=nav_photo, active='Histórico', key="nav_pages_04_Historico_de_Treinos.py")
 
-st.markdown("""<div class="hist-hero"><div class="hist-kicker">Performance archive</div><div class="hist-title">Histórico de Treinos</div><div class="hist-sub">Consulte sessões, análises, CSVs e relatórios de cada atleta em um único lugar.</div></div>""",unsafe_allow_html=True)
+st.markdown("""<div class="hist-hero"><div class="hist-kicker">Performance archive</div><div class="hist-title">Histórico de Sessões</div><div class="hist-sub">Consulte sessões, análises, CSVs e relatórios de cada atleta em um único lugar.</div></div>""",unsafe_allow_html=True)
 
 try:
     if is_admin or is_technician:
@@ -149,11 +149,11 @@ try:
 except Exception:
     video_posts=[]; all_events=[]; trick_names={}
 if not rows and not video_posts:
-    st.info("Nenhum treino salvo para este skatista neste período."); st.stop()
+    st.info("Nenhum sessão salvo para este skatista neste período."); st.stop()
 
 if video_posts:
     st.markdown('<div class="section-label">Análise por vídeo</div>',unsafe_allow_html=True)
-    st.markdown("## Treinos codificados em vídeo")
+    st.markdown("## Sessões codificados em vídeo")
     st.caption("Sessões analisadas por tentativa, com a mesma leitura de performance do dashboard.")
     for vp in video_posts:
         ev=[x for x in all_events if x.get("post_id")==vp["id"]]
@@ -198,13 +198,13 @@ if video_posts:
 
 if rows:
     st.markdown('<div class="section-label">Sportscode / CSV</div>',unsafe_allow_html=True)
-    st.markdown("## Treinos salvos")
-st.metric("Treinos salvos", len(rows))
+    st.markdown("## Sessões salvos")
+st.metric("Sessões salvos", len(rows))
 for row in rows:
     with st.container(border=True):
-        c1,c2=st.columns([4,1]); c1.markdown(f"#### {row.get('title') or 'Treino'}")
-        c1.caption(f"Data do treino: {row.get('training_date') or '—'}"); c2.caption("ARQUIVOS DA SESSÃO")
-        safe=re.sub(r"[^A-Za-z0-9_-]+","_",row.get('title') or 'treino')
+        c1,c2=st.columns([4,1]); c1.markdown(f"#### {row.get('title') or 'Sessão'}")
+        c1.caption(f"Data da sessão: {row.get('training_date') or '—'}"); c2.caption("ARQUIVOS DA SESSÃO")
+        safe=re.sub(r"[^A-Za-z0-9_-]+","_",row.get('title') or 'sessão')
         # V2.0.2 — abrir o MESMO dashboard interativo da tela de análise usando
         # os CSVs arquivados. Não é apenas um preview do PDF: sessão, filtros e
         # distribuições continuam selecionáveis como no primeiro upload.
@@ -219,7 +219,7 @@ for row in rows:
                         archived.append({"name": path.rsplit("/",1)[-1] or f"treino_{i}.csv", "data": raw})
                     st.session_state["history_analysis_view"]={
                         "session_id": row["id"], "athlete_id": athlete_id,
-                        "title": row.get("title") or "Treino", "training_date": row.get("training_date"),
+                        "title": row.get("title") or "Sessão", "training_date": row.get("training_date"),
                         "files": archived
                     }
                     st.switch_page("pages/03_Analise_de_Treino.py")
@@ -242,7 +242,7 @@ for row in rows:
                         st.download_button(f"⬇ {len(csv_paths)} CSVs ORIGINAIS (ADMIN)",data=buf.getvalue(),file_name=f"{safe}_CSVs.zip",mime="application/zip",key=f"csv_{row['id']}",use_container_width=True)
                 except Exception as exc:
                     st.caption(f"CSV indisponível: {exc}")
-        # Relatório é regenerado com o motor atual para usar fontes maiores inclusive em treinos antigos.
+        # Relatório é regenerado com o motor atual para usar fontes maiores inclusive em sessões antigos.
         if csv_paths:
             try:
                 report_sessions=[]
@@ -255,7 +255,7 @@ for row in rows:
                     df=read_csv(af)
                     report_sessions.append(parse_aggregate(df,af.name) if is_aggregate(df) else parse_raw(df,af.name))
                 report_merged=merge_sessions(report_sessions)
-                report_data=make_pdf(athlete.get("full_name") or "ATLETA",report_merged,report_sessions,"TODOS OS TREINOS")
+                report_data=make_pdf(athlete.get("full_name") or "ATLETA",report_merged,report_sessions,"TODAS AS SESSÕES")
                 b2.download_button("▤  RELATÓRIO PDF",data=report_data,file_name=f"{safe}_relatorio.pdf",mime="application/pdf",key=f"report_{row['id']}",use_container_width=True)
             except Exception as exc: b2.caption(f"Relatório indisponível: {exc}")
         else: b2.caption("CSVs não disponíveis para gerar o relatório")
@@ -273,8 +273,8 @@ for row in rows:
                     df=read_csv(af)
                     sessions.append(parse_aggregate(df,af.name) if is_aggregate(df) else parse_raw(df,af.name))
                 merged=merge_sessions(sessions)
-                data=make_visual_pdf(athlete.get("full_name") or "ATLETA",merged,sessions,"TODOS OS TREINOS",None)
-                b3.download_button("▦  DASHBOARD MOBILE V4.85",data=data,file_name=f"{safe}_dashboard_mobile_v485.pdf",mime="application/pdf",key=f"visual_{row['id']}",use_container_width=True)
+                data=make_visual_pdf(athlete.get("full_name") or "ATLETA",merged,sessions,"TODAS AS SESSÕES",None)
+                b3.download_button("▦  DASHBOARD MOBILE V4.86",data=data,file_name=f"{safe}_dashboard_mobile_v486.pdf",mime="application/pdf",key=f"visual_{row['id']}",use_container_width=True)
             except Exception as exc: b3.caption(f"Dashboard indisponível: {exc}")
         else: b3.caption("CSVs não disponíveis para gerar o dashboard")
 
@@ -287,5 +287,5 @@ for row in rows:
                     report_paths=[p for p in [row.get("report_pdf_path"),row.get("visual_pdf_path")] if p]
                     if report_paths: sb.storage.from_("training-reports").remove(report_paths)
                     sb.table("training_sessions").delete().eq("id",row["id"]).execute()
-                    st.success("Treino e arquivos associados excluídos."); st.rerun()
+                    st.success("Sessão e arquivos associados excluídos."); st.rerun()
                 except Exception as exc: st.error(f"Não foi possível excluir: {exc}")
