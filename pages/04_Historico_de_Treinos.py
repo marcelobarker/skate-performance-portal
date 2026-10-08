@@ -274,7 +274,7 @@ for row in rows:
                     sessions.append(parse_aggregate(df,af.name) if is_aggregate(df) else parse_raw(df,af.name))
                 merged=merge_sessions(sessions)
                 data=make_visual_pdf(athlete.get("full_name") or "ATLETA",merged,sessions,"TODOS OS TREINOS",None)
-                b3.download_button("▦  DASHBOARD VISUAL",data=data,file_name=f"{safe}_dashboard_visual.pdf",mime="application/pdf",key=f"visual_{row['id']}",use_container_width=True)
+                b3.download_button("▦  DASHBOARD MOBILE V4.85",data=data,file_name=f"{safe}_dashboard_mobile_v485.pdf",mime="application/pdf",key=f"visual_{row['id']}",use_container_width=True)
             except Exception as exc: b3.caption(f"Dashboard indisponível: {exc}")
         else: b3.caption("CSVs não disponíveis para gerar o dashboard")
 
